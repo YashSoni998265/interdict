@@ -17,6 +17,7 @@ import json
 import logging
 import os
 import secrets
+import socket
 import time
 import uuid
 from collections.abc import AsyncIterator, Callable
@@ -24,6 +25,7 @@ from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Any, Literal
+from urllib.parse import urlsplit
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -562,8 +564,9 @@ def create_app(
         except Exception:
             checks["falkordb"] = checks.get("falkordb", False)
             checks["template"] = False
-        checks["agent_key"] = state.anthropic is not None
-        ready = checks["falkordb"] and checks["template"]
+        checks["mcp"] = _reachable(settings.mcp_url)
+        checks["agent_key"] = state.anthropic is not None  # optional: the fallback needs none
+        ready = checks["falkordb"] and checks["template"] and checks["mcp"]
         return JSONResponse({"ready": ready, "checks": checks}, status_code=200 if ready else 503)
 
     # --- the web app -----------------------------------------------------------------------
@@ -581,6 +584,16 @@ def create_app(
             return FileResponse(root / "index.html")
 
     return app
+
+
+def _reachable(url: str, timeout_s: float = 0.5) -> bool:
+    """Whether something accepts TCP connections at the URL's host and port."""
+    parts = urlsplit(url)
+    try:
+        with socket.create_connection((parts.hostname or "127.0.0.1", parts.port or 80), timeout_s):
+            return True
+    except OSError:
+        return False
 
 
 async def _investigate(
