@@ -28,3 +28,29 @@ def reachable_targets(
 ) -> set[str]:
     """The subset of `targets` that has a directed path from `source`."""
     return reachable_from(edges, source) & set(targets)
+
+
+def witness_paths(
+    edges: Iterable[tuple[str, str]], source: str, targets: Iterable[str]
+) -> dict[str, tuple[str, ...]]:
+    """One shortest path from `source` to each reachable target, as node ids (deterministic)."""
+    adjacency: dict[str, list[str]] = defaultdict(list)
+    for src, dst in edges:
+        adjacency[src].append(dst)
+    parent: dict[str, str | None] = {source: None}
+    queue = deque([source])
+    while queue:
+        node = queue.popleft()
+        for nxt in sorted(adjacency[node]):
+            if nxt not in parent:
+                parent[nxt] = node
+                queue.append(nxt)
+    paths = {}
+    for target in sorted(set(targets)):
+        if target == source or target not in parent:
+            continue
+        path = [target]
+        while (prev := parent[path[-1]]) is not None:
+            path.append(prev)
+        paths[target] = tuple(reversed(path))
+    return paths
