@@ -76,11 +76,50 @@ jobs:
           SKIP: no-commit-to-branch,gitleaks # branch rule is local-only; gitleaks runs in its own job
         run: uvx pre-commit run --all-files --show-diff-on-failure
 
+  backend:
+    name: backend
+    runs-on: ubuntu-latest
+    services:
+      falkordb:
+        # Same pinned release and digest as docker-compose.yml (solution.md §17, gate G0)
+        image: falkordb/falkordb:v4.22.1@sha256:b0bdcac2cbaff989e77cb0610439b7a9289e86de033ccbbd4368b66fb680ae7a
+        env:
+          BROWSER: "0"
+          REDIS_ARGS: --requirepass ci-ephemeral
+          FALKORDB_ARGS: MAX_QUEUED_QUERIES 25 TIMEOUT_MAX 30000 TIMEOUT_DEFAULT 1000 RESULTSET_SIZE 100000
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli -a ci-ephemeral --no-auth-warning ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      FALKORDB_HOST: localhost
+      FALKORDB_PORT: "6379"
+      FALKORDB_PASSWORD: ci-ephemeral # throwaway password for the job's own container
+      FALKORDB_RESULTSET_SIZE: "100000"
+      INTERDICT_REQUIRE_FALKORDB: "1"
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.0
+      - name: Install dependencies (locked)
+        run: uv sync --locked
+      - name: Lint
+        run: uv run ruff check .
+      - name: Check formatting
+        run: uv run ruff format --check .
+      - name: Test against FalkorDB
+        run: uv run pytest -q
+
   # Single required status check for branch protection. pr-title is skipped on pushes to main.
   ci-pass:
     name: ci-pass
     if: always()
-    needs: [pr-title, secrets-scan, hygiene]
+    needs: [pr-title, secrets-scan, hygiene, backend]
     runs-on: ubuntu-latest
     steps:
       - name: Require every job to succeed
