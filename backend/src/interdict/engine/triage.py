@@ -15,9 +15,7 @@ BFS and in Python; any disagreement makes the triage inconclusive. Under the fro
 
 from __future__ import annotations
 
-import time
 from collections import Counter, defaultdict
-from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -43,6 +41,7 @@ from interdict.engine.evidence import (
     ScopeIssue,
     collect_evidence,
     judge,
+    timed,
 )
 from interdict.engine.statuses import AlertTriageClass, AttackPathRole, InconclusiveReason
 from interdict.graphstore import GraphStore
@@ -96,28 +95,6 @@ class StormReport:
         return not self.issues
 
 
-def _timed[T](
-    records: list[QueryRecord], template: str, fn: Callable[[], T], rows: Callable[[T], int]
-) -> T:
-    started = time.perf_counter()
-    record_id = f"q{len(records) + 1:02d}"
-    try:
-        out = fn()
-    except QueryFailedError as exc:
-        records.append(
-            QueryRecord(
-                record_id, template, 0, round((time.perf_counter() - started) * 1000, 2), exc.reason
-            )
-        )
-        raise
-    records.append(
-        QueryRecord(
-            record_id, template, rows(out), round((time.perf_counter() - started) * 1000, 2)
-        )
-    )
-    return out
-
-
 def run_triage(
     store: GraphStore,
     name: str,
@@ -138,13 +115,13 @@ def run_triage(
 
     if not issues:
         try:
-            built = _timed(
+            built = timed(
                 records,
                 "attack-build",
                 lambda: build_attack_steps(store, name, snap),
                 lambda b: b.total,
             )
-            steps = _timed(
+            steps = timed(
                 records,
                 "attack-export",
                 lambda: export_steps(store, name, row_limit=row_limit),
@@ -152,7 +129,7 @@ def run_triage(
             )
             forward_py = reachable(steps, {INTERNET_ID})
             forward_db = (
-                _timed(
+                timed(
                     records,
                     "attack-forward-bfs",
                     lambda: forward_reachable_in_graph(store, name, len(snap.pods) + 2),
@@ -180,7 +157,7 @@ def run_triage(
                         roles[step.dst].add(AttackPathRole.LATERAL)
                     elif step.kind == "GOAL" and step.src in on_path and step.dst in crown:
                         roles[step.src].add(AttackPathRole.FINAL_HOP)
-                chain_set = _timed(
+                chain_set = timed(
                     records,
                     "chains-enumerate",
                     lambda: enumerate_chains(
