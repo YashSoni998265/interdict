@@ -15,6 +15,7 @@ from service_helpers import (
     app_settings,
     cleanup_session,
     direct_factory,
+    free_port,
 )
 
 NO_LIMITS = {bucket: (10_000, 3600) for bucket in ("session", "operation", "agent")}
@@ -22,7 +23,8 @@ NO_LIMITS = {bucket: (10_000, 3600) for bucket in ("session", "operation", "agen
 
 @pytest.fixture
 def app_config(template):
-    return app_settings(template)
+    # No tool server listens on this port, whatever else runs on the machine.
+    return app_settings(template, mcp_url=f"http://127.0.0.1:{free_port()}/mcp")
 
 
 @pytest.fixture
@@ -240,4 +242,8 @@ def test_the_operation_cap_and_system_endpoints(client, monkeypatch: pytest.Monk
     assert system["live_mode"] is False and system["falkordb_version"] == "4.22.1"
     assert len(system["tools"]) == 7 and "EXPIRE_EVIDENCE" in system["sandbox_operations"]
     assert client.get("/healthz").json() == {"status": "ok"}
-    assert client.get("/readyz").json()["checks"]["falkordb"] is True
+    readiness = client.get("/readyz")
+    assert readiness.json()["checks"]["falkordb"] is True
+    assert readiness.status_code == 503 and readiness.json()["checks"]["mcp"] is False, (
+        "no tool server is listening in this test, so the app is not ready"
+    )
