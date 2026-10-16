@@ -1,0 +1,322 @@
+{
+  "started_at": "2026-10-16T18:32:15.140609+00:00",
+  "falkordb_image": "see docker-compose.yml",
+  "results": {
+    "G0": [
+      {
+        "check": "Redis server version",
+        "passed": true,
+        "detail": "8.10.2"
+      },
+      {
+        "check": "FalkorDB module loaded",
+        "passed": true,
+        "detail": {
+          "graph": 42201,
+          "vectorset": 1
+        }
+      },
+      {
+        "check": "procedure algo.maxFlow available",
+        "passed": true,
+        "detail": "listed as algo.maxFlow"
+      },
+      {
+        "check": "procedure algo.betweenness available",
+        "passed": true,
+        "detail": "listed as algo.betweenness"
+      },
+      {
+        "check": "procedure algo.bfs available",
+        "passed": true,
+        "detail": "listed as algo.BFS"
+      },
+      {
+        "check": "functions: labels, properties, type, coalesce, range, list comprehension, startNode, endNode",
+        "passed": true,
+        "detail": [
+          [
+            "A"
+          ],
+          {
+            "id": "a",
+            "x": 1
+          },
+          "R",
+          {
+            "id": "r1",
+            "p": 2
+          },
+          "dflt",
+          [
+            0,
+            2,
+            4
+          ],
+          "a",
+          "b"
+        ]
+      },
+      {
+        "check": "zero-length variable-length pattern *0..3",
+        "passed": true,
+        "detail": [
+          [
+            "a"
+          ],
+          [
+            "a",
+            "b"
+          ],
+          [
+            "a",
+            "b",
+            "c"
+          ]
+        ]
+      },
+      {
+        "check": "node and relationship-property indexes",
+        "passed": true,
+        "detail": [
+          [
+            "R",
+            [
+              "id"
+            ]
+          ],
+          [
+            "A",
+            [
+              "id"
+            ]
+          ]
+        ]
+      },
+      {
+        "check": "unique constraint becomes operational",
+        "passed": true,
+        "detail": "OPERATIONAL"
+      },
+      {
+        "check": "unique constraint rejects duplicate ids",
+        "passed": true,
+        "detail": "unique constraint violation on node of type A"
+      },
+      {
+        "check": "failed write query leaves no partial writes",
+        "passed": true,
+        "detail": "nodes with id 'dup' after the failed query: 0"
+      },
+      {
+        "check": "server-side scripting (EVAL) for atomic audit append",
+        "passed": true,
+        "detail": "PONG"
+      },
+      {
+        "check": "revision compare-and-set: exactly one of 20 concurrent writers wins (D-03)",
+        "passed": true,
+        "detail": "winners=1, final revision=2"
+      }
+    ],
+    "G3": [
+      {
+        "check": "server configuration",
+        "passed": true,
+        "detail": {
+          "TIMEOUT": 0,
+          "TIMEOUT_DEFAULT": 1000,
+          "TIMEOUT_MAX": 30000,
+          "RESULTSET_SIZE": 100000,
+          "MAX_QUEUED_QUERIES": 25
+        }
+      },
+      {
+        "check": "read query exceeding its 50 ms timeout raises QueryFailedError",
+        "passed": true,
+        "detail": "'Query timed out' after 9656 ms"
+      },
+      {
+        "check": "eager list functions (range of 200M items) are not interrupted by the timeout (informational)",
+        "passed": true,
+        "detail": "9656 ms wall clock for a 50 ms limit; engine queries must not build huge lists"
+      },
+      {
+        "check": "traversal-heavy query is interrupted promptly (< 1,000 ms wall clock for a 50 ms limit)",
+        "passed": true,
+        "detail": "'Query timed out' after 57 ms"
+      },
+      {
+        "check": "timed-out write query is rolled back",
+        "passed": true,
+        "detail": "'Query timed out'; nodes left: 0"
+      },
+      {
+        "check": "per-query timeout above TIMEOUT_MAX is rejected",
+        "passed": true,
+        "detail": "The query TIMEOUT parameter value cannot exceed the TIMEOUT_MAX configuration parameter value"
+      },
+      {
+        "check": "a 100010-row result is returned in full (RESULTSET_SIZE=100000)",
+        "passed": false,
+        "detail": "rows returned: 100000 -> results are truncated SILENTLY at RESULTSET_SIZE; engine must page and treat a full page as possibly truncated"
+      }
+    ],
+    "G1": [
+      {
+        "check": "(a) edges are directed: s->t gives 1, t->s gives 0",
+        "passed": true,
+        "detail": "s->t=1.0, t->s=0.0"
+      },
+      {
+        "check": "(b) unit capacities: value = number of edge-disjoint paths (2)",
+        "passed": true,
+        "detail": "maxFlow=2.0"
+      },
+      {
+        "check": "(b) per-edge flows returned and conserve flow out of the source",
+        "passed": true,
+        "detail": [
+          [
+            "a",
+            "t",
+            1.0
+          ],
+          [
+            "b",
+            "t",
+            1.0
+          ],
+          [
+            "s",
+            "a",
+            1.0
+          ],
+          [
+            "s",
+            "b",
+            1.0
+          ]
+        ]
+      },
+      {
+        "check": "(c) multiple targetNodes supported (expected 2)",
+        "passed": true,
+        "detail": "maxFlow=2.0"
+      },
+      {
+        "check": "(d1) graph with no edge of the listed type: maxFlow returns 0",
+        "passed": false,
+        "detail": "MaxFlow configuration, unknown relationship-type E -> a fully contained candidate (no ATTACK_STEP edges left) would error; engine must count ATTACK_STEP edges first and treat 0 edges as F = 0"
+      },
+      {
+        "check": "(d2) edges of other relationship types are ignored (expected 0)",
+        "passed": true,
+        "detail": "maxFlow=0.0"
+      },
+      {
+        "check": "(e) behaviour with a missing capacity property (documented, informational)",
+        "passed": true,
+        "detail": "error: MaxFlow configuration, 'capacityProperty' does not exists key"
+      },
+      {
+        "check": "relationshipTypes accepts a query parameter",
+        "passed": true,
+        "detail": "maxFlow=1.0"
+      },
+      {
+        "check": "(f) 50 random graphs: maxFlow > 0 exactly when the oracle finds a path",
+        "passed": true,
+        "detail": "50/50 agree; disagreements=[]"
+      },
+      {
+        "check": "(g) maxFlow p95 < 300 ms on ~800 nodes / 3,000 edges",
+        "passed": true,
+        "detail": "p50=3.9 ms, p95=5.0 ms"
+      },
+      {
+        "check": "(h) algo.bfs direction (informational)",
+        "passed": true,
+        "detail": "from a: ['b']; from b: [] -> outgoing only"
+      }
+    ],
+    "G2": [
+      {
+        "check": "copy ~800 nodes / 3,000 edges: p95 < 500 ms",
+        "passed": true,
+        "detail": "p50=105.4 ms, p95=108.0 ms"
+      },
+      {
+        "check": "copy has identical node and edge counts",
+        "passed": true,
+        "detail": "source=[800, 3000], copy=[800, 3000]"
+      },
+      {
+        "check": "indexes are copied",
+        "passed": true,
+        "detail": [
+          [
+            "N",
+            [
+              "id"
+            ]
+          ]
+        ]
+      },
+      {
+        "check": "copy onto an existing destination is rejected",
+        "passed": true,
+        "detail": "destination key already exists"
+      },
+      {
+        "check": "10 concurrent copies succeed",
+        "passed": false,
+        "detail": "GRAPH.COPY failed, could not fork"
+      },
+      {
+        "check": "memory per copy (GRAPH.MEMORY USAGE, informational)",
+        "passed": true,
+        "detail": [
+          "total_graph_sz_mb",
+          0,
+          "label_matrices_sz_mb",
+          0,
+          "relation_matrices_sz_mb",
+          0,
+          "amortized_node_block_sz_mb",
+          0,
+          "amortized_node_attributes_by_label_sz_mb",
+          [
+            "N",
+            0
+          ],
+          "amortized_unlabeled_nodes_attributes_sz_mb",
+          0,
+          "amortized_edge_block_sz_mb",
+          0,
+          "amortized_edge_attributes_by_type_sz_mb",
+          [
+            "E",
+            0
+          ],
+          "indices_sz_mb",
+          0
+        ]
+      }
+    ]
+  },
+  "failed": [
+    [
+      "G3",
+      "a 100010-row result is returned in full (RESULTSET_SIZE=100000)"
+    ],
+    [
+      "G1",
+      "(d1) graph with no edge of the listed type: maxFlow returns 0"
+    ],
+    [
+      "G2",
+      "10 concurrent copies succeed"
+    ]
+  ]
+}
