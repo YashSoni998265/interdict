@@ -7,13 +7,13 @@ dependencies = [
     "anthropic==1.11.0",
     "falkordb>=1.8.0",
     "fastapi==0.142.2",
-    "httpx==0.28.1",
     "mcp==2.3.0",
     "uvicorn==0.54.0",
 ]
 
 [dependency-groups]
 dev = [
+    "httpx==0.28.1",
     "pytest>=9.1.1",
     "ruff>=0.17.1",
 ]
