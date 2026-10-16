@@ -372,10 +372,11 @@ def subgraph_view(
     chains: list[Chain],
     *,
     plan: Plan | None = None,
+    cuts: dict[tuple[str, str], list[str]] | None = None,
     extra_paths: tuple[tuple[str, ...], ...] = (),
 ) -> Json:
     """The focused attack subgraph for some chains: their nodes and ATTACK_STEP edges, with the
-    steps a plan would cut marked (§13.7: subgraph focus only)."""
+    steps a plan would cut marked, from a Plan or from stored `cuts` (§13.7: subgraph focus only)."""
     snap = report.snapshot
     by_pair = {(s.src, s.dst): s for s in steps}
     paths = [(INTERNET_ID, *c.pods, c.target) for c in chains] + [tuple(p) for p in extra_paths]
@@ -384,6 +385,8 @@ def subgraph_view(
     for action in plan.actions if plan else ():
         for pair in action.removed:
             cut_by[pair].append(action.id)
+    for pair, action_ids in (cuts or {}).items():
+        cut_by[pair].extend(action_ids)
     alerts_on: dict[str, int] = defaultdict(int)
     for verdict in report.verdicts:
         alerts_on[verdict.pod] += 1
