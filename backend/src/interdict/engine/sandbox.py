@@ -88,6 +88,30 @@ def create_sandbox(
         return True
 
 
+def reset_sandbox(
+    store: GraphStore,
+    name: str,
+    now: datetime,
+    *,
+    template: str = TEMPLATE,
+    ttl: timedelta = EVIDENCE_TTL,
+) -> int:
+    """Re-copy the template into the sandbox, stamped now. The revision keeps counting up from
+    the old one, so every certificate issued before the reset is SUPERSEDED, never revived."""
+    with store.lock(graph_lock(name)):
+        previous = read_revision(store, name) if store.exists(name) else 0
+        store.copy(template, name, replace=True)
+        stamp_evidence(store, name, now, ttl)
+        rows = run(
+            store.graph(name),
+            "revision-reset",
+            "MATCH (m:Meta {id: 'meta'}) SET m.revision = $revision RETURN m.revision",
+            {"revision": previous + 1},
+            timeout_ms=TIMEOUT_MS,
+        ).result_set
+    return int(rows[0][0])
+
+
 def mutate(
     store: GraphStore,
     name: str,

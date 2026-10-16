@@ -29,7 +29,6 @@ from collections import defaultdict
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
 
 import redis
 
@@ -495,14 +494,14 @@ def hunt(
     k: int = MAX_PLAN_ACTIONS,
     strict: bool = False,
     max_rounds: int = MAX_ROUNDS,
-    audit: Callable[[dict[str, Any]], str] | None = None,
+    audit: Callable[[Certificate], str] | None = None,
 ) -> HuntReport:
     """Plan, verify and re-plan for T_scope starting from the constraint set `chains` (§8.7).
 
     `triage` is the sandbox's current triage: its evaluation time is used for every freshness
     check, and its revision must hold from the first copy until issuance. `audit`, if given,
-    records the certificate document and returns the audit event hash; if it fails, the
-    certificate is withdrawn (no unaudited certificate).
+    records the certificate and returns the audit event hash; if it fails, the certificate is
+    withdrawn (no unaudited certificate).
     """
     scope = tuple(sorted(set(t_scope)))
     if not scope or not set(scope) <= triage.snapshot.crown_jewels:
@@ -541,7 +540,7 @@ def hunt(
                 report.certificate = state.issue(verified, plan, max_rounds)
                 if audit is not None:
                     try:
-                        event_hash = audit(report.certificate.to_dict())
+                        event_hash = audit(report.certificate)
                     except Exception as exc:
                         store.delete(report.certificate.candidate_graph_key)
                         raise HuntStoppedError(
