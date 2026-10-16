@@ -1,0 +1,17 @@
+# Keep the build context small and free of secrets.
+.git
+.github
+.claude
+.env
+.env.*
+!.env.example
+**/.venv
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/*.tsbuildinfo
+frontend/dist
+backend/tests
+backend/scripts
+docs

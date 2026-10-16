@@ -124,6 +124,57 @@ def test_graph_copy_refuses_an_existing_destination(db: FalkorDB, graph: Graph) 
         db.select_graph(clone_name).delete()
 
 
+def test_a_graph_key_can_be_renamed_and_keeps_its_expiry(db: FalkorDB, graph: Graph) -> None:
+    """Certificates are promoted with RENAMENX (no fork) after an expiry is set (Hunter)."""
+    create_edges(graph, [("a", "b")])
+    renamed = f"{graph.name}:renamed"
+    db.connection.pexpire(graph.name, 60_000)
+    try:
+        assert db.connection.renamenx(graph.name, renamed)
+        moved = db.select_graph(renamed)
+        assert run(
+            moved, "count", "MATCH (n) RETURN count(n)", timeout_ms=SETUP_TIMEOUT_MS
+        ).result_set == [[2]]
+        assert 0 < db.connection.pttl(renamed) <= 60_000
+        create_edges(graph, [("x", "y")])  # the old name is free again
+        assert not db.connection.renamenx(graph.name, renamed), "RENAMENX never overwrites"
+    finally:
+        moved.delete()
+
+
+def test_policy_pruning_follows_union_semantics(graph: Graph) -> None:
+    """The Hunter's prune query: an isolated pod keeps only flows some selecting policy allows,
+    and a pod no egress policy selects keeps everything (§7.1)."""
+    from interdict.engine.hunter import Q_PRUNE
+
+    run(
+        graph,
+        "setup",
+        "CREATE (p:Pod {id: 'p'}), (q:Pod {id: 'q'}), (d:Database {id: 'd'}), (x:Pod {id: 'x'}), "
+        "(p)-[:CAN_REACH {id: 'p-d-5432', port: 5432, protocol: 'TCP'}]->(d), "
+        "(p)-[:CAN_REACH {id: 'p-x-8080', port: 8080, protocol: 'TCP'}]->(x), "
+        "(p)-[:CAN_REACH {id: 'p-x-9090', port: 9090, protocol: 'TCP'}]->(x), "
+        "(p)-[:CAN_REACH {id: 'p-x-8080-udp', port: 8080, protocol: 'UDP'}]->(x), "
+        "(q)-[:CAN_REACH {id: 'q-d-5432', port: 5432, protocol: 'TCP'}]->(d), "
+        "(a:NetworkPolicy {id: 'a', policy_types: ['Egress']})-[:SELECTS]->(p), "
+        "(b:NetworkPolicy {id: 'b', policy_types: ['Egress']})-[:SELECTS]->(p), "
+        "(i:NetworkPolicy {id: 'i', policy_types: ['Ingress']})-[:SELECTS]->(q), "
+        "(a)-[:ALLOWS_EGRESS {port: 8080, protocol: 'TCP'}]->(x), "
+        "(b)-[:ALLOWS_EGRESS {port: 5432, protocol: 'TCP'}]->(d), "
+        "(i)-[:ALLOWS_EGRESS {port: 9090, protocol: 'TCP'}]->(x)",
+        timeout_ms=SETUP_TIMEOUT_MS,
+    )
+    pruned = run(graph, "prune", Q_PRUNE, timeout_ms=SETUP_TIMEOUT_MS).result_set[0][0]
+    assert sorted(pruned) == ["p-x-8080-udp", "p-x-9090"]
+    left = run(
+        graph,
+        "left",
+        "MATCH ()-[c:CAN_REACH]->() RETURN c.id ORDER BY c.id",
+        timeout_ms=SETUP_TIMEOUT_MS,
+    ).result_set
+    assert [r[0] for r in left] == ["p-d-5432", "p-x-8080", "q-d-5432"]
+
+
 def test_maxflow_is_directed(graph: Graph) -> None:
     create_edges(graph, [("s", "t")])
     assert max_flow(graph, "s", ["t"])[0] == 1
