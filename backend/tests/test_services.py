@@ -309,3 +309,20 @@ def test_expiring_evidence_makes_triage_honestly_inconclusive(ctx) -> None:
     with pytest.raises(ToolError) as err:
         find_attack_paths_to_asset(ctx, PAYMENTS)
     assert err.value.code == "SCOPE_INCOMPLETE"
+
+
+# --- sandbox lifetime (§12.2) ------------------------------------------------------------------
+
+
+def test_an_idle_sandbox_expires_and_comes_back_without_reviving_certificates(ctx) -> None:
+    from interdict.gateway import certificate_status
+
+    certificate = certify(ctx)["certificate"]
+    ttl = ctx.store.db.connection.pttl(ctx.keys.sandbox)
+    assert 0 < ttl <= 2 * 60 * 60 * 1000, "idle sandboxes expire after two hours"
+    document = ctx.records.get(ctx.keys.certificate(certificate["certificate_id"]))
+    assert certificate_status(document, ctx.clock(), ctx.revision()) == "VALID"
+    ctx.store.delete(ctx.keys.sandbox)  # what the idle expiry does
+    assert ctx.revision() == 2, "the re-created sandbox resumes above the last revision"
+    assert certificate_status(document, ctx.clock(), ctx.revision()) == "SUPERSEDED"
+    assert triage_alert_storm(ctx, STORM).brief["complete"]

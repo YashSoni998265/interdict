@@ -295,6 +295,24 @@ def test_tc30_a_failed_query_withholds_the_certificate(
     assert report.certificate is None
 
 
+def test_candidate_graphs_expire_on_their_own_if_a_process_dies(
+    store: GraphStore, triage: StormReport, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    ttls = []
+
+    def apply_and_check(store_, candidate, plan):
+        ttls.append(store_.db.connection.pttl(candidate))
+        return apply_plan(store_, candidate, plan)
+
+    monkeypatch.setattr(hunter_module, "apply_plan", apply_and_check)
+    report = hunt(store, triage, {PAYMENTS}, triage.chains)
+    assert ttls and all(0 < ttl <= hunter_module.ORPHAN_TTL_MS for ttl in ttls)
+    assert (
+        store.db.connection.pttl(report.certificate.candidate_graph_key)
+        > hunter_module.ORPHAN_TTL_MS
+    )
+
+
 def test_tc30_stale_evidence_in_the_candidate_withholds_the_certificate(
     store: GraphStore, triage: StormReport, monkeypatch: pytest.MonkeyPatch
 ) -> None:

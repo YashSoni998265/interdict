@@ -41,6 +41,11 @@ class SessionKeys:
     def operations(self) -> str:
         return f"ops:{self.key}"
 
+    @property
+    def revision_mark(self) -> str:
+        """The session's highest sandbox revision, kept beyond the sandbox's own lifetime."""
+        return f"rev:{self.key}"
+
     def plan(self, plan_id: str) -> str:
         return f"plan:{self.key}:{plan_id}"
 

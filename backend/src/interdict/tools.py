@@ -27,7 +27,7 @@ from interdict.db import QueryFailedError
 from interdict.engine.certificate import Certificate
 from interdict.engine.hunter import hunt
 from interdict.engine.planner import ACTION_TYPE, PlanReport, constraint_set, plan_remediation
-from interdict.engine.sandbox import TEMPLATE, create_sandbox, read_revision
+from interdict.engine.sandbox import TEMPLATE, create_sandbox, read_revision, set_revision
 from interdict.engine.statuses import AlertTriageClass, CertificateStatus, PlanStatus
 from interdict.engine.triage import StormReport, run_triage
 from interdict.gateway import certificate_status, submit_execution
@@ -48,6 +48,8 @@ from interdict.views import (
 
 ID = re.compile(r"^[a-z0-9-]{1,64}$")
 PLAN_TTL_S = 24 * 60 * 60
+SESSION_TTL_S = 7 * 24 * 60 * 60
+SANDBOX_IDLE_MS = 2 * 60 * 60 * 1000
 CERTIFICATE_TTL_S = 7 * 24 * 60 * 60
 TOOL_NAMES = (
     "triage_alert_storm",
@@ -99,8 +101,21 @@ class ToolContext:
         return Memory(self.store, self.keys.memory)
 
     def ensure_sandbox(self) -> None:
+        """Create the session sandbox if it is missing, and refresh its idle expiry (§12.2).
+
+        A sandbox that expired is re-created from the template, but its revision resumes above
+        the session's last one, so certificates issued before cannot become VALID again."""
         if create_sandbox(self.store, self.keys.sandbox, self.clock(), template=self.template):
-            self.audit.append("SANDBOX_CREATED", revision=1)
+            last = self.records.get(self.keys.revision_mark)
+            revision = 1
+            if last:
+                revision = set_revision(self.store, self.keys.sandbox, int(last) + 1)
+            self.mark_revision(revision)
+            self.audit.append("SANDBOX_CREATED", revision=revision)
+        self.store.expire(self.keys.sandbox, SANDBOX_IDLE_MS)
+
+    def mark_revision(self, revision: int) -> None:
+        self.records.put(self.keys.revision_mark, revision, SESSION_TTL_S)
 
     def triage(self) -> StormReport:
         """Triage the session sandbox now. Serialised per sandbox, because building the derived

@@ -68,6 +68,7 @@ from interdict_oracle.reachability import reachable_targets, witness_paths
 MAX_ROUNDS = 5
 TIMEOUT_MS = 5_000
 CANDIDATE_OWNER = "INTERDICT_CANDIDATE"
+ORPHAN_TTL_MS = 10 * 60 * 1000  # an orphaned candidate (crashed process) expires (§12.2)
 
 Q_CANDIDATE_POLICIES = (
     "UNWIND $policies AS pol "
@@ -286,6 +287,7 @@ class _Hunt:
                 lambda: self.store.copy(self.triage.graph, candidate),
             )
             self.live.append(candidate)
+            self.store.expire(candidate, ORPHAN_TTL_MS)  # safety net if this process dies
         if read_revision(self.store, candidate) != self.triage.revision:
             raise HuntStoppedError(
                 InconclusiveReason.REVISION_CHANGED, "the copy has a different revision"

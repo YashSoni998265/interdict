@@ -88,6 +88,19 @@ def create_sandbox(
         return True
 
 
+def set_revision(store: GraphStore, name: str, revision: int) -> int:
+    """Set Meta.revision under the graph's lock (sandbox re-creation only)."""
+    with store.lock(graph_lock(name)):
+        rows = run(
+            store.graph(name),
+            "revision-set",
+            "MATCH (m:Meta {id: 'meta'}) SET m.revision = $revision RETURN m.revision",
+            {"revision": revision},
+            timeout_ms=TIMEOUT_MS,
+        ).result_set
+    return int(rows[0][0])
+
+
 def reset_sandbox(
     store: GraphStore,
     name: str,

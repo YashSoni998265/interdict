@@ -488,6 +488,7 @@ def create_app(
                 "superseded_certificates": [],
             }
         result = apply_operation(store, session.keys.sandbox, body.op, body.args, datetime.now(UTC))
+        session.tools.mark_revision(result.revision)
         event = "SANDBOX_OPERATION_APPLIED" if result.applied else "SANDBOX_OPERATION_REJECTED"
         session.audit.append(
             event,
@@ -516,6 +517,7 @@ def create_app(
         revision = reset_sandbox(
             store, session.keys.sandbox, datetime.now(UTC), template=settings.template
         )
+        session.tools.mark_revision(revision)
         state.redis.delete(session.keys.operations)
         session.audit.append("SANDBOX_CREATED", revision=revision, reset=True)
         return {"revision": revision}
