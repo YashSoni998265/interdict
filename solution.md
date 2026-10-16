@@ -1567,7 +1567,7 @@ FalkorDB v4.22.1 (module version 42201, Redis 8.10.2), local Docker on Apple Sil
 | **G4** | Pass | Full storm triage of 1,000 alerts (1,235 nodes, 2,566 edges: evidence, ATTACK_STEP build, method E, both reachability passes, classification): **median 58 ms, slowest of 5 warm runs 64 ms** (target p95 < 2 s) | No fallback needed; the 1,000-alert storm and the 3-hop planner bound stay |
 
 Further implementation findings (2026-10-17): variable-length patterns return a node sequence once per parallel edge (method E de-duplicates by node sequence); `algo.BFS` returns an empty result, not an error, when no edge of the listed type exists (unlike `algo.maxFlow`, D-16 b). A graph key can be renamed with `RENAMENX` (it never overwrites, needs no fork, and keeps a `PEXPIRE` expiry), and the renamed graph stays readable, writable and copyable (D-20 e). Each has a contract test. Measured on the default environment: a full two-round hunt for the payments cluster, ending in a certificate, takes about 0.7 s.
-| **G5** | Pending | Needs the application container | — |
+| **G5** | Pass | One image (web app, API and MCP server as two processes) plus FalkorDB via `docker compose up`: **`/readyz` green 2.7 s after the container starts** (FalkorDB healthy, template present, MCP server listening); rerunning the seed is a no-op; killing the MCP process stops the container and Docker restarts both, ready again in 2.5 s; image 449 MB; build about 1.5 min | Readiness requires FalkorDB, the template and the MCP server; the LLM key is reported but optional, because the deterministic fallback runs the same tools (D-21 e) |
 | **G6** | Pending | Needs an Anthropic API key | — |
 
 ---
