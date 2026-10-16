@@ -55,10 +55,15 @@ BEST_C1 = (
 )
 
 
+_BEFORE: set[str] = set()
+
+
 @pytest.fixture(autouse=True)
 def no_leaks(store: GraphStore) -> Iterator[None]:
     """Every hunt must clean up its candidate graphs; certificates are removed after each test."""
     before = set(store.names())
+    _BEFORE.clear()
+    _BEFORE.update(before)
     yield
     created = set(store.names()) - before
     for name in created:
@@ -78,7 +83,8 @@ def cluster_chains(report: StormReport, cluster_id: str) -> list[Chain]:
 
 
 def certs(store: GraphStore) -> list[str]:
-    return [n for n in store.names() if n.startswith("cert:")]
+    """Certificate graphs created by the current test."""
+    return [n for n in store.names() if n.startswith("cert:") and n not in _BEFORE]
 
 
 # --- the worked example (solution.md §4.3, steps 11-15) ---------------------------------------
@@ -289,6 +295,24 @@ def test_tc30_a_failed_query_withholds_the_certificate(
     assert report.certificate is None
 
 
+def test_candidate_graphs_expire_on_their_own_if_a_process_dies(
+    store: GraphStore, triage: StormReport, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    ttls = []
+
+    def apply_and_check(store_, candidate, plan):
+        ttls.append(store_.db.connection.pttl(candidate))
+        return apply_plan(store_, candidate, plan)
+
+    monkeypatch.setattr(hunter_module, "apply_plan", apply_and_check)
+    report = hunt(store, triage, {PAYMENTS}, triage.chains)
+    assert ttls and all(0 < ttl <= hunter_module.ORPHAN_TTL_MS for ttl in ttls)
+    assert (
+        store.db.connection.pttl(report.certificate.candidate_graph_key)
+        > hunter_module.ORPHAN_TTL_MS
+    )
+
+
 def test_tc30_stale_evidence_in_the_candidate_withholds_the_certificate(
     store: GraphStore, triage: StormReport, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -340,7 +364,7 @@ def test_tc43_a_sandbox_change_during_the_hunt_blocks_issuance(
 
 
 def test_an_audit_failure_withdraws_the_certificate(store: GraphStore, triage: StormReport) -> None:
-    def failing(_document):
+    def failing(_certificate):
         raise RuntimeError("audit store unavailable")
 
     report = hunt(store, triage, {PAYMENTS}, triage.chains, audit=failing)
@@ -354,13 +378,13 @@ def test_an_audited_certificate_carries_the_event_hash(
 ) -> None:
     seen = []
 
-    def audit(document):
-        seen.append(document)
+    def audit(certificate):
+        seen.append(certificate)
         return "sha256:" + "ab" * 32
 
     report = hunt(store, triage, {PAYMENTS}, triage.chains, audit=audit)
     certificate = report.certificate
-    assert seen and seen[0]["certificate_id"] == certificate.certificate_id
+    assert seen and seen[0].certificate_id == certificate.certificate_id
     assert certificate.provenance["audit_event_hash"] == "sha256:" + "ab" * 32
     assert (
         certificate.digest()

@@ -1,6 +1,7 @@
-# Local development stack. Usage:
-#   cp .env.example .env        # then set FALKORDB_PASSWORD
-#   docker compose up -d falkordb
+# Usage:
+#   cp .env.example .env           # then set the passwords and secrets it asks for
+#   docker compose up -d falkordb  # just the database, for backend development
+#   docker compose up -d --build   # the whole application on http://localhost:8000
 #
 # FalkorDB is pinned to an exact release and image digest (solution.md §17, gate G0).
 # Port 6379 is bound to localhost only.
@@ -23,6 +24,25 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+
+  app:
+    build:
+      context: .
+      args:
+        GIT_SHA: "${INTERDICT_GIT_SHA:-dev}"
+    image: interdict:local
+    restart: unless-stopped
+    depends_on:
+      falkordb:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      FALKORDB_HOST: falkordb
+      FALKORDB_PORT: "6379"
+      INTERDICT_MCP_URL: http://127.0.0.1:8765/mcp
+      INTERDICT_ALLOWED_ORIGINS: "${INTERDICT_PUBLIC_ORIGIN:-http://localhost:8000}"
+    ports:
+      - "127.0.0.1:8000:8000"
 
 volumes:
   falkordb-data:

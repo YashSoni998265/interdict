@@ -466,6 +466,29 @@ def plan_remediation(
     return report
 
 
+def constraint_set(
+    triage: StormReport,
+    *,
+    cluster_id: str | None = None,
+    targets: Iterable[str] | None = None,
+) -> tuple[tuple[str, ...], list[Chain]]:
+    """T_scope and the starting constraint set C0: one cluster's target and chains, or every
+    bounded chain to a set of crown jewels. Raises KeyError for an unknown cluster and ValueError
+    for anything else that does not name crown jewels."""
+    if (cluster_id is None) == (targets is None):
+        raise ValueError("give exactly one of cluster_id or targets")
+    if cluster_id is not None:
+        cluster = next((c for c in triage.clusters if c.id == cluster_id), None)
+        if cluster is None:
+            raise KeyError(cluster_id)
+        ids = set(cluster.chain_ids)
+        return (cluster.target,), [c for c in triage.chains if c.id in ids]
+    scope = tuple(sorted(set(targets or ())))
+    if not scope or not set(scope) <= triage.snapshot.crown_jewels:
+        raise ValueError("targets must be a non-empty set of crown jewels")
+    return scope, [c for c in triage.chains if c.target in scope]
+
+
 def _flow_refs(snapshot: EvidenceSnapshot, actions: Iterable[Action]) -> dict[str, FlowRef]:
     known = {
         e.edge_id: FlowRef(e.edge_id, e.src, e.dst, e.port, e.protocol) for e in snapshot.reach

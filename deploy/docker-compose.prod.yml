@@ -1,0 +1,31 @@
+# Production overlay for one host with a public domain (solution.md §19, D-14). Usage:
+#   docker compose -f docker-compose.yml -f deploy/docker-compose.prod.yml up -d --build
+# Requires INTERDICT_DOMAIN in .env and DNS pointing at this host (ports 80 and 443 open).
+services:
+  app:
+    environment:
+      INTERDICT_COOKIE_SECURE: "1"
+      INTERDICT_TRUST_PROXY: "1"
+      FORWARDED_ALLOW_IPS: "*"
+      INTERDICT_ALLOWED_ORIGINS: "https://${INTERDICT_DOMAIN:?set INTERDICT_DOMAIN in .env}"
+    # Port 8000 stays bound to 127.0.0.1 (base file); the public entry point is Caddy below.
+
+  caddy:
+    image: caddy:2.10.2@sha256:c3d7ee5d2b11f9dc54f947f68a734c84e9c9666c92c88a7f30b9cba5da182adb
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      INTERDICT_DOMAIN: "${INTERDICT_DOMAIN:?set INTERDICT_DOMAIN in .env}"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  caddy-data:
+  caddy-config:
