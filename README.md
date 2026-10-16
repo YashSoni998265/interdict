@@ -1,2 +1,35 @@
-# interdict
-Graph-grounded security agent on FalkorDB: turns alert storms into proven attack paths, finds the least-disruptive fix that cuts them all, and verifies it with an independent search. WeMakeDevs x FalkorDB Graph Hacks 2026, Track 01.
+# Interdict
+
+**Graph-grounded security triage on FalkorDB.** Interdict turns a flood of vulnerability alerts into the few attack paths that actually reach your crown-jewel databases. It then finds the least-disruptive Kubernetes NetworkPolicy change that cuts every modelled path, checks that change with an independent graph search, and only then issues a model-verified containment certificate.
+
+> Built for **WeMakeDevs × FalkorDB Graph Hacks 2026, Track 01: Agents That Act on Connected Data** (Oct 15–18, 2026). Work in progress.
+
+## Why "Interdict"?
+In operations research, *network interdiction* is the problem of removing the fewest edges from a network so that nothing can flow from a source to a target. Interdict does this for attack paths: it looks for the smallest safe cut between the Internet and your sensitive data, and verifies, within its stated threat model, that the cut holds.
+
+## Status
+| Area | State |
+| :--- | :--- |
+| Specification | Complete: [`solution.md`](solution.md) |
+| Engine, agent, UI | In progress |
+| Live demo | Not yet deployed |
+
+## Repository layout (planned)
+| Path | Contents |
+| :--- | :--- |
+| `backend/` | Python: engine (graph queries, planner, Path Hunter, certificates), independent oracle, API, MCP server, agent |
+| `frontend/` | React + TypeScript web app |
+| `docs/` | Pre-event planning notes (supporting material for `solution.md`) |
+| `solution.md` | Canonical end-to-end specification |
+
+## Contributing
+See [CONTRIBUTING.md](CONTRIBUTING.md). `main` is protected: every change goes through a pull request with passing CI.
+
+## Security
+See [SECURITY.md](SECURITY.md). Interdict runs only on synthetic data and never changes real infrastructure.
+
+## AI usage disclosure
+This project is built with an AI coding assistant (Claude Code). The planning documents in `docs/` and `solution.md` were prepared before the event as notes; all application code is written during the event and is reviewed and tested by the team. Commits that include AI-written changes carry a `Co-Authored-By` trailer.
+
+## License
+[MIT](LICENSE)
