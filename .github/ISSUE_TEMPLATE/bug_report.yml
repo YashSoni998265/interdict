@@ -1,0 +1,26 @@
+name: Bug report
+description: Something behaves differently from solution.md or crashes
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Commands, sandbox operations, seed, revision number.
+  - type: input
+    id: spec
+    attributes:
+      label: Related spec section or test ID
+      placeholder: "solution.md §7.6 / TC-23"
