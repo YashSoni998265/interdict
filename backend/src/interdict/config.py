@@ -4,6 +4,28 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
+
+
+def find_dotenv(start: Path | None = None) -> Path | None:
+    """The nearest `.env` file in `start` (default: the working directory) or a parent."""
+    current = (start or Path.cwd()).resolve()
+    for folder in (current, *current.parents):
+        candidate = folder / ".env"
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def load_dotenv(path: Path | None) -> None:
+    """Load KEY=VALUE lines into the environment. Variables that are already set win."""
+    if path is None or not path.is_file():
+        return
+    for raw in path.read_text().splitlines():
+        line = raw.strip()
+        if line and not line.startswith("#") and "=" in line:
+            key, value = line.split("=", 1)
+            os.environ.setdefault(key.strip(), value.strip())
 
 
 @dataclass(frozen=True)
