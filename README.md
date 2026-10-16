@@ -23,6 +23,7 @@ cp .env.example .env                  # then set FALKORDB_PASSWORD
 docker compose up -d falkordb         # FalkorDB v4.22.1 (pinned), bound to localhost
 cd backend
 uv sync
+uv run python -m interdict.seed       # load the synthetic environment into FalkorDB (graph `template`)
 uv run pytest                         # tests run against the local FalkorDB
 uv run python scripts/day1_gates.py   # re-run the Day-1 runtime checks
 ```

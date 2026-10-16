@@ -27,7 +27,7 @@ import redis
 from falkordb import FalkorDB
 from falkordb.graph import Graph
 
-from interdict.config import Settings
+from interdict.config import Settings, load_dotenv
 from interdict.db import QueryFailedError, connect, run
 from interdict_oracle.reachability import reachable_targets
 
@@ -35,17 +35,6 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 RESULTS_PATH = Path(__file__).resolve().parent / "gate_results" / "day1.json"
 SLOW = 30_000  # generous timeout for setup queries
 RESULTS: dict[str, list[dict[str, Any]]] = {}
-
-
-def load_dotenv(path: Path) -> None:
-    """Minimal .env loader: KEY=VALUE lines; existing environment variables win."""
-    if not path.exists():
-        return
-    for line in path.read_text().splitlines():
-        line = line.strip()
-        if line and not line.startswith("#") and "=" in line:
-            key, value = line.split("=", 1)
-            os.environ.setdefault(key.strip(), value.strip())
 
 
 def record(gate: str, check: str, passed: bool, detail: Any) -> None:

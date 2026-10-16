@@ -11,26 +11,15 @@ import redis
 from falkordb import FalkorDB
 from falkordb.graph import Graph
 
-from interdict.config import Settings
+from interdict.config import Settings, find_dotenv, load_dotenv
 from interdict.db import connect
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
-def _load_dotenv() -> None:
-    env_file = REPO_ROOT / ".env"
-    if not env_file.exists():
-        return
-    for line in env_file.read_text().splitlines():
-        line = line.strip()
-        if line and not line.startswith("#") and "=" in line:
-            key, value = line.split("=", 1)
-            os.environ.setdefault(key.strip(), value.strip())
-
-
 @pytest.fixture(scope="session")
 def settings() -> Settings:
-    _load_dotenv()
+    load_dotenv(find_dotenv(REPO_ROOT))
     return Settings.from_env()
 
 
