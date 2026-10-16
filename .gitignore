@@ -33,6 +33,7 @@ node_modules/
 .pnpm-store/
 .vite/
 *.tsbuildinfo
+coverage/
 npm-debug.log*
 pnpm-debug.log*
 
