@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import time
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -66,7 +67,9 @@ Q_POLICIES = (
     "RETURN np.id, np.managed_by, np.namespace, np.pod_selector, selected, "
     "collect(DISTINCT [d.id, al.port, al.protocol])"
 )
-Q_DEPENDENCIES = "MATCH (p:Pod)-[dep:DEPENDS_ON]->(d) RETURN p.id, d.id, dep.port, dep.protocol"
+Q_DEPENDENCIES = (
+    "MATCH (p:Pod)-[dep:DEPENDS_ON]->(d) RETURN p.id, d.id, dep.port, dep.protocol, dep.id"
+)
 Q_ALERTS = (
     "MATCH (a:Alert)-[:ON_WORKLOAD]->(p:Pod) MATCH (a)-[:REFERENCES]->(v:Vulnerability) "
     "RETURN a.id, p.id, v.id, a.severity, a.title, a.created_at, a.scanner, a.storm_id ORDER BY a.id"
@@ -222,6 +225,7 @@ class EvidenceSnapshot:
     grants: list[Grant]
     policies: list[PolicyInfo]
     declared: dict[str, frozenset[Flow]]
+    declared_ids: dict[tuple[str, Flow], str]
     alerts: list[AlertInfo]
     scope: ScopeReport
     queries: list[QueryRecord]
@@ -260,6 +264,24 @@ class _Recorder:
 
 def _ms(started: float) -> float:
     return round((time.perf_counter() - started) * 1000, 2)
+
+
+def timed[T](
+    records: list[QueryRecord],
+    template: str,
+    fn: Callable[[], T],
+    rows: Callable[[T], int] = lambda _: 0,
+) -> T:
+    """Run one graph operation and append its record (including a failure) to `records`."""
+    started = time.perf_counter()
+    record_id = f"q{len(records) + 1:02d}"
+    try:
+        out = fn()
+    except QueryFailedError as exc:
+        records.append(QueryRecord(record_id, template, 0, _ms(started), exc.reason))
+        raise
+    records.append(QueryRecord(record_id, template, rows(out), _ms(started)))
+    return out
 
 
 def _parse(ts: Any) -> datetime | None:
@@ -387,8 +409,11 @@ def collect_evidence(
         for r in tier("policy", "evidence-policies", Q_POLICIES)
     ]
     declared_sets: dict[str, set[Flow]] = defaultdict(set)
+    declared_ids: dict[tuple[str, Flow], str] = {}
     for r in tier("dependency", "evidence-dependencies", Q_DEPENDENCIES):
-        declared_sets[r[0]].add((r[1], int(r[2]), r[3]))
+        flow = (r[1], int(r[2]), r[3])
+        declared_sets[r[0]].add(flow)
+        declared_ids[(r[0], flow)] = str(r[4])
     alerts = [
         AlertInfo(r[0], r[1], r[2], r[3], r[4] or "", r[5] or "", r[6] or "", r[7] or "")
         for r in tier("alerts", "evidence-alerts", Q_ALERTS)
@@ -470,6 +495,7 @@ def collect_evidence(
         grants=grants,
         policies=policies,
         declared={k: frozenset(v) for k, v in declared_sets.items()},
+        declared_ids=declared_ids,
         alerts=alerts,
         scope=ScopeReport(tiers, issues),
         queries=rec.records,
