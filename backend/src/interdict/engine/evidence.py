@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import time
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -263,6 +264,24 @@ class _Recorder:
 
 def _ms(started: float) -> float:
     return round((time.perf_counter() - started) * 1000, 2)
+
+
+def timed[T](
+    records: list[QueryRecord],
+    template: str,
+    fn: Callable[[], T],
+    rows: Callable[[T], int] = lambda _: 0,
+) -> T:
+    """Run one graph operation and append its record (including a failure) to `records`."""
+    started = time.perf_counter()
+    record_id = f"q{len(records) + 1:02d}"
+    try:
+        out = fn()
+    except QueryFailedError as exc:
+        records.append(QueryRecord(record_id, template, 0, _ms(started), exc.reason))
+        raise
+    records.append(QueryRecord(record_id, template, rows(out), _ms(started)))
+    return out
 
 
 def _parse(ts: Any) -> datetime | None:

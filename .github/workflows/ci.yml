@@ -115,11 +115,35 @@ jobs:
       - name: Test against FalkorDB
         run: uv run pytest -q
 
+  web:
+    name: web
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: "22" # LTS
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies (locked)
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Test
+        run: npm test
+      - name: Build
+        run: npm run build
+
   # Single required status check for branch protection. pr-title is skipped on pushes to main.
   ci-pass:
     name: ci-pass
     if: always()
-    needs: [pr-title, secrets-scan, hygiene, backend]
+    needs: [pr-title, secrets-scan, hygiene, backend, web]
     runs-on: ubuntu-latest
     steps:
       - name: Require every job to succeed

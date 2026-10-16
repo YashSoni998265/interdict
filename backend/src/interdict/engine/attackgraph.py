@@ -16,9 +16,10 @@ edge, so E de-duplicates by node sequence.
 from __future__ import annotations
 
 from collections import defaultdict, deque
+from collections.abc import Iterable
 from dataclasses import dataclass
 
-from interdict.db import run
+from interdict.db import QueryFailedError, run
 from interdict.engine.evidence import INTERNET_ID, EvidenceSnapshot
 from interdict.engine.sandbox import graph_lock, read_revision
 from interdict.graphstore import GraphStore
@@ -73,6 +74,15 @@ Q_EXPORT = (
 Q_FORWARD = (
     "MATCH (i:Internet {id: $internet_id}) CALL algo.bfs(i, $depth, 'ATTACK_STEP') "
     "YIELD nodes RETURN [n IN nodes | n.id]"
+)
+Q_COUNT_STEPS = "MATCH ()-[s:ATTACK_STEP]->() RETURN count(s)"
+Q_MAXFLOW = (  # Q-F1: unit capacities, so the value is the number of edge-disjoint paths
+    "MATCH (s:Internet {id: $internet_id}) MATCH (t:Database) WHERE t.id IN $targets "
+    "WITH s, collect(t) AS targets "
+    "CALL algo.maxFlow({sourceNodes: [s], targetNodes: targets, capacityProperty: 'capacity', "
+    "relationshipTypes: ['ATTACK_STEP']}) "
+    "YIELD edges, edgeFlows, maxFlow "
+    "RETURN maxFlow, [e IN edges | [startNode(e).id, endNode(e).id]], edgeFlows"
 )
 
 
@@ -132,6 +142,13 @@ class ChainSet:
     max_lateral_hops: int
 
 
+@dataclass(frozen=True)
+class FlowResult:
+    targets: tuple[str, ...]
+    value: int
+    flows: tuple[tuple[str, str, int], ...]  # (source, destination, units) with positive flow
+
+
 def chain_id(pods: tuple[str, ...], target: str) -> str:
     return "chain-" + "-".join((*pods, target))
 
@@ -185,6 +202,47 @@ def forward_reachable_in_graph(store: GraphStore, name: str, depth: int) -> set[
         read_only=True,
     ).result_set
     return set(rows[0][0]) if rows else set()
+
+
+def count_steps(store: GraphStore, name: str) -> int:
+    rows = run(
+        store.graph(name), "attack-count", Q_COUNT_STEPS, timeout_ms=TIMEOUT_MS, read_only=True
+    ).result_set
+    return int(rows[0][0])
+
+
+def max_flow(
+    store: GraphStore, name: str, targets: Iterable[str], *, steps: int | None = None
+) -> FlowResult:
+    """Method F (Q-F1): maximum flow from the Internet to `targets` over ATTACK_STEP edges.
+
+    With unit capacities the value is 0 exactly when no path exists (Theorem 2). With no
+    ATTACK_STEP edge at all the procedure errors, so the value is 0 without calling it (D-16 b).
+    """
+    wanted = tuple(sorted(set(targets)))
+    if steps is None:
+        steps = count_steps(store, name)
+    if not wanted or steps == 0:
+        return FlowResult(wanted, 0, ())
+    rows = run(
+        store.graph(name),
+        "attack-maxflow",
+        Q_MAXFLOW,
+        {"internet_id": INTERNET_ID, "targets": list(wanted)},
+        timeout_ms=TIMEOUT_MS,
+        read_only=True,
+    ).result_set
+    if not rows:
+        raise QueryFailedError("attack-maxflow", "the Internet node or the targets are missing")
+    value, pairs, units = rows[0]
+    flows = tuple(
+        sorted(
+            (src, dst, round(float(unit)))
+            for (src, dst), unit in zip(pairs, units, strict=True)
+            if float(unit) > 0
+        )
+    )
+    return FlowResult(wanted, round(float(value)), flows)
 
 
 def _adjacency(steps: list[AttackStep], reverse: bool = False) -> dict[str, list[str]]:
