@@ -1561,7 +1561,9 @@ FalkorDB v4.22.1 (module version 42201, Redis 8.10.2), local Docker on Apple Sil
 | **G3** | Pass, with findings | Timeouts raise "Query timed out"; a traversal was interrupted after 57 ms for a 50 ms limit; timed-out writes are rolled back; a per-query timeout above `TIMEOUT_MAX` is rejected. **Eager list functions are not interruptible** (`range()` of 200 M items ran ~8.7 s despite a 50 ms limit). **Results are truncated silently at `RESULTSET_SIZE`** (100,010 rows requested, 100,000 returned, no error) | D-16 (a), (e) |
 | **G1** | Pass, with finding | Edges are directed; unit capacities give the number of edge-disjoint paths; per-edge flows returned; multiple targets supported; unlisted relationship types ignored; `relationshipTypes` accepts a parameter; **50/50 random graphs agree with the oracle**; p95 5.0 ms on 800 nodes / 3,000 edges; an edge without the capacity property is an error; `algo.BFS` follows outgoing edges only. **`algo.maxFlow` errors when no edge of the listed type exists** | Max-flow stays as method F (no fallback needed); D-16 (b), (d) |
 | **G2** | Pass, with finding | Copy of 800 nodes / 3,000 edges: p50 105 ms, p95 108 ms; contents and indexes identical; an existing destination is rejected. **10 concurrent copies fail with "could not fork"** | D-16 (c) |
-| **G4** | Pending | Needs the generator (Saturday) | — |
+| **G4** | Pass | Full storm triage of 1,000 alerts (1,235 nodes, 2,566 edges: evidence, ATTACK_STEP build, method E, both reachability passes, classification): **median 58 ms, slowest of 5 warm runs 64 ms** (target p95 < 2 s) | No fallback needed; the 1,000-alert storm and the 3-hop planner bound stay |
+
+Further implementation findings (2026-10-17): variable-length patterns return a node sequence once per parallel edge (method E de-duplicates by node sequence); `algo.BFS` returns an empty result, not an error, when no edge of the listed type exists (unlike `algo.maxFlow`, D-16 b).
 | **G5** | Pending | Needs the application container | — |
 | **G6** | Pending | Needs an Anthropic API key | — |
 
