@@ -11,8 +11,21 @@ In operations research, *network interdiction* is the problem of removing the fe
 | Area | State |
 | :--- | :--- |
 | Specification | Complete: [`solution.md`](solution.md) |
+| FalkorDB runtime checks (Day-1 gates G0–G3) | Done: results in `solution.md` §17.1 |
 | Engine, agent, UI | In progress |
 | Live demo | Not yet deployed |
+
+## Local development
+Prerequisites: Docker and [uv](https://docs.astral.sh/uv/).
+
+```bash
+cp .env.example .env                  # then set FALKORDB_PASSWORD
+docker compose up -d falkordb         # FalkorDB v4.22.1 (pinned), bound to localhost
+cd backend
+uv sync
+uv run pytest                         # tests run against the local FalkorDB
+uv run python scripts/day1_gates.py   # re-run the Day-1 runtime checks
+```
 
 ## Repository layout (planned)
 | Path | Contents |

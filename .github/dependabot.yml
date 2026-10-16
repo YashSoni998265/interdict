@@ -7,3 +7,11 @@ updates:
     commit-message:
       prefix: ci
       include: scope
+
+  - package-ecosystem: uv
+    directory: /backend
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build
+      include: scope

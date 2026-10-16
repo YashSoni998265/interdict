@@ -64,6 +64,7 @@
 | **D-13** | The independent oracle **O re-derives ITM-1 from the raw sandbox snapshot export plus the plan's policy specs** (own policy semantics, predicates and search), instead of reading exported ATTACK_STEP edges | Removes the shared-construction and shared-policy-application blind spot (RSK-16) at low cost, because the export already exists for snapshot hashing | 07 §4.4 (C-28) |
 | **D-14** | **Time-recovery scope (2026-10-16).** Implementation started at 23:30 IST on Oct 16, about 46 hours before the submission target. For the event, only the demo path in [§3.5](#35-time-recovery-scope-d-14) is built, on the schedule in [§18.0](#180-recovery-schedule-d-14). Everything in §3.1–§3.2 not listed in §3.5 is deferred. UI work may start in parallel against a mocked API contract | The plan assumed four build days and two were lost; a complete, honest vertical slice beats a broad unfinished one | §3.1–§3.2 (in part), §18 day plans, §22.6 sequencing rule (C-31) |
 | **D-15** | **Project renamed from SentinelGraph to Interdict (2026-10-16).** Identifiers renamed with it: threat model `SG-TM-1` → `ITM-1`, policy owner `SENTINELGRAPH_CANDIDATE` → `INTERDICT_CANDIDATE`, candidate policy prefix `sg-` → `idt-` | *Network interdiction* is the operations-research problem of removing edges to stop source-to-target flow, which is exactly this product; no security product with this name was found | Product name in all documents |
+| **D-16** | **Engine rules from the Day-1 gates (2026-10-17).** (a) A query result whose row count reaches `RESULTSET_SIZE` is treated as possibly truncated (`QUERY_FAILED`); large reads are paged well below the limit. Enforced in `db.run`. (b) Before calling `algo.maxFlow`, count ATTACK_STEP edges; with zero edges, record F = 0 without calling the procedure, which errors on an absent relationship type. (c) `GRAPH.COPY` is serialised behind one global lock shared by every process and retried with backoff on "could not fork": each copy forks the server, and only one fork (including background saves) can run at a time. (d) Forward reachability may use `algo.BFS` (outgoing only); backward reachability uses engine-side search over exported ATTACK_STEP edges. (e) Engine queries must not build large lists with eager functions such as `range()`, because timeouts cannot interrupt them | Measured behaviour of FalkorDB v4.22.1 ([§17.1](#171-recorded-results-2026-10-17)); each rule has a contract test | §5.6, §8.4, §12.2, §12.3 (C-32, C-33, C-34) |
 
 ### 0.3 Validation and status markers
 - **[DESIGN]**: argued on paper here; correctness depends on the stated assumptions.
@@ -1534,7 +1535,7 @@ Anonymous sessions can be recreated (rate limits slow abuse but do not prevent i
 
 ## 17. Day-1 Runtime Validation Gates
 
-Run on Oct 15 against the pinned container and the seeded template; decision by **18:00 IST**; results (timestamps, measured values, chosen fallbacks) are recorded in this section and in the README "Limitations". **Until a gate passes, the behaviour it covers is described as unvalidated.** The exact FalkorDB version is **not yet known**: G0 records the image tag and digest and pins them in `docker-compose.yml`; `latest` is never used in deployment.
+Run on Oct 15 against the pinned container and the seeded template; decision by **18:00 IST**; results (timestamps, measured values, chosen fallbacks) are recorded in this section and in the README "Limitations". **Until a gate passes, the behaviour it covers is described as unvalidated.** **Pinned at G0 (2026-10-17): `falkordb/falkordb:v4.22.1@sha256:b0bdcac2cbaff989e77cb0610439b7a9289e86de033ccbbd4368b66fb680ae7a`**, used by `docker-compose.yml` and CI; `latest` is never used. Results so far: [§17.1](#171-recorded-results-2026-10-17).
 
 Order: **G0 → G3 → G1 → G2 → G4 → G5 → G6** (G3 early because other gates rely on timeouts).
 
@@ -1547,6 +1548,19 @@ Order: **G0 → G3 → G1 → G2 → G4 → G5 → G6** (G3 early because other 
 | **G4 Alert Storm latency** | Full triage on 1,000 alerts / ~800 nodes, warm and cold, 20 runs; enumeration at cap | Warm p95 < 2 s; cold < 5 s; enumeration < 1 s | (1) 500 alerts; (2) triage computed at sandbox creation and after each operation (still computed from the graph, labelled with its revision); (3) planner bound L = 2, Hunter covers longer paths | Funnel uses the measured size; README states measured numbers only |
 | **G5 Startup and readiness** | `docker compose up --build` on a clean machine; health checks; startup order; seed idempotency | Ready ≤ 60 s; `/readyz` green only when FalkorDB, mcp, template and LLM key are ready; rerun of seed is a no-op | Longer health-check grace; pre-built images | NFR-04 reported with measured value |
 | **G6 LLM smoke test** | Defensive security prompt with the tool set; refusal handling; fallback path; cost per run | No refusal on the scripted scenarios, or refusal handled by fallback/deterministic report; cost measured | Adjust framing; deterministic report as default narration | If unreliable: agent narration optional, deterministic pipeline drives the demo (still via MCP tools) |
+
+### 17.1 Recorded results (2026-10-17)
+FalkorDB v4.22.1 (module version 42201, Redis 8.10.2), local Docker on Apple Silicon. CI runs the same image on x64 and the production host is not chosen yet, so **latencies elsewhere may differ**. Raw results: `backend/scripts/gate_results/day1.json`; re-run with `uv run python scripts/day1_gates.py`. The behaviours below are pinned by `backend/tests/test_falkordb_contract.py`.
+
+| Gate | Status | Observed | Consequence |
+| :--- | :--- | :--- | :--- |
+| **G0** | Pass | `algo.maxFlow`, `algo.betweenness`, `algo.BFS` present; every function used in §5.6 works; `*0..3` patterns work; node and relationship-property indexes; unique constraints become operational and reject duplicates; a failed write leaves no partial writes; server-side scripting available; compare-and-set: exactly 1 of 20 concurrent writers wins | D-03 and D-08 confirmed at database level |
+| **G3** | Pass, with findings | Timeouts raise "Query timed out"; a traversal was interrupted after 57 ms for a 50 ms limit; timed-out writes are rolled back; a per-query timeout above `TIMEOUT_MAX` is rejected. **Eager list functions are not interruptible** (`range()` of 200 M items ran ~8.7 s despite a 50 ms limit). **Results are truncated silently at `RESULTSET_SIZE`** (100,010 rows requested, 100,000 returned, no error) | D-16 (a), (e) |
+| **G1** | Pass, with finding | Edges are directed; unit capacities give the number of edge-disjoint paths; per-edge flows returned; multiple targets supported; unlisted relationship types ignored; `relationshipTypes` accepts a parameter; **50/50 random graphs agree with the oracle**; p95 5.0 ms on 800 nodes / 3,000 edges; an edge without the capacity property is an error; `algo.BFS` follows outgoing edges only. **`algo.maxFlow` errors when no edge of the listed type exists** | Max-flow stays as method F (no fallback needed); D-16 (b), (d) |
+| **G2** | Pass, with finding | Copy of 800 nodes / 3,000 edges: p50 105 ms, p95 108 ms; contents and indexes identical; an existing destination is rejected. **10 concurrent copies fail with "could not fork"** | D-16 (c) |
+| **G4** | Pending | Needs the generator (Saturday) | — |
+| **G5** | Pending | Needs the application container | — |
+| **G6** | Pending | Needs an Anthropic API key | — |
 
 ---
 
@@ -1808,6 +1822,9 @@ C-01…C-20 from docs/07 §14 with their current status, plus conflicts found wh
 | C-29 | V5 adds one residual path per round | **Resolved here (D-02)** |
 | C-30 | Revision counter in Redis/memory (02, 03) vs durable control | **Resolved here (D-03)** |
 | C-31 | Four-day plan vs implementation starting on the evening of Oct 16 | **Resolved here (D-14)** |
+| C-32 | Design assumed sandboxes and candidates could be copied in parallel; FalkorDB copies fork the server one at a time | **Resolved here (D-16 c)** |
+| C-33 | Design assumed `algo.maxFlow` returns 0 on a graph with no ATTACK_STEP edges; it errors | **Resolved here (D-16 b)** |
+| C-34 | §6.5 treated only client-side caps as partial results; the server also truncates silently at `RESULTSET_SIZE` | **Resolved here (D-16 a)** |
 
 ---
 

@@ -1,0 +1,28 @@
+# Local development stack. Usage:
+#   cp .env.example .env        # then set FALKORDB_PASSWORD
+#   docker compose up -d falkordb
+#
+# FalkorDB is pinned to an exact release and image digest (solution.md §17, gate G0).
+# Port 6379 is bound to localhost only.
+services:
+  falkordb:
+    image: falkordb/falkordb:v4.22.1@sha256:b0bdcac2cbaff989e77cb0610439b7a9289e86de033ccbbd4368b66fb680ae7a
+    restart: unless-stopped
+    environment:
+      BROWSER: "${FALKORDB_BROWSER:-0}" # set to 1 to start FalkorDB Browser on port 3000
+      FALKORDB_PASSWORD: "${FALKORDB_PASSWORD:?set FALKORDB_PASSWORD in .env}"
+      REDIS_ARGS: "--requirepass ${FALKORDB_PASSWORD} --appendonly yes"
+      FALKORDB_ARGS: "MAX_QUEUED_QUERIES 25 TIMEOUT_MAX ${FALKORDB_TIMEOUT_MAX_MS:-30000} TIMEOUT_DEFAULT ${FALKORDB_TIMEOUT_DEFAULT_MS:-1000} RESULTSET_SIZE ${FALKORDB_RESULTSET_SIZE:-100000}"
+    ports:
+      - "127.0.0.1:6379:6379"
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - falkordb-data:/var/lib/falkordb/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$FALKORDB_PASSWORD\" --no-auth-warning ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  falkordb-data:
