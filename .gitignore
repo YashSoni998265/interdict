@@ -33,6 +33,7 @@ node_modules/
 .pnpm-store/
 .vite/
 *.tsbuildinfo
+coverage/
 npm-debug.log*
 pnpm-debug.log*
 
@@ -45,3 +46,6 @@ appendonlydir/
 # Test and performance artefacts
 playwright-report/
 test-results/
+
+# Local Claude Code state (agent worktrees)
+.claude/

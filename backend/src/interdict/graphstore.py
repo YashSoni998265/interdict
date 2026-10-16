@@ -34,6 +34,10 @@ class LockTimeoutError(RuntimeError):
     """A lock could not be acquired in time."""
 
 
+class GraphRenameError(RuntimeError):
+    """A graph could not be renamed (for example, the new name is taken)."""
+
+
 class GraphStore:
     def __init__(
         self,
@@ -64,6 +68,28 @@ class GraphStore:
         except redis.exceptions.ResponseError:
             return False
         return True
+
+    def rename(self, src: str, dst: str) -> None:
+        """Rename a graph atomically, never over an existing one (RENAMENX; no fork involved)."""
+        try:
+            renamed = self.db.connection.renamenx(src, dst)
+        except redis.exceptions.ResponseError as exc:
+            raise GraphRenameError(f"rename {src} -> {dst} failed: {exc}") from exc
+        if not renamed:
+            raise GraphRenameError(f"rename {src} -> {dst} failed: {dst} already exists")
+
+    def expire(self, name: str, ttl_ms: int) -> bool:
+        """Delete the graph automatically after `ttl_ms`. Returns whether the graph exists."""
+        return bool(self.db.connection.pexpire(name, ttl_ms))
+
+    def server_version(self) -> str:
+        """The FalkorDB module version reported by the server, for example '4.22.1'."""
+        for module in self.db.connection.module_list():
+            name = module.get("name") or module.get(b"name")
+            if name in ("graph", b"graph"):
+                ver = int(module.get("ver") or module.get(b"ver") or 0)
+                return f"{ver // 10000}.{ver // 100 % 100}.{ver % 100}"
+        return "unknown"
 
     @contextmanager
     def lock(self, key: str, *, wait_s: float | None = None) -> Iterator[None]:
