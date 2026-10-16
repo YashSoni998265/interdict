@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Graph-grounded security triage on FalkorDB"
 requires-python = ">=3.12"
 dependencies = [
-    "anthropic==1.11.0",
+    "anthropic==1.13.0",
     "falkordb>=1.8.0",
     "fastapi==0.142.2",
     "mcp==2.3.0",
