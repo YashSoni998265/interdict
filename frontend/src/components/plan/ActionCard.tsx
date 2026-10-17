@@ -8,13 +8,14 @@ import { VARIANT } from '@/lib/status';
 import { Disclosure } from '../ui/disclosure';
 import { JsonView } from '../ui/misc';
 import { Tag } from '../ui/tag';
+import './ActionCard.css';
 
 function FlowList({ ids, flows, empty, tone }: { ids: string[]; flows: Record<string, FlowRef>; empty: string; tone?: 'yellow' | 'neutral' }) {
-  if (ids.length === 0) return <span className="text-fg-subtle">{empty}</span>;
+  if (ids.length === 0) return <span className="flow-list">{empty}</span>;
   return (
-    <ul className="space-y-0.5">
+    <ul className="flow-list-2">
       {ids.map((id) => (
-        <li key={id} className={cn('font-mono text-[11.5px]', tone === 'yellow' ? 'text-yellow-300' : 'text-fg')} title={id}>
+        <li key={id} className={cn('flow-list-3', tone === 'yellow' ? 'flow-list--yellow' : 'flow-list--not-yellow')} title={id}>
           {describeFlow(id, flows)}
         </li>
       ))}
@@ -35,18 +36,18 @@ export function ActionCard({
   const variant = VARIANT[action.variant];
   return (
     <article
-      className="rounded-md border border-dashed border-violet-500/40 bg-violet-500/[0.04] px-3 py-2.5"
+      className="action-card"
       aria-label={`Proposed policy change ${action.id}`}
     >
-      <div className="flex items-start gap-2">
-        <Scissors className="mt-0.5 size-3.5 shrink-0 text-violet-400" aria-hidden />
-        <div className="min-w-0 flex-1">
-          <div className="break-words font-mono text-[12px] font-medium text-fg">{action.id}</div>
-          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-2xs text-fg-muted">
-            <span className="text-violet-300">{variant.label}</span>
+      <div className="action-card__row">
+        <Scissors className="action-card__icon" aria-hidden />
+        <div className="action-card__block">
+          <div className="action-card__block-2">{action.id}</div>
+          <div className="action-card__row-2">
+            <span className="action-card__label">{variant.label}</span>
             <span>
               · selector{' '}
-              <span className="font-mono">
+              <span className="action-card__label-2">
                 {action.namespace}/app={action.app}
               </span>{' '}
               · {action.pods.join(', ')}
@@ -58,13 +59,13 @@ export function ActionCard({
         </div>
       </div>
 
-      <dl className="mt-2.5 grid gap-x-4 gap-y-2 text-2xs sm:grid-cols-[7.5rem_1fr]">
-        <dt className="text-fg-subtle">Egress allowlist</dt>
+      <dl className="action-card__details">
+        <dt className="action-card__term">Egress allowlist</dt>
         <dd>
           {action.allow.length === 0 ? (
-            <span className="text-fg">nothing (all egress blocked, DNS included)</span>
+            <span className="action-card__label-3">nothing (all egress blocked, DNS included)</span>
           ) : (
-            <span className="flex flex-wrap gap-1">
+            <span className="action-card__label-4">
               {action.allow.map((rule) => (
                 <Tag key={`${rule.dst}-${rule.port}-${rule.protocol}`} mono>
                   {rule.dst}:{rule.port}/{rule.protocol}
@@ -73,20 +74,20 @@ export function ActionCard({
             </span>
           )}
         </dd>
-        <dt className="text-fg-subtle">Blocks</dt>
+        <dt className="action-card__term">Blocks</dt>
         <dd>
           <FlowList ids={action.blocked} flows={flows} empty="no observed flow" />
         </dd>
         {!compact ? (
           <>
-            <dt className="text-fg-subtle">Cuts steps</dt>
-            <dd className="font-mono text-[11.5px] text-fg">
+            <dt className="action-card__term">Cuts steps</dt>
+            <dd className="action-card__value">
               {action.removed_steps.length === 0 ? (
-                <span className="font-sans text-fg-subtle">none</span>
+                <span className="action-card__label-5">none</span>
               ) : (
                 action.removed_steps.map(([src, dst]) => (
                   <div key={`${src}->${dst}`}>
-                    <span className="text-violet-300 line-through decoration-violet-400/70">
+                    <span className="action-card__label-6">
                       {src} → {dst}
                     </span>
                   </div>
@@ -95,19 +96,19 @@ export function ActionCard({
             </dd>
           </>
         ) : null}
-        <dt className="text-fg-subtle">Breaks</dt>
+        <dt className="action-card__term">Breaks</dt>
         <dd>
           <FlowList ids={action.known_broken} flows={flows} empty="no declared dependency" />
         </dd>
-        <dt className="text-fg-subtle">Unknown impact</dt>
+        <dt className="action-card__term">Unknown impact</dt>
         <dd>
           <FlowList ids={action.unknown} flows={flows} empty="none" tone="yellow" />
         </dd>
       </dl>
 
       {!compact ? (
-        <Disclosure summary="Policy spec (Kubernetes-style)" className="mt-2.5">
-          <JsonView value={action.policy_spec} maxHeight="max-h-60" />
+        <Disclosure summary="Policy spec (Kubernetes-style)" className="action-card__disclosure">
+          <JsonView value={action.policy_spec} maxHeight="action-card__policy-json" />
         </Disclosure>
       ) : null}
     </article>

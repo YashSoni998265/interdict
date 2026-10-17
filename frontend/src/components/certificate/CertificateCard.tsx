@@ -13,6 +13,7 @@ import { StatusBadge } from '../StatusBadge';
 import { Button } from '../ui/button';
 import { CopyButton } from '../ui/misc';
 import { Tag } from '../ui/tag';
+import './CertificateCard.css';
 
 export function CertificateCard({
   hunt,
@@ -31,12 +32,12 @@ export function CertificateCard({
   if (!certificate) {
     const descriptor = describeStatus(hunt.status);
     return (
-      <div className="rounded-lg border border-dashed border-line px-3.5 py-3">
-        <div className="flex items-center gap-2 text-ui font-medium text-fg">
-          <FileX2 className="size-4 text-fg-subtle" aria-hidden />
+      <div className="certificate-card">
+        <div className="certificate-card__row">
+          <FileX2 className="certificate-card__icon" aria-hidden />
           No certificate
         </div>
-        <p className="mt-1 text-2xs text-fg-muted">
+        <p className="certificate-card__text">
           {descriptor.label}
           {hunt.reason ? `: ${reasonText(hunt.reason)}` : ''}. A certificate is issued only when the evidence is
           complete and fresh and E, F and O all agree that no path reaches the target.
@@ -51,22 +52,22 @@ export function CertificateCard({
   return (
     <div
       className={cn(
-        'rounded-lg border px-3.5 py-3 transition-colors',
-        current ? 'border-emerald-500/35 bg-emerald-500/[0.06]' : 'border-zinc-500/30 bg-zinc-500/[0.06]',
+        'certificate-card-2',
+        current ? 'certificate-card--current' : 'certificate-card--not-current',
       )}
       aria-label="Certificate status"
     >
-      <div className="flex flex-wrap items-start gap-2">
+      <div className="certificate-card__row-2">
         {current ? (
-          <BadgeCheck className="mt-0.5 size-5 shrink-0 text-emerald-400" aria-hidden />
+          <BadgeCheck className="certificate-card__icon-2" aria-hidden />
         ) : (
-          <Clock className="mt-0.5 size-5 shrink-0 text-zinc-400" aria-hidden />
+          <Clock className="certificate-card__icon-3" aria-hidden />
         )}
-        <div className="min-w-0 flex-1">
-          <div className={cn('text-sm font-semibold', current ? 'text-emerald-300' : 'text-zinc-300')}>
+        <div className="certificate-card__block">
+          <div className={cn('certificate-card__block-2', current ? 'certificate-card__block--current' : 'certificate-card__block--not-current')}>
             {current ? 'Model-verified containment (simulation)' : 'Certificate no longer current'}
           </div>
-          <div className={cn('mt-0.5 text-2xs', current ? 'text-fg-muted' : 'text-fg-subtle line-through decoration-zinc-500/60')}>
+          <div className={cn('certificate-card__block-3', current ? 'certificate-card__block--current-2' : 'certificate-card__block--not-current-2')}>
             {current
               ? `Under ${certificate.threat_model.id}, on the hashed snapshot, no modelled chain reaches ${certificate.threat_model.t_scope.join(', ')} after the plan. Not real-world containment.`
               : `Was: model-verified containment (simulation) for ${certificate.threat_model.t_scope.join(', ')}.`}
@@ -76,7 +77,7 @@ export function CertificateCard({
       </div>
 
       {!current ? (
-        <p className="mt-2 text-2xs text-fg-muted">
+        <p className="certificate-card__text-2">
           {status === 'SUPERSEDED'
             ? `Superseded: issued at sandbox revision ${certificate.snapshot.sandbox_revision}; the sandbox is now at revision ${currentRevision ?? '?'}.`
             : status === 'EXPIRED'
@@ -85,34 +86,34 @@ export function CertificateCard({
         </p>
       ) : null}
 
-      <dl className="mt-3 grid grid-cols-[5.5rem_1fr] gap-x-3 gap-y-1 text-2xs">
-        <dt className="text-fg-subtle">Scope</dt>
-        <dd className="flex flex-wrap gap-1">
+      <dl className="certificate-card__details">
+        <dt className="certificate-card__term">Scope</dt>
+        <dd className="certificate-card__value">
           {certificate.threat_model.t_scope.map((t) => (
             <Tag key={t} mono>
               {t}
             </Tag>
           ))}
         </dd>
-        <dt className="text-fg-subtle">Issued</dt>
-        <dd className="text-fg-muted">
+        <dt className="certificate-card__term">Issued</dt>
+        <dd className="certificate-card__value-2">
           {formatUtc(certificate.issued_at)} · revision {certificate.snapshot.sandbox_revision}
         </dd>
-        <dt className="text-fg-subtle">Expires</dt>
-        <dd className="text-fg-muted">
+        <dt className="certificate-card__term">Expires</dt>
+        <dd className="certificate-card__value-2">
           {formatUtc(certificate.expires_at)}{' '}
-          <span className="text-fg-subtle">({formatRelative(certificate.expires_at, now)})</span>
+          <span className="certificate-card__label">({formatRelative(certificate.expires_at, now)})</span>
         </dd>
-        <dt className="text-fg-subtle">Digest</dt>
-        <dd className="flex min-w-0 items-center gap-1">
-          <span className="truncate font-mono text-[11px] text-fg" title={certificate.digest}>
+        <dt className="certificate-card__term">Digest</dt>
+        <dd className="certificate-card__value-3">
+          <span className="certificate-card__label-2" title={certificate.digest}>
             {shortHash(certificate.digest, 10, 8)}
           </span>
           <CopyButton value={certificate.digest} label="Copy certificate digest" />
         </dd>
       </dl>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="certificate-card__row-3">
         <Button asChild size="sm" variant={current ? 'primary' : 'secondary'}>
           <Link to={`/certificates/${certificate.certificate_id}`}>
             Open certificate
@@ -125,8 +126,8 @@ export function CertificateCard({
             Re-run
           </Button>
         ) : null}
-        {query.isFetching ? <span className="text-2xs text-fg-subtle">Checking status…</span> : null}
-        {query.error ? <span className="text-2xs text-yellow-300">Status check failed; showing the issued copy.</span> : null}
+        {query.isFetching ? <span className="certificate-card__label-3">Checking status…</span> : null}
+        {query.error ? <span className="certificate-card__label-4">Status check failed; showing the issued copy.</span> : null}
       </div>
     </div>
   );

@@ -15,27 +15,28 @@ import { Button } from '../ui/button';
 import { Segmented } from '../ui/segmented';
 
 import { Pane } from './Pane';
+import './InvestigationPane.css';
 
 function AgentLine() {
   const client = useApi();
   const system = useSystem();
   if (client.mode === 'mock') {
     return (
-      <span className="inline-flex items-center gap-1.5">
-        <Cpu className="size-3.5" aria-hidden />
+      <span className="agent-line">
+        <Cpu className="agent-line__icon" aria-hidden />
         Mock API: replays the recorded deterministic run for either mode
       </span>
     );
   }
   if (!system.data) return null;
   return system.data.agent_available ? (
-    <span className="inline-flex items-center gap-1.5">
-      <Bot className="size-3.5" aria-hidden />
+    <span className="agent-line">
+      <Bot className="agent-line__icon" aria-hidden />
       Agent: Claude ({system.data.agent_model ?? 'model not reported'})
     </span>
   ) : (
-    <span className="inline-flex items-center gap-1.5">
-      <PlugZap className="size-3.5" aria-hidden />
+    <span className="agent-line">
+      <PlugZap className="agent-line__icon" aria-hidden />
       Agent: deterministic only (no API key)
     </span>
   );
@@ -43,20 +44,20 @@ function AgentLine() {
 
 function EmptyTimeline({ onStart, disabled }: { onStart: () => void; disabled: boolean }) {
   return (
-    <div className="space-y-4 py-2">
-      <div className="space-y-1.5">
-        <h3 className="text-ui font-semibold text-fg">What the investigation does</h3>
-        <p className="text-ui leading-5 text-fg-muted">
+    <div className="empty-timeline">
+      <div className="empty-timeline__block">
+        <h3 className="empty-timeline__title">What the investigation does</h3>
+        <p className="empty-timeline__text">
           The agent calls Interdict’s own MCP tools in order, within a budget of at most 12 calls. Every verdict comes
           from the engine; the agent only chooses the next tool and narrates.
         </p>
       </div>
-      <ol className="space-y-1.5">
+      <ol className="empty-timeline__list">
         {TYPICAL_RUN.map((tool, index) => (
-          <li key={tool} className="flex items-baseline gap-2.5 text-ui">
-            <span className="font-mono text-2xs text-fg-subtle">{index + 1}</span>
-            <span className="text-fg">{toolTitle(tool, undefined)}</span>
-            <span className="font-mono text-[11px] text-fg-subtle">{tool}</span>
+          <li key={tool} className="empty-timeline-2">
+            <span className="empty-timeline__label">{index + 1}</span>
+            <span className="empty-timeline__label-2">{toolTitle(tool, undefined)}</span>
+            <span className="empty-timeline__label-3">{tool}</span>
           </li>
         ))}
       </ol>
@@ -137,20 +138,20 @@ export function InvestigationPane({
         </>
       }
     >
-      <div className="shrink-0 space-y-2 border-b border-line px-3 py-2.5">
+      <div className="investigation-pane__block">
         <LifecycleRail derived={derived} active={busy} terminal={derived?.done ? display(derived.done.status) : null} />
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-2xs text-fg-muted">
+        <div className="investigation-pane__row">
           <span>
-            <span className="text-fg-subtle">Ran: </span>
-            <span className={cn(ran ? 'text-fg' : 'text-fg-subtle')}>{ran ? ranModeText(ran) : run ? `requested ${run.requestedMode}` : 'not run yet'}</span>
+            <span className="investigation-pane__label">Ran: </span>
+            <span className={cn(ran ? 'investigation-pane__label--ran' : 'investigation-pane__label--not-ran')}>{ran ? ranModeText(ran) : run ? `requested ${run.requestedMode}` : 'not run yet'}</span>
           </span>
-          {run?.investigationId ? <span className="font-mono text-fg-subtle">{run.investigationId}</span> : null}
+          {run?.investigationId ? <span className="investigation-pane__label-2">{run.investigationId}</span> : null}
         </div>
         {notes.length > 0 ? (
-          <ul className="space-y-0.5">
+          <ul className="investigation-pane__list">
             {notes.map((note) => (
-              <li key={note} className="flex gap-1.5 text-2xs text-yellow-300">
-                <TriangleAlert className="mt-px size-3 shrink-0" aria-hidden />
+              <li key={note} className="investigation-pane">
+                <TriangleAlert className="investigation-pane__icon" aria-hidden />
                 {note}
               </li>
             ))}
@@ -160,7 +161,7 @@ export function InvestigationPane({
           <Banner
             tone="grey"
             icon={Clock}
-            className="py-2"
+            className="investigation-pane__banner"
             title={`Computed at revision ${run.revisionAtStart}; the sandbox is now at revision ${revision}`}
             actions={
               <Button size="xs" variant="secondary" onClick={start} disabled={busy}>
@@ -172,7 +173,7 @@ export function InvestigationPane({
         ) : null}
       </div>
 
-      <div ref={scroller} onScroll={onScroll} className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
+      <div ref={scroller} onScroll={onScroll} className="investigation-pane__block-2">
 
         {!run ? <EmptyTimeline onStart={start} disabled={busy} /> : null}
         {run?.phase === 'starting' ? (
@@ -191,7 +192,7 @@ export function InvestigationPane({
           )
         ) : null}
 
-        <ol className="space-y-2" aria-label="Investigation timeline">
+        <ol className="investigation-pane__list-2" aria-label="Investigation timeline">
           {items.map((item) => {
             const key = `${item.kind}-${item.seq}`;
             switch (item.kind) {

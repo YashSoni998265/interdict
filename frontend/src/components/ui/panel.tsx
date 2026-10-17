@@ -1,6 +1,7 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 
 import { cn } from '@/lib/cn';
+import './panel.css';
 
 export interface PanelProps extends Omit<HTMLAttributes<HTMLElement>, 'title'> {
   title?: ReactNode;
@@ -27,17 +28,17 @@ export function Panel({
 }: PanelProps) {
   const Heading = headingLevel === 2 ? 'h2' : 'h3';
   return (
-    <Component className={cn('rounded-lg border border-line bg-surface', className)} {...props}>
+    <Component className={cn('panel', className)} {...props}>
       {title || actions ? (
-        <header className="flex items-start gap-3 border-b border-line px-4 py-3">
-          <div className="min-w-0 flex-1">
-            {title ? <Heading className="text-ui font-semibold text-fg">{title}</Heading> : null}
-            {subtitle ? <div className="mt-0.5 text-2xs text-fg-muted">{subtitle}</div> : null}
+        <header className="panel__header">
+          <div className="panel__block">
+            {title ? <Heading className="panel__heading">{title}</Heading> : null}
+            {subtitle ? <div className="panel__block-2">{subtitle}</div> : null}
           </div>
-          {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
+          {actions ? <div className="panel__row">{actions}</div> : null}
         </header>
       ) : null}
-      <div className={cn('px-4 py-3', bodyClassName)}>{children}</div>
+      <div className={cn('panel__block-3', bodyClassName)}>{children}</div>
     </Component>
   );
 }
@@ -45,11 +46,11 @@ export function Panel({
 /** Label + value rows ("dl"), used for certificate and system facts. */
 export function Facts({ items, className }: { items: { label: ReactNode; value: ReactNode }[]; className?: string }) {
   return (
-    <dl className={cn('grid grid-cols-[minmax(0,10rem)_minmax(0,1fr)] gap-x-4 gap-y-2 text-ui', className)}>
+    <dl className={cn('facts', className)}>
       {items.map((item, index) => (
-        <div key={index} className="contents">
-          <dt className="text-fg-muted">{item.label}</dt>
-          <dd className="min-w-0 break-words text-fg">{item.value}</dd>
+        <div key={index} className="facts-2">
+          <dt className="facts__term">{item.label}</dt>
+          <dd className="facts__value">{item.value}</dd>
         </div>
       ))}
     </dl>

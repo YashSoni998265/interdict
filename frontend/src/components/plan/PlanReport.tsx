@@ -15,6 +15,7 @@ import { Tag } from '../ui/tag';
 import { Tip } from '../ui/tooltip';
 
 import { ActionCard } from './ActionCard';
+import './PlanReport.css';
 
 function targetsOf(report: PlanReportView, chains: readonly ChainView[]): string[] {
   if (report.t_scope && report.t_scope.length > 0) return report.t_scope;
@@ -42,7 +43,7 @@ export function ImpactSentence({
   const unknownPods = flowSources(plan.unknown, flows);
   const scope = targets.length > 0 ? ` to ${targets.join(', ')}` : '';
   return (
-    <p className="text-ui leading-5 text-fg">
+    <p className="impact-sentence">
       {verified ? (
         `Closes all modelled paths${scope}`
       ) : (
@@ -63,7 +64,7 @@ export function ImpactSentence({
       {plan.unknown.length > 0 ? (
         <>
           ;{' '}
-          <span className="text-yellow-300">
+          <span className="impact-sentence__label">
             <Num metric="unknownImpact" value={plan.unknown.length} /> blocked {plural(plan.unknown.length, 'flow')}{' '}
             {plan.unknown.length === 1 ? 'has' : 'have'} unknown impact
           </span>
@@ -86,11 +87,11 @@ function PlanMetrics({ plan, total }: { plan: PlanView; total: number }) {
     },
   ];
   return (
-    <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+    <dl className="plan-metrics">
       {cells.map((cell) => (
-        <div key={cell.label} className="rounded-md border border-line bg-canvas px-2.5 py-2">
-          <dt className="text-2xs text-fg-subtle">{cell.label}</dt>
-          <dd className="mt-0.5 text-sm font-semibold text-fg">{cell.node}</dd>
+        <div key={cell.label} className="plan-metrics-2">
+          <dt className="plan-metrics__term">{cell.label}</dt>
+          <dd className="plan-metrics__value">{cell.node}</dd>
         </div>
       ))}
     </dl>
@@ -101,14 +102,14 @@ function NamedFlows({ title, ids, flows, tone }: { title: string; ids: string[];
   if (ids.length === 0) return null;
   return (
     <div>
-      <div className="section-label mb-1">{title}</div>
-      <ul className="space-y-0.5">
+      <div className="section-label named-flows__block">{title}</div>
+      <ul className="named-flows__list">
         {ids.map((id) => (
-          <li key={id} className="flex flex-wrap items-baseline gap-x-2 text-2xs">
-            <span className={cn('font-mono text-[11.5px]', tone === 'yellow' ? 'text-yellow-300' : 'text-fg')}>
+          <li key={id} className="named-flows">
+            <span className={cn('named-flows__label', tone === 'yellow' ? 'named-flows__label--yellow' : 'named-flows__label--not-yellow')}>
               {describeFlow(id, flows)}
             </span>
-            <span className="font-mono text-fg-subtle">{id}</span>
+            <span className="named-flows__label-2">{id}</span>
           </li>
         ))}
       </ul>
@@ -127,7 +128,7 @@ function Optimality({ value }: { value: string | null }) {
           : 'Found without the exact search (for example a capped catalogue). Never described as optimal.'
       }
     >
-      <button type="button" className="cursor-help rounded">
+      <button type="button" className="optimality__button">
         <Tag mono>{value}</Tag>
       </button>
     </Tip>
@@ -145,56 +146,56 @@ function Comparison({ report, flows }: { report: PlanReportView; flows: Record<s
   if (hard && !hardListed) rows.push({ plan: hard, label: 'Hard isolation' });
   if (rows.length === 1) return null;
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <ListOrdered className="size-3.5 text-fg-subtle" aria-hidden />
+    <div className="comparison">
+      <div className="comparison__row">
+        <ListOrdered className="comparison__icon" aria-hidden />
         <div className="section-label">Compared plans</div>
       </div>
-      <div className="overflow-x-auto rounded-md border border-line">
-        <table className="w-full min-w-[30rem] text-left text-2xs">
+      <div className="comparison__box">
+        <table className="comparison__table">
           <caption className="sr-only">
             Plans ranked by declared dependencies broken, then unknown-impact flows, then actions, then flows blocked.
           </caption>
-          <thead className="bg-surface text-fg-subtle">
+          <thead className="comparison__head">
             <tr>
-              <th scope="col" className="px-2.5 py-1.5 font-medium">Plan</th>
-              <th scope="col" className="px-2 py-1.5 text-right font-medium">Broken</th>
-              <th scope="col" className="px-2 py-1.5 text-right font-medium">Unknown</th>
-              <th scope="col" className="px-2 py-1.5 text-right font-medium">Actions</th>
-              <th scope="col" className="px-2 py-1.5 text-right font-medium">Blocked</th>
+              <th scope="col" className="comparison__heading-cell">Plan</th>
+              <th scope="col" className="comparison__heading-cell-2">Broken</th>
+              <th scope="col" className="comparison__heading-cell-2">Unknown</th>
+              <th scope="col" className="comparison__heading-cell-2">Actions</th>
+              <th scope="col" className="comparison__heading-cell-2">Blocked</th>
             </tr>
           </thead>
           <tbody>
             {rows.map(({ plan, label, best: isBest }) => (
-              <tr key={`${label}-${plan.id}`} className={cn('border-t border-line align-top', isBest && 'bg-elevated/60')}>
-                <td className="px-2.5 py-1.5">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className={cn('font-medium', isBest ? 'text-fg' : 'text-fg-muted')}>{label}</span>
+              <tr key={`${label}-${plan.id}`} className={cn('comparison-2', isBest && 'comparison--best')}>
+                <td className="comparison__cell">
+                  <div className="comparison__row-2">
+                    <span className={cn('comparison__label', isBest ? 'comparison__label--best' : 'comparison__label--not-best')}>{label}</span>
                     {plan.id === hard?.id && label !== 'Hard isolation' ? <Tag>hard isolation</Tag> : null}
                   </div>
-                  <div className="mt-0.5 space-y-px font-mono text-[11px] text-fg-subtle">
+                  <div className="comparison__block">
                     {plan.action_ids.map((id) => (
-                      <div key={id} className="break-all">
+                      <div key={id} className="comparison-3">
                         {id}
                       </div>
                     ))}
                   </div>
                   {plan.known_broken.length > 0 ? (
-                    <div className="mt-0.5 text-[11px] text-fg-muted">
+                    <div className="comparison__block-2">
                       breaks {plan.known_broken.map((id) => describeFlow(id, flows)).join('; ')}
                     </div>
                   ) : null}
                 </td>
-                <td className="px-2 py-1.5 text-right text-fg">
+                <td className="comparison__cell-2">
                   <Num metric="declaredBroken" value={plan.objective.known_broken} plain />
                 </td>
-                <td className="px-2 py-1.5 text-right text-fg">
+                <td className="comparison__cell-2">
                   <Num metric="unknownImpact" value={plan.objective.unknown} plain />
                 </td>
-                <td className="px-2 py-1.5 text-right text-fg">
+                <td className="comparison__cell-2">
                   <Num metric="planActions" value={plan.objective.actions} plain />
                 </td>
-                <td className="px-2 py-1.5 text-right text-fg">
+                <td className="comparison__cell-2">
                   <Num metric="flowsBlocked" value={plan.objective.blocked} plain />
                 </td>
               </tr>
@@ -202,7 +203,7 @@ function Comparison({ report, flows }: { report: PlanReportView; flows: Record<s
           </tbody>
         </table>
       </div>
-      <p className="text-2xs text-fg-subtle">
+      <p className="comparison__text">
         Ranked by (1) declared dependencies broken, (2) unknown-impact flows, (3) actions, (4) flows blocked, (5) action
         ids. Exact search evaluated{' '}
         <Num metric="subsetsEvaluated" value={report.subsets_evaluated} /> subsets;{' '}
@@ -218,26 +219,26 @@ function NoPlan({ report, flows, chains }: { report: PlanReportView; flows: Reco
   const covered = partial?.covered.length ?? 0;
   const tone = TONE_CLASS[describeStatus('NO_FEASIBLE_PLAN_WITHIN_K').tone];
   return (
-    <div className={cn('space-y-3 rounded-lg border px-3.5 py-3', tone.border, tone.bg)}>
-      <div className="flex items-start gap-2">
-        <OctagonX className={cn('mt-0.5 size-4 shrink-0', tone.text)} aria-hidden />
+    <div className={cn('no-plan', tone.border, tone.bg)}>
+      <div className="no-plan__row">
+        <OctagonX className={cn('no-plan__icon', tone.text)} aria-hidden />
         <div>
-          <div className={cn('text-ui font-semibold', tone.text)}>No safe plan within 3 changes</div>
-          <p className="mt-0.5 text-ui text-fg-muted">
+          <div className={cn('no-plan__block', tone.text)}>No safe plan within 3 changes</div>
+          <p className="no-plan__text">
             No plan of ≤ <Num metric="maxPlanActions" value={report.k} /> allowed policy changes closes every modelled
             path. Best partial plan closes <Num metric="chainsCovered" value={covered} /> of{' '}
             <Num metric="constraintChains" value={total} />.
           </p>
           {report.no_plan_reason ? (
-            <p className="mt-1 text-2xs text-fg-subtle">
-              <span className="font-mono">{report.no_plan_reason}</span>: {reasonText(report.no_plan_reason)}
+            <p className="no-plan__text-2">
+              <span className="no-plan__label">{report.no_plan_reason}</span>: {reasonText(report.no_plan_reason)}
             </p>
           ) : null}
         </div>
       </div>
-      <p className="text-2xs text-fg-muted">No certificate is issued for this result, and nothing is called contained.</p>
+      <p className="no-plan__text-3">No certificate is issued for this result, and nothing is called contained.</p>
       {partial ? (
-        <div className="space-y-2">
+        <div className="no-plan__block-2">
           <div className="section-label">Best partial plan</div>
           {partial.actions.map((action) => (
             <ActionCard key={action.id} action={action} flows={flows} compact />
@@ -263,17 +264,17 @@ export function ChainGroup({
 }) {
   if (ids.length === 0) return null;
   return (
-    <div className="space-y-1.5">
+    <div className="chain-group">
       <div className="section-label">
         {title} (<Num metric="constraintChains" value={ids.length} plain />)
       </div>
-      <ul className="space-y-1.5">
+      <ul className="chain-group__list">
         {ids.map((id) => {
           const chain = chains.find((c) => c.id === id);
           return (
             <li key={id}>
               {chain ? <PathChips path={chain.path} tone={tone} size="xs" /> : null}
-              <div className="mt-0.5 break-all font-mono text-[10.5px] text-fg-subtle">{id}</div>
+              <div className="chain-group__block">{id}</div>
             </li>
           );
         })}
@@ -300,16 +301,16 @@ export function PlanReport({ report, flows, chains, verified }: PlanReportProps)
 
   if (report.status === 'PLANNING_INCONCLUSIVE') {
     return (
-      <div className="space-y-3">
+      <div className="plan-report">
         <Banner tone="yellow" title="Not enough fresh evidence to plan" role="alert">
-          <span className="font-mono text-2xs">{report.inconclusive_reason}</span>: {reasonText(report.inconclusive_reason)}.
+          <span className="plan-report__label">{report.inconclusive_reason}</span>: {reasonText(report.inconclusive_reason)}.
           Planning fails closed: no plan is offered as optimal and no certificate can follow.
         </Banner>
         {report.plan ? (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
+          <div className="plan-report__block">
+            <div className="plan-report__row">
               <Tag mono>NOT_EXACT</Tag>
-              <span className="text-2xs text-fg-muted">Heuristic plan shown for the Hunter to verify; never optimal.</span>
+              <span className="plan-report__label-2">Heuristic plan shown for the Hunter to verify; never optimal.</span>
             </div>
             {report.plan.actions.map((action) => (
               <ActionCard key={action.id} action={action} flows={flows} />
@@ -322,18 +323,18 @@ export function PlanReport({ report, flows, chains, verified }: PlanReportProps)
 
   const plan = report.plan;
   if (!plan) {
-    return <p className="text-ui text-fg-muted">The planner returned no plan.</p>;
+    return <p className="plan-report-2">The planner returned no plan.</p>;
   }
 
   if (plan.actions.length === 0) {
     return (
-      <div className="space-y-2 rounded-lg border border-line bg-canvas px-3.5 py-3">
-        <div className="flex items-center gap-2">
+      <div className="plan-report-3">
+        <div className="plan-report__row">
           <StatusBadge status="PLAN_FOUND" size="sm" />
           <Tag mono>{plan.id}</Tag>
         </div>
-        <p className="text-ui text-fg">No chain within the planner’s 3-hop bound, so there is nothing for it to cut.</p>
-        <p className="text-2xs text-fg-muted">
+        <p className="plan-report__text">No chain within the planner’s 3-hop bound, so there is nothing for it to cut.</p>
+        <p className="plan-report__text-2">
           The empty plan is not a verdict. The Path Hunter searches without the hop limit and decides whether anything
           reaches {targets.join(', ') || 'the target'}.
         </p>
@@ -342,18 +343,18 @@ export function PlanReport({ report, flows, chains, verified }: PlanReportProps)
   }
 
   return (
-    <div className="space-y-3.5">
-      <div className="flex flex-wrap items-center gap-1.5">
+    <div className="plan-report-4">
+      <div className="plan-report__row-2">
         <StatusBadge status={report.status} size="sm" />
         <Optimality value={report.optimality} />
         <StatusBadge status={plan.impact_status} knownBroken={plan.known_broken.length} size="sm" tooltip />
-        <span className="ml-auto font-mono text-2xs text-fg-subtle">{plan.id}</span>
+        <span className="plan-report__label-3">{plan.id}</span>
       </div>
       <ImpactSentence plan={plan} flows={flows} targets={targets} verified={verified} chainCount={report.chains.length} />
       <PlanMetrics plan={plan} total={report.chains.length} />
-      <div className="space-y-2">
-        <div className="flex items-center gap-1.5">
-          <StatusIcon name="scissors" className="text-violet-400" />
+      <div className="plan-report__block">
+        <div className="plan-report__row-3">
+          <StatusIcon name="scissors" className="plan-report__status-icon" />
           <div className="section-label">
             <Num metric="planActions" value={plan.actions.length} plain /> proposed {plural(plan.actions.length, 'change')}
           </div>
@@ -362,7 +363,7 @@ export function PlanReport({ report, flows, chains, verified }: PlanReportProps)
           <ActionCard key={action.id} action={action} flows={flows} />
         ))}
       </div>
-      <div className="space-y-2.5">
+      <div className="plan-report__block-2">
         <NamedFlows title="Declared dependencies broken (synthetic fixture)" ids={plan.known_broken} flows={flows} />
         <NamedFlows title="Blocked flows with unknown impact" ids={plan.unknown} flows={flows} tone="yellow" />
         <Disclosure summary="Every blocked flow">
@@ -371,12 +372,12 @@ export function PlanReport({ report, flows, chains, verified }: PlanReportProps)
       </div>
       <Comparison report={report} flows={flows} />
       {report.ineligible.length > 0 ? (
-        <div className="space-y-1">
+        <div className="plan-report__block-3">
           <div className="section-label">Ineligible selectors</div>
-          <ul className="space-y-1 text-2xs text-fg-muted">
+          <ul className="plan-report__list">
             {report.ineligible.map((item) => (
               <li key={`${item.namespace}/${item.app}`}>
-                <span className="font-mono text-fg">
+                <span className="plan-report__label-4">
                   {item.namespace}/app={item.app}
                 </span>
                 : {reasonText(item.reason)}
@@ -387,11 +388,11 @@ export function PlanReport({ report, flows, chains, verified }: PlanReportProps)
         </div>
       ) : null}
       <Disclosure summary="Action catalogue (every candidate action)">
-        <ul className="space-y-1.5">
+        <ul className="plan-report__list-2">
           {report.catalogue.map((action) => (
-            <li key={action.id} className="rounded border border-line bg-canvas px-2.5 py-1.5 text-2xs">
-              <div className="break-all font-mono text-[11.5px] text-fg">{action.id}</div>
-              <div className="text-fg-muted">
+            <li key={action.id} className="plan-report-5">
+              <div className="plan-report__block-4">{action.id}</div>
+              <div className="plan-report__block-5">
                 blocks <Num metric="flowsBlocked" value={action.blocked.length} plain /> · cuts{' '}
                 <Num metric="stepsRemoved" value={action.removed_steps.length} plain /> · breaks{' '}
                 <Num metric="declaredBroken" value={action.known_broken.length} plain /> · unknown{' '}

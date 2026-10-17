@@ -8,18 +8,24 @@ updates:
       prefix: ci
       include: scope
 
+  # uv and npm use a fixed "build(deps)" prefix: include: scope would title
+  # dev-dependency updates "build(deps-dev)", which is not an allowed PR-title scope.
   - package-ecosystem: uv
     directory: /backend
     schedule:
       interval: weekly
     commit-message:
-      prefix: build
-      include: scope
+      prefix: "build(deps)"
 
   - package-ecosystem: npm
     directory: /frontend
     schedule:
       interval: weekly
     commit-message:
-      prefix: build
-      include: scope
+      prefix: "build(deps)"
+    ignore:
+      # ESLint 10 waits for eslint-plugin-jsx-a11y, whose latest release (6.10.2) supports ESLint 9 at most.
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]

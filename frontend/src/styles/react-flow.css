@@ -1,0 +1,31 @@
+/* React Flow: blend the graph into the dark canvas */
+
+.react-flow {
+  --xy-background-color: transparent;
+  --xy-edge-stroke: rgb(var(--fg-subtle));
+  --xy-node-border-radius: 10px;
+  --xy-controls-button-background-color: rgb(var(--elevated));
+  --xy-controls-button-background-color-hover: rgb(var(--hover));
+  --xy-controls-button-color: rgb(var(--fg-muted));
+  --xy-controls-button-color-hover: rgb(var(--fg));
+  --xy-controls-button-border-color: rgb(var(--line));
+}
+
+.react-flow__node:focus-visible {
+  outline: none;
+}
+
+.react-flow__node:focus-visible > div {
+  box-shadow: 0 0 0 2px rgb(var(--canvas)), 0 0 0 4px rgb(var(--accent));
+}
+
+.react-flow__controls {
+  box-shadow: none;
+  border: 1px solid rgb(var(--line));
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.react-flow__controls-button svg {
+  fill: currentColor;
+}
