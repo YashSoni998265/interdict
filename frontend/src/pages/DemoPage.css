@@ -108,6 +108,7 @@
 
 .demo-step {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 2.5rem;
 }
 
@@ -478,12 +479,6 @@
   gap: 0.375rem;
 }
 
-.demo-change {
-  border-radius: 12px;
-  background-color: rgb(var(--canvas));
-  padding: 0.75rem 1rem;
-}
-
 .demo-change__pod {
   font-weight: 600;
   color: rgb(var(--fg));
@@ -557,8 +552,12 @@
 
 /* Supporting content under each step's text */
 
+/* A flex column, not a grid: a grid track would grow to the longest policy line on phones. */
 .demo-step__aside {
   margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
 }
 
 .demo-aside {
@@ -572,12 +571,6 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: rgb(var(--fg-subtle));
-}
-
-.demo-method__letter {
-  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.9375rem;
-  font-weight: 700;
 }
 
 .demo-method__result {
@@ -614,12 +607,6 @@
 .demo-rule__icon svg {
   width: 0.875rem;
   height: 0.875rem;
-}
-
-.demo-rounds {
-  margin-top: 0.75rem;
-  display: grid;
-  gap: 0.5rem;
 }
 
 .demo-round__badge {
@@ -722,7 +709,6 @@
 
 /* Step 3: the checks, one line each; the rounds with the paths they missed */
 
-.demo-methods,
 .demo-rules {
   display: grid;
   gap: 0.5rem;
@@ -818,6 +804,293 @@
   margin-top: 0;
 }
 
+/* Cards that spread their rows over the height they are given */
+
+.demo-spread {
+  display: flex;
+  flex-direction: column;
+}
+
+.demo-spread__rows {
+  margin-top: 0.75rem;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: space-evenly;
+  gap: 0.625rem;
+}
+
+.demo-method__detail {
+  flex-basis: 100%;
+  padding-left: 2.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: rgb(var(--fg-muted));
+}
+
+.demo-method__time {
+  margin-left: auto;
+  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  color: rgb(var(--fg-subtle));
+}
+
+.demo-now__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid rgb(var(--line) / 0.6);
+  padding-bottom: 0.5rem;
+  font-size: 0.9375rem;
+  color: rgb(var(--fg-muted));
+}
+
+.demo-now__value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--fg));
+}
+
+.demo-now__note {
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: rgb(var(--fg-subtle));
+}
+
+/* Step 1: severity against the graph's verdict */
+
+.demo-severity {
+  display: flex;
+  flex-direction: column;
+}
+
+.demo-severity__lead {
+  margin-top: 0.375rem;
+  font-size: 0.9375rem;
+  color: rgb(var(--fg-muted));
+}
+
+.demo-severity__lead strong {
+  color: rgb(var(--rose-figure));
+}
+
+.demo-severity__rows {
+  margin-top: 0.5rem;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: space-evenly;
+  gap: 0.375rem;
+}
+
+.demo-severity__row {
+  display: grid;
+  grid-template-columns: 4.25rem 1fr 5.5rem;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.demo-severity__label {
+  text-transform: capitalize;
+  color: rgb(var(--fg-muted));
+}
+
+.demo-severity__bar {
+  position: relative;
+  height: 0.625rem;
+  overflow: hidden;
+  border-radius: 9999px;
+  background-color: rgb(var(--fg) / 0.05);
+}
+
+.demo-severity__all,
+.demo-severity__on {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 9999px;
+}
+
+.demo-severity__all {
+  background-color: rgb(var(--fg) / 0.18);
+}
+
+.demo-severity__on {
+  background-color: rgb(225 29 72);
+}
+
+.demo-severity__count {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--fg-subtle));
+}
+
+.demo-severity__count strong {
+  color: rgb(var(--fg));
+}
+
+.demo-severity__legend {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: rgb(var(--fg-subtle));
+}
+
+.demo-severity__key {
+  display: inline-block;
+  width: 0.625rem;
+  height: 0.625rem;
+  margin-left: 0.5rem;
+  border-radius: 3px;
+  background-color: rgb(var(--fg) / 0.18);
+}
+
+.demo-severity__key--on {
+  margin-left: 0;
+  background-color: rgb(225 29 72);
+}
+
+/* Step 1: the alerts behind the 69 */
+
+.demo-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.demo-list__box {
+  margin-top: 0.5rem;
+  height: calc(4 * 38px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* The rows share the box's height, so the list ends flush with the card (never a part-row gap). */
+.demo-list__rows {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+
+.demo-list__row {
+  display: grid;
+  min-height: 38px;
+  flex: 1 1 0%;
+  grid-template-columns: minmax(0, 1fr) 7rem 4.5rem;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid rgb(var(--line) / 0.6);
+  font-size: 0.875rem;
+}
+
+.demo-list__id,
+.demo-list__cve {
+  color: rgb(var(--fg-muted));
+}
+
+.demo-list__pod {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgb(var(--fg));
+}
+
+.demo-list__sev {
+  text-align: right;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.demo-list__sev--critical {
+  color: rgb(var(--red-text));
+}
+
+.demo-list__sev--high {
+  color: rgb(var(--orange-text));
+}
+
+.demo-list__sev--medium {
+  color: rgb(var(--yellow-text));
+}
+
+.demo-list__sev--low {
+  color: rgb(var(--zinc-text));
+}
+
+/* Step 4: the policy file preview and the impact tiles */
+
+.demo-yaml {
+  display: flex;
+  flex-direction: column;
+}
+
+.demo-yaml__box {
+  margin-top: 0.5rem;
+  height: 11rem;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  background-color: rgb(var(--canvas));
+  padding: 0.625rem 0.875rem;
+}
+
+.demo-yaml__code {
+  margin: 0;
+  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  line-height: 18px;
+  color: rgb(var(--fg-muted));
+}
+
+/* One block per line, so a line too long for the card ends in an ellipsis. */
+.demo-yaml__line {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre;
+}
+
+.demo-impact {
+  display: grid;
+  min-height: 5.25rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.demo-impact__tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-radius: 14px;
+  background-color: rgb(var(--surface));
+  padding: 0.625rem 0.875rem;
+  box-shadow: var(--shadow-card);
+}
+
+.demo-impact__value {
+  font-size: 1.875rem;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: rgb(var(--fg));
+}
+
+.demo-impact__label {
+  /* Two lines tall in every tile, so the numbers line up. */
+  min-height: 2.6em;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: rgb(var(--fg-muted));
+}
+
 /* Bottom navigation */
 
 .demo-nav {
@@ -830,9 +1103,23 @@
   padding: 0.875rem 0 1rem;
 }
 
+@media (max-width: 639px) {
+  .demo-list__id {
+    display: none;
+  }
+}
+
 @media (min-width: 640px) {
   .demo-progress__label {
     display: inline;
+  }
+
+  .demo-list__row {
+    grid-template-columns: 5.5rem minmax(0, 1fr) 7rem 4.5rem;
+  }
+
+  .demo-impact {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -844,10 +1131,186 @@
 
   .demo-step {
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    align-items: start;
+    align-items: stretch;
     gap: 4rem;
   }
 
+  /* Fill to the line: both columns take the full step height, and each column's flexible
+     element (a graph, a list, a preview or spread-out rows) absorbs the space that is left. */
+  .demo-stage {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .demo-step {
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+
+  .demo-step__copy,
+  .demo-step__visual {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+  }
+
+  .demo-step__visual > * {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+  }
+
+  .demo-step__aside {
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+
+  .demo-fill {
+    min-height: 0;
+    flex: 1 1 0%;
+  }
+
+  .demo-graph.demo-fill {
+    height: auto;
+  }
+
+  .demo-graph--sm.demo-fill {
+    min-height: 8rem;
+  }
+
+  .demo-graph--md.demo-fill {
+    min-height: 11rem;
+  }
+
+  .demo-list.demo-fill,
+  .demo-yaml.demo-fill {
+    min-height: 7rem;
+  }
+
+  .demo-list__box,
+  .demo-yaml__box {
+    height: auto;
+    flex: 1 1 0%;
+  }
+
+  .demo-break {
+    justify-content: space-between;
+  }
+}
+
+/* Shorter desktop windows: the frame around the step is set tighter. It depends only on the window
+   (the same threshold as START_LEVEL in DemoPage.tsx), so the navigation sits at the same place on
+   every step. */
+@media (min-width: 1024px) and (max-height: 820px) {
+  .demo {
+    padding-top: 0.625rem;
+  }
+
+  .demo-stage {
+    margin-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .demo-nav {
+    padding: 0.625rem 0 0.75rem;
+  }
+}
+
+/* Fit levels, set by useFitToStage (DemoPage.tsx) when a step would not end above the navigation
+   line: a shorter window, or the sandbox banners above the demo. The levels add up (data-fit="1 2").
+   Level 1 sets the same content tighter; level 2 tighter still, without two summaries whose facts
+   are stated next to them (the severity counts, and the fix's impact sentence); level 3, the last
+   resort, keeps only the names of the four conditions, drops the severity lead (its numbers are the
+   chart's first row) and sets rules and card text smaller. The navigation is outside the step, so
+   it never moves. */
+@media (min-width: 1024px) {
+  .demo-stage[data-fit~='1'] .demo-step__title {
+    font-size: clamp(1.75rem, 2.5vw, 2.125rem);
+  }
+
+  .demo-stage[data-fit~='1'] .demo-step__lede {
+    margin-top: 0.625rem;
+    gap: 0.5rem;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .demo-stage[data-fit~='1'] .demo-step__actions {
+    margin-top: 0.875rem;
+  }
+
+  .demo-stage[data-fit~='1'] .demo-step__aside {
+    margin-top: 1rem;
+    gap: 0.625rem;
+  }
+
+  .demo-stage[data-fit~='1'] .demo-card {
+    padding: 0.75rem 1rem;
+  }
+
+  .demo-stage[data-fit~='1'] .demo-condition {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .demo-stage[data-fit~='1'] .demo-graph--sm.demo-fill {
+    min-height: 6.5rem;
+  }
+
+  .demo-stage[data-fit~='1'] .demo-graph--md.demo-fill {
+    min-height: 9rem;
+  }
+
+  .demo-stage[data-fit~='1'] .demo-impact__value {
+    font-size: 1.5rem;
+  }
+
+  .demo-stage[data-fit~='1'] .demo-impact__label {
+    min-height: 0;
+  }
+
+  .demo-stage[data-fit~='1'] :is(.demo-aside, .demo-break) {
+    gap: 0.5rem;
+  }
+
+  .demo-stage[data-fit~='1'] .demo-card__actions {
+    margin-top: 0.625rem;
+  }
+
+  .demo-stage[data-fit~='2'] .demo-step__title {
+    font-size: clamp(1.625rem, 2.2vw, 1.875rem);
+  }
+
+  .demo-stage[data-fit~='2'] .demo-step__lede {
+    font-size: 0.875rem;
+    line-height: 1.45;
+  }
+
+  .demo-stage[data-fit~='2'] .demo-spread__rows {
+    gap: 0.25rem;
+  }
+
+  .demo-stage[data-fit~='2'] :is(.demo-severity__legend, .demo-impact) {
+    display: none;
+  }
+
+  .demo-stage[data-fit~='3'] :is(.demo-condition__body, .demo-severity__lead) {
+    display: none;
+  }
+
+  .demo-stage[data-fit~='3'] .demo-rule {
+    font-size: 0.8125rem;
+    line-height: 1.3;
+  }
+
+  .demo-stage[data-fit~='3'] .demo-card__text {
+    font-size: 0.875rem;
+    line-height: 1.45;
+  }
+
+  .demo-stage[data-fit~='3'] .demo-change {
+    padding: 0.375rem 0.75rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

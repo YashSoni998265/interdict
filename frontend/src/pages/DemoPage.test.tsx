@@ -24,6 +24,9 @@ describe('Guided demo', () => {
     // What an alert needs to matter, and where the other 931 went (549 + 382 + 0).
     expect(screen.getByText('An alert matters only if the graph shows all four')).toBeInTheDocument();
     expect(screen.getByText('Where the other 931 alerts went')).toBeInTheDocument();
+    // Severity against the graph's verdict, and real alerts behind the 69.
+    expect(screen.getByText('Severity is not the answer')).toBeInTheDocument();
+    expect(screen.getByText('A few of the 69 alerts that matter')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /Next: The agent/ }));
     expect(await heading()).toHaveTextContent('The agent investigates.');
@@ -31,6 +34,8 @@ describe('Guided demo', () => {
     const timeline = screen.getByRole('list', { name: 'The agent’s tool calls' });
     expect(within(timeline).getByText('Hunt for paths that survive the plan')).toBeInTheDocument();
     expect(screen.getByText(/generated without the AI narrator/)).toBeInTheDocument();
+    expect(screen.getByText('What the agent can and cannot do')).toBeInTheDocument();
+    expect(screen.getByText('At most 12 tool calls per investigation')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /Next: The hunt/ }));
     expect(await heading()).toHaveTextContent('The first fix wasn’t enough.');
@@ -41,6 +46,7 @@ describe('Guided demo', () => {
     expect(screen.getByText('2 paths survived')).toBeInTheDocument();
     expect(screen.getByText('no modelled path survives')).toBeInTheDocument();
     expect(screen.getByText('0 chains left')).toBeInTheDocument();
+    expect(screen.getByText('Three independent checks, on a copy of the graph')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /Next: The action/ }));
     expect(await heading()).toHaveTextContent('It acts, with proof.');
@@ -52,6 +58,9 @@ describe('Guided demo', () => {
     );
     expect(screen.getByRole('button', { name: /Download the policies/ })).toBeInTheDocument();
     expect(screen.getByText('A VALID certificate at the current sandbox revision')).toBeInTheDocument();
+    // The policy file preview and what the fix costs.
+    expect(screen.getByText('Preview of the policy file')).toBeInTheDocument();
+    expect(within(screen.getByRole('list', { name: 'Impact of the fix' })).getByText('attack paths cut')).toBeInTheDocument();
   });
 
   it('marks the certificate no longer current once a new attack path is opened', async () => {
@@ -63,6 +72,8 @@ describe('Guided demo', () => {
     await user.click(screen.getByRole('button', { name: 'Open a new attack path' }));
     await waitFor(() => expect(screen.getByText('no longer current')).toBeInTheDocument());
     expect(screen.getByText('2 changes applied', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText('Your sandbox right now')).toBeInTheDocument();
+    expect(screen.getByText('Changes applied')).toBeInTheDocument();
   });
 
   it('runs the agent by itself when a visitor opens the hunt directly', async () => {
