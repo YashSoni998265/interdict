@@ -98,15 +98,15 @@
 }
 
 .graph-table__state--active {
-  color: rgb(253 164 175);
+  color: rgb(190 18 60);
 }
 
 .graph-table__state--cut {
-  color: rgb(196 181 253);
+  color: rgb(109 40 217);
 }
 
 .graph-table__state--residual {
-  color: rgb(253 186 116);
+  color: rgb(194 65 12);
 }
 
 .graph-table__state--cleared {

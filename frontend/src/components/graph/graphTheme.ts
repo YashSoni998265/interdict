@@ -3,10 +3,10 @@ import type { EdgeState } from '@/lib/graphState';
 
 /** Stroke colours per edge state (§13.7 visual deltas). Text labels always accompany them. */
 export const EDGE_STYLE: Record<EdgeState, { stroke: string; width: number; dash?: string; label: string }> = {
-  active: { stroke: '#f43f5e', width: 1.75, label: 'Real attack path (modelled)' },
-  cut: { stroke: '#a78bfa', width: 1.75, dash: '6 5', label: 'Proposed policy change: step cut' },
-  residual: { stroke: '#fb923c', width: 2.6, label: 'Partly fixed: path remains' },
-  cleared: { stroke: '#71717a', width: 1.25, label: 'No reported path uses this step' },
+  active: { stroke: '#e11d48', width: 1.75, label: 'Real attack path (modelled)' },
+  cut: { stroke: '#7c3aed', width: 1.75, dash: '6 5', label: 'Proposed policy change: step cut' },
+  residual: { stroke: '#ea580c', width: 2.6, label: 'Partly fixed: path remains' },
+  cleared: { stroke: '#a1a1aa', width: 1.25, label: 'No reported path uses this step' },
 };
 
 /** Compact enough that a four-layer graph reads at ~0.85 zoom in a 560 px pane. */

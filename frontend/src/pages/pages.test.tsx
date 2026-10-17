@@ -1,11 +1,18 @@
 import { screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
 import { fastMockClient, renderApp } from '@/test/render';
 
 describe('Alert storm', () => {
-  it('shows the funnel with every branch, the clusters and the restraint example', async () => {
+  it('shows the headline numbers, the funnel with every branch, the clusters and the restraint example', async () => {
+    const user = userEvent.setup();
     renderApp('/storm');
+    // The headline: every alert, the ones on a real attack path, and the places to fix.
+    expect(await screen.findByText('alerts in the storm')).toBeInTheDocument();
+    expect(screen.getByText('on a real attack path')).toBeInTheDocument();
+    // The full funnel, with its graph proofs, is one click away.
+    await user.click(screen.getByRole('button', { name: /How we got here/ }));
     const funnel = await screen.findByRole('list', { name: 'Triage funnel' });
     for (const label of ['Alerts', 'Actionable', 'On an attack path', 'Workloads', 'Chains', 'Clusters']) {
       expect(within(funnel).getByText(label)).toBeInTheDocument();

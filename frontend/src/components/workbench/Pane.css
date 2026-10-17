@@ -5,23 +5,19 @@
   min-height: 0px;
   min-width: 0px;
   flex-direction: column;
-  background-color: rgb(var(--pane));
+  background-color: rgb(var(--surface));
 }
 
 .pane__header {
   display: flex;
-  min-height: 3rem;
+  min-height: 3.5rem;
   flex-shrink: 0;
   flex-wrap: wrap;
   align-items: center;
   column-gap: 0.75rem;
   row-gap: 0.5rem;
-  border-bottom-width: 1px;
-  border-color: rgb(var(--line));
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgb(var(--line) / 0.8);
+  padding: 0.75rem 1rem;
 }
 
 .pane__block {
@@ -30,16 +26,17 @@
 }
 
 .pane__title {
-  font-size: 0.8125rem;
-  line-height: 1.25rem;
-  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.375rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
   color: rgb(var(--fg));
 }
 
 .pane__text {
-  font-size: 0.6875rem;
-  line-height: 1rem;
-  color: rgb(var(--fg-muted));
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
+  color: rgb(var(--fg-subtle));
 }
 
 .pane__row {

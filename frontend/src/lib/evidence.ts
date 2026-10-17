@@ -58,3 +58,12 @@ export const STEP_CONDITION: Record<string, { formula: string; words: string }> 
     words: 'An allowed observed flow from a reaches the crown jewel, and a holds an Allow grant on it.',
   },
 };
+
+/** The evidence tier an evidence edge belongs to, from its id prefix. */
+export function tierOfEdge(edgeId: string): string {
+  if (/^ev-(exposes|routes|targets)-/.test(edgeId)) return 'exposure';
+  if (/^ev-(runs|hasvuln)-/.test(edgeId)) return 'vulnerability';
+  if (edgeId.startsWith('ev-reach-')) return 'reachability';
+  if (/^ev-(assumes|grants|applies)-/.test(edgeId)) return 'authorization';
+  return 'evidence';
+}

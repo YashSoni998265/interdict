@@ -2,12 +2,11 @@ import { ArrowRight, Database, Telescope } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { usePlanPreview } from '@/api/queries';
-import type { ClusterView, StormView } from '@/api/types';
+import type { ClusterView } from '@/api/types';
 import { useClusterAnalysis } from '@/app/hooks';
 import { cn } from '@/lib/cn';
 import { plural } from '@/lib/format';
 import { isEmptyPlan } from '@/lib/plan';
-import { ROLE } from '@/lib/status';
 
 import { Num } from '../Num';
 import { OutcomeBadge } from '../OutcomeBadge';
@@ -37,8 +36,8 @@ function PlanLine({ cluster }: { cluster: ClusterView }) {
   if (report.status === 'PLAN_FOUND' && isEmptyPlan(report.plan) && report.chains.length === 0) {
     return (
       <p className="plan-line-2">
-        <span className="plan-line__label">No chain within the planner’s 3-hop bound.</span> The path is longer, so
-        the Path Hunter (no hop limit) finds it and the planner closes it.
+        <span className="plan-line__label">Longer than the planner’s 3 hops.</span> The Path Hunter, which has no hop
+        limit, finds it and the plan closes it.
       </p>
     );
   }
@@ -75,7 +74,7 @@ function Outcome({ clusterId }: { clusterId: string }) {
   );
 }
 
-export function ClusterCard({ cluster, storm }: { cluster: ClusterView; storm: StormView }) {
+export function ClusterCard({ cluster }: { cluster: ClusterView }) {
   const hops = Math.max(cluster.witness_path.length - 3, 0);
   return (
     <article
@@ -120,37 +119,6 @@ export function ClusterCard({ cluster, storm }: { cluster: ClusterView; storm: S
 
         <PathChips path={cluster.witness_path} tone="red" size="xs" />
 
-        <dl className="cluster-card__details">
-          <div className="cluster-card__box">
-            <dt className="cluster-card__term">Chains ≤ 3 hops</dt>
-            <dd className="cluster-card__value">
-              <Num
-                metric="clusterChains"
-                value={cluster.chain_ids.length}
-                truncated={storm.chain_enumeration_truncated}
-              />
-            </dd>
-          </div>
-          <div className="cluster-card__box">
-            <dt className="cluster-card__term">Workloads</dt>
-            <dd className="cluster-card__value">
-              <Num metric="clusterWorkloads" value={cluster.workloads.length} />
-            </dd>
-          </div>
-        </dl>
-
-        <ul className="cluster-card__list" aria-label="Workload roles">
-          {cluster.workloads.map((pod) => (
-            <li key={pod} className="cluster-card-2">
-              <span className="cluster-card__label-2">{pod}</span>
-              {(storm.roles[pod] ?? []).map((role) => (
-                <Tag key={role} title={ROLE[role].description}>
-                  {ROLE[role].label}
-                </Tag>
-              ))}
-            </li>
-          ))}
-        </ul>
       </div>
 
       <div className="cluster-card__block-6">

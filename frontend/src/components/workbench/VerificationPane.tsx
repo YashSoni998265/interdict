@@ -70,19 +70,6 @@ export function VerificationPane({
       id="pane-verification"
       title="Plan and verification"
       subtitle="Cheapest safe fix, Path Hunter rounds, certificate"
-      actions={
-        !running && !plan && !hunt ? (
-          <Button size="sm" variant="secondary" onClick={computePlan} disabled={planLoading}>
-            <ListChecks aria-hidden />
-            Compute plan
-          </Button>
-        ) : !running && plan && !hunt && handle ? (
-          <Button size="sm" variant="secondary" onClick={runHunt} disabled={huntLoading}>
-            <Radar aria-hidden />
-            Run Path Hunter
-          </Button>
-        ) : null
-      }
     >
       <div className="verification-pane__block">
         {hunt ? (
@@ -105,19 +92,13 @@ export function VerificationPane({
             title="No plan yet"
             icon={ListChecks}
             action={
-              <div className="verification-pane__row">
-                <Button size="sm" variant="primary" onClick={() => void workbench.start(cluster.id, 'deterministic')}>
-                  <Play aria-hidden />
-                  Investigate
-                </Button>
-                <Button size="sm" variant="secondary" onClick={computePlan}>
-                  Compute plan only
-                </Button>
-              </div>
+              <Button size="sm" variant="primary" onClick={() => void workbench.start(cluster.id, 'deterministic')}>
+                <Play aria-hidden />
+                Run the agent
+              </Button>
             }
           >
-            Run the investigation to plan and verify the fix step by step, or call the planner and the Path Hunter
-            directly. Both use the same engine.
+            Run the agent to plan the cheapest safe fix and verify it on a copy of the graph.
           </EmptyState>
         ) : null}
 
@@ -177,14 +158,8 @@ export function VerificationPane({
           <Section title="Path Hunter">
             <p className="verification-pane__text">
               Not run yet. The plan is only trusted after the Hunter re-checks it on a copy of the graph, with no hop
-              limit and over every crown jewel.
+              limit and over every crown jewel; it runs as part of the agent’s investigation.
             </p>
-            {handle ? (
-              <Button size="sm" variant="secondary" onClick={runHunt}>
-                <Radar aria-hidden />
-                Run Path Hunter
-              </Button>
-            ) : null}
           </Section>
         ) : null}
 

@@ -10,7 +10,7 @@ export function LogoMark({ className }: { className?: string }) {
       <circle cx="8.5" cy="16" r="3.25" stroke="currentColor" strokeWidth="2" />
       <circle cx="23.5" cy="16" r="3.75" fill="currentColor" />
       <path d="M11.75 16h2.5M17.75 16h2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M14.25 21.25 17.75 10.75" stroke="#a78bfa" strokeWidth="2.25" strokeLinecap="round" />
+      <path d="M14.25 21.25 17.75 10.75" stroke="#7c3aed" strokeWidth="2.25" strokeLinecap="round" />
     </svg>
   );
 }

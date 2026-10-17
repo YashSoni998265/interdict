@@ -35,7 +35,7 @@ describe('Workbench', () => {
     const user = userEvent.setup();
     renderApp(AUTH);
     const pane = await screen.findByRole('region', { name: 'Investigation' });
-    await user.click(within(pane).getAllByRole('button', { name: /Investigate/ })[0]!);
+    await user.click(within(pane).getAllByRole('button', { name: /Run the agent/ })[0]!);
 
     const report = await screen.findByRole('article', { name: 'Final report' }, { timeout: 10_000 });
     expect(within(report).getByText('Model-verified containment (simulation)')).toBeInTheDocument();

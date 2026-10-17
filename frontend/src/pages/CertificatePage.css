@@ -1,30 +1,24 @@
 /* Styles for CertificatePage.tsx */
 
 .certificate-page-section {
-  border-radius: 0.5rem;
-  border-width: 1px;
-  border-color: rgb(var(--line));
+  overflow: hidden;
+  border-radius: var(--radius-card);
   background-color: rgb(var(--surface));
+  box-shadow: var(--shadow-card);
 }
 
 .certificate-page-section__title {
-  border-bottom-width: 1px;
-  border-color: rgb(var(--line));
-  padding-left: 1rem;
-  padding-right: 1rem;
-  padding-top: 0.625rem;
-  padding-bottom: 0.625rem;
-  font-size: 0.8125rem;
-  line-height: 1.25rem;
-  font-weight: 600;
+  border-bottom: 1px solid rgb(var(--line) / 0.8);
+  padding: 0.875rem 1.25rem;
+  font-size: 1rem;
+  line-height: 1.375rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
   color: rgb(var(--fg));
 }
 
 .certificate-page-section__block {
-  padding-left: 1rem;
-  padding-right: 1rem;
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
+  padding: 1rem 1.25rem 1.125rem;
 }
 
 .row {
@@ -168,7 +162,7 @@
 }
 
 .document__label--string {
-  color: rgb(253 224 71);
+  color: rgb(161 98 7);
 }
 
 .document__label--not-string {
@@ -252,7 +246,7 @@
 }
 
 .document__text--not-agreement {
-  color: rgb(252 165 165);
+  color: rgb(153 27 27);
 }
 
 .document__block-5 {
@@ -338,7 +332,7 @@
 .document__label-9 {
   font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 12px;
-  color: rgb(253 224 71);
+  color: rgb(161 98 7);
 }
 
 .document__list-2 {
@@ -418,11 +412,8 @@
   margin-left: auto;
   margin-right: auto;
   width: 100%;
-  max-width: 48rem;
-  padding-left: 1rem;
-  padding-right: 1rem;
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
+  max-width: 52rem;
+  padding: 2rem 1.25rem 3rem;
 }
 
 .certificate-page__article > :not([hidden]) ~ :not([hidden]) {
@@ -434,9 +425,9 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  font-size: 0.6875rem;
-  line-height: 1rem;
-  color: rgb(var(--fg-muted));
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: rgb(var(--accent));
 }
 
 .certificate-page__link:hover {
@@ -454,22 +445,19 @@
 }
 
 .certificate-page__header {
-  border-radius: 0.75rem;
-  border-width: 1px;
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
-  padding-top: 1.25rem;
-  padding-bottom: 1.25rem;
+  border-radius: 22px;
+  padding: 1.75rem 1.75rem 1.5rem;
+  box-shadow: var(--shadow-card);
 }
 
 .certificate-page__header--current {
-  border-color: rgb(16 185 129 / 0.35);
-  background-color: rgb(16 185 129 / 0.06);
+  background-color: rgb(var(--surface));
+  box-shadow: 0 0 0 1px rgb(16 185 129 / 0.35), var(--shadow-card);
 }
 
 .certificate-page__header--not-current {
-  border-color: rgb(113 113 122 / 0.3);
-  background-color: rgb(113 113 122 / 0.05);
+  background-color: rgb(var(--surface));
+  box-shadow: 0 0 0 1px rgb(var(--line-strong)), var(--shadow-card);
 }
 
 .certificate-page__row {
@@ -507,7 +495,7 @@
   width: 1.75rem;
   height: 1.75rem;
   flex-shrink: 0;
-  color: rgb(52 211 153);
+  color: rgb(4 120 87);
 }
 
 .certificate-page__icon-3 {
@@ -515,7 +503,7 @@
   width: 1.75rem;
   height: 1.75rem;
   flex-shrink: 0;
-  color: rgb(161 161 170);
+  color: rgb(82 82 91);
 }
 
 .certificate-page__block {
@@ -523,18 +511,18 @@
 }
 
 .certificate-page__heading {
-  font-size: 1.25rem;
-  line-height: 1.75rem;
-  font-weight: 600;
-  letter-spacing: -0.025em;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.03em;
 }
 
 .certificate-page__heading--current {
-  color: rgb(110 231 183);
+  color: rgb(4 120 87);
 }
 
 .certificate-page__heading--not-current {
-  color: rgb(212 212 216);
+  color: rgb(63 63 70);
 }
 
 .certificate-page__text {
@@ -602,4 +590,40 @@
   .document__grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+.certificate-page-section__summary {
+  display: flex;
+  cursor: pointer;
+  list-style: none;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 1.25rem;
+}
+
+.certificate-page-section__summary::-webkit-details-marker {
+  display: none;
+}
+
+.certificate-page-section__summary .certificate-page-section__title {
+  border-bottom-width: 0;
+}
+
+.certificate-page-section__details[open] .certificate-page-section__summary {
+  border-bottom: 1px solid rgb(var(--line) / 0.8);
+}
+
+.certificate-page-section__chevron {
+  width: 1.125rem;
+  height: 1.125rem;
+  color: rgb(var(--fg-subtle));
+  transition: transform 250ms var(--ease-out);
+}
+
+.certificate-page-section__details[open] .certificate-page-section__chevron {
+  transform: rotate(180deg);
+}
+
+.certificate-page-section__summary:hover .certificate-page-section__chevron {
+  color: rgb(var(--fg));
 }

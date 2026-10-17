@@ -77,9 +77,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  font-weight: 600;
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
   color: rgb(var(--fg));
 }
 
@@ -90,12 +91,6 @@
 .workbench__label-2 {
   font-weight: 400;
   color: rgb(var(--fg-muted));
-}
-
-.workbench__block-2 {
-  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 11px;
-  color: rgb(var(--fg-subtle));
 }
 
 .workbench__icon-2 {

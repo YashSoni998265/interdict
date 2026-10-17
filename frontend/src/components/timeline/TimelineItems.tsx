@@ -76,7 +76,6 @@ export function StepCard({ step, index, firstAt }: { step: ToolStep; index: numb
               </button>
             </Tip>
           </div>
-          <InputList input={call?.input} />
         </div>
         <div className="step-card__stack">
           {step.state === 'running' ? (
@@ -111,8 +110,12 @@ export function StepCard({ step, index, firstAt }: { step: ToolStep; index: numb
           </p>
         ) : null}
         {result ? (
-          <Disclosure summary="Show graph proof">
+          <Disclosure summary="Show inputs and graph proof">
             <div className="step-card__block-3">
+              <div>
+                <div className="step-card__block-4">Tool inputs</div>
+                <InputList input={call?.input} />
+              </div>
               {result.evidence_ids.length > 0 ? (
                 <div className="step-card__row-3">
                   <span className="step-card__label-6">Evidence ids</span>

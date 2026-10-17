@@ -15,7 +15,7 @@
   font-size: 0.8125rem;
   line-height: 1.25rem;
   color: rgb(var(--fg));
-  box-shadow: 0 0 0 1px rgb(var(--elevated)), 0 12px 32px -12px rgb(var(--elevated));
+  box-shadow: var(--shadow-elevated);
 }
 
 .tip__arrow {
