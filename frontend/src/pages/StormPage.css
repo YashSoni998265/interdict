@@ -365,7 +365,15 @@
 }
 
 .storm-page__how {
-  margin-top: 1rem;
+  margin-top: 1.75rem;
+}
+
+.storm-page__how-title {
+  margin-bottom: 0.875rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: rgb(var(--fg-muted));
 }
 
 .storm-page__heading-row {
