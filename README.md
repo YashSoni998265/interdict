@@ -30,6 +30,129 @@ Every verdict comes from a connected-data operation in FalkorDB, never from the 
 | Revision compare-and-set in the same query as each mutation | Certificates are superseded the moment the graph changes |
 | A per-session memory graph | Dated plans and certificates, recalled first for the same assets |
 
+## Graph data model
+The whole product runs on FalkorDB graphs. A synthetic environment is generated from a fixed seed into one graph, and every visitor works on a private copy of it.
+
+| Graph | What it holds | Lifetime |
+| :--- | :--- | :--- |
+| `template` | The environment: 1,235 nodes and 2,566 relationships | Built from the seed at startup |
+| `sandbox:{session}` | A visitor's private copy (`GRAPH.COPY`), plus the derived `ATTACK_STEP` edges | 2 hours idle |
+| Candidate graphs | One copy of the sandbox per Path Hunter round, with the proposed policies applied | Deleted after the hunt |
+| `cert:{id}` | The candidate graph a certificate was issued on | 24 hours |
+| `memory:{session}` | What the agent learned: `Plan`, `Certificate` and `Asset` nodes | 7 days |
+
+```mermaid
+flowchart LR
+    Internet -- EXPOSES --> Ingress -- ROUTES_TO --> Service -- TARGETS --> Pod
+    Pod -- RUNS_IMAGE --> ContainerImage -- HAS_VULNERABILITY --> Vulnerability
+    Pod -- CAN_REACH --> Pod
+    Pod -- CAN_REACH --> Database
+    Pod -- ASSUMES_ROLE --> IAMRole -- GRANTS_ACCESS --> IAMPermission -- APPLIES_TO --> Database
+    NetworkPolicy -- SELECTS --> Pod
+    Alert -- ON_WORKLOAD --> Pod
+    Alert -- REFERENCES --> Vulnerability
+```
+
+**Nodes** (counts in `template`):
+
+| Label | What it is | Count |
+| :--- | :--- | ---: |
+| `Internet` | The untrusted outside | 1 |
+| `Ingress`, `Service` | How traffic gets in | 6, 35 |
+| `Pod` | A workload, with its namespace, app and dependency manifest (complete, partial or none) | 51 |
+| `ContainerImage`, `Vulnerability` | What a pod runs, and its vulnerabilities (status, attack vector, severity) | 35, 81 |
+| `IAMRole`, `IAMPermission` | Cloud identity: the roles a pod assumes and what they grant | 9, 8 |
+| `Database` | Data stores; crown jewels carry `is_crown_jewel: true` | 4 |
+| `PlatformService` | Shared platform services (`kube-dns`) | 1 |
+| `NetworkPolicy` | Kubernetes egress policies: existing ones, and the Path Hunter's candidates | 3 |
+| `Alert` | One scanner alert in the storm | 1,000 |
+| `Meta` | The sandbox revision and the seed | 1 |
+
+**Relationships:**
+
+| Type | From → to | Count |
+| :--- | :--- | ---: |
+| `EXPOSES`, `ROUTES_TO`, `TARGETS` | Internet → Ingress → Service → Pod: exposure | 6, 8, 51 |
+| `RUNS_IMAGE`, `HAS_VULNERABILITY` | Pod → ContainerImage → Vulnerability | 51, 81 |
+| `CAN_REACH` | Pod → Pod, Database or PlatformService: an observed flow, with port and protocol | 187 |
+| `ASSUMES_ROLE`, `GRANTS_ACCESS`, `APPLIES_TO` | Pod → IAMRole → IAMPermission → Database: authorization | 13, 8, 8 |
+| `SELECTS`, `ALLOWS_EGRESS` | NetworkPolicy → Pod it applies to, and → destinations it allows | 6, 5 |
+| `DEPENDS_ON` | Pod → a declared dependency (port, protocol) | 142 |
+| `ON_WORKLOAD`, `REFERENCES` | Alert → Pod, and → Vulnerability | 1,000, 1,000 |
+| `ATTACK_STEP` (derived) | One possible attacker move: Internet → Pod (`ENTRY`), Pod → Pod (`LATERAL`), Pod → Database (`GOAL`) | Built per sandbox |
+
+Every evidence relationship (exposure, vulnerability, reachability and authorization) carries its provenance: `id`, `evidence_source`, `observed_at`, `valid_until` and `verified`. Evidence past `valid_until` makes a verdict inconclusive, never "safe". Each `ATTACK_STEP` carries `capacity: 1`, the ids of the evidence behind it, the revision it was built at, and a MITRE ATT&CK technique.
+
+## Cypher queries the product depends on
+Every query is a fixed, parameterised template in [`backend/src/interdict/engine/`](backend/src/interdict/engine/) or [`memory.py`](backend/src/interdict/memory.py). No query text is ever written by a model or built from user input, and the agent can only call the seven tools. These are the queries the verdicts rest on, exactly as they run.
+
+**1. Evidence: the authorization tier** (`evidence.py`, `Q_AUTHORIZATION`). Four hops from a pod to a database, with the provenance of each hop:
+```cypher
+MATCH (p:Pod)-[ar:ASSUMES_ROLE]->(role:IAMRole)-[g:GRANTS_ACCESS]->(perm:IAMPermission)-[ap:APPLIES_TO]->(db:Database)
+RETURN p.id, db.id, role.arn, perm.id, perm.effect, [ar.id, g.id, ap.id],
+       [ar.verified, g.verified, ap.verified], [ar.observed_at, g.observed_at, ap.observed_at],
+       [ar.valid_until, g.valid_until, ap.valid_until], [ar.evidence_source, g.evidence_source, ap.evidence_source]
+```
+The exposure, vulnerability and reachability tiers follow the same pattern (`Q_EXPOSURE`, `Q_VULNERABILITY`, `Q_REACHABILITY`).
+
+**2. The attack graph, built in Cypher** (`attackgraph.py`, `Q_LATERAL`). A lateral move exists only where an observed flow reaches a pod with an active, network-exploitable vulnerability. `Q_ENTRY` and `Q_GOAL` build the entry and final steps the same way; a goal step needs an `Allow` IAM grant to the crown jewel.
+```cypher
+MATCH (a:Pod)-[c:CAN_REACH]->(b:Pod) WHERE a.id <> b.id
+MATCH (b)-[:RUNS_IMAGE]->(:ContainerImage)-[:HAS_VULNERABILITY]->(v:Vulnerability {status: 'ACTIVE'})
+WHERE coalesce(v.attack_vector, 'NETWORK') IN ['NETWORK', 'ADJACENT']
+WITH a, b, collect(DISTINCT c.port) AS ports, collect(DISTINCT c.id) + collect(DISTINCT v.id) AS backing
+CREATE (a)-[:ATTACK_STEP {kind: 'LATERAL', capacity: 1, ports: ports, backing_evidence_ids: backing,
+        built_at_revision: $revision, technique_id: 'T1210', technique: 'Exploitation of Remote Services'}]->(b)
+```
+
+**3. Triage: what the Internet can reach** (`attackgraph.py`, `Q_FORWARD`):
+```cypher
+MATCH (i:Internet {id: $internet_id}) CALL algo.bfs(i, $depth, 'ATTACK_STEP') YIELD nodes RETURN [n IN nodes | n.id]
+```
+
+**4. Bounded attack chains, method E** (`attackgraph.py`). Variable-length paths over the raw `CAN_REACH` evidence, at most 3 lateral hops:
+```cypher
+MATCH path = (p0:Pod)-[:CAN_REACH*0..3]->(pm:Pod)
+WHERE p0.id IN $entries AND pm.id IN $goals
+RETURN [n IN nodes(path) | n.id] LIMIT $limit
+```
+
+**5. Max-flow to the crown jewels, method F** (`attackgraph.py`, `Q_MAXFLOW`). With unit capacities, the value is the number of edge-disjoint attack paths; 0 means none survives:
+```cypher
+MATCH (s:Internet {id: $internet_id}) MATCH (t:Database) WHERE t.id IN $targets
+WITH s, collect(t) AS targets
+CALL algo.maxFlow({sourceNodes: [s], targetNodes: targets, capacityProperty: 'capacity', relationshipTypes: ['ATTACK_STEP']})
+YIELD edges, edgeFlows, maxFlow
+RETURN maxFlow, [e IN edges | [startNode(e).id, endNode(e).id]], edgeFlows
+```
+
+**6. Kubernetes policy semantics, in the candidate graph** (`hunter.py`, `Q_PRUNE`). FalkorDB itself deletes every flow that no selecting policy allows any more. The result must equal the planner's prediction, or nothing is certified:
+```cypher
+MATCH (np:NetworkPolicy)-[:SELECTS]->(p:Pod) WHERE 'Egress' IN np.policy_types
+WITH DISTINCT p MATCH (p)-[c:CAN_REACH]->(d)
+OPTIONAL MATCH (p)<-[:SELECTS]-(q:NetworkPolicy)-[a:ALLOWS_EGRESS]->(d)
+WHERE 'Egress' IN q.policy_types AND a.port = c.port AND a.protocol = c.protocol
+WITH c, count(a) AS allowed WHERE allowed = 0
+WITH collect(c) AS doomed, collect(c.id) AS ids
+FOREACH (c IN doomed | DELETE c) RETURN ids
+```
+
+**7. Every sandbox change, with a revision compare-and-set** (`sandbox.py`, `mutate`). The change and the revision bump happen in one query, so a certificate from an earlier revision can never look current:
+```cypher
+MATCH (m:Meta {id: 'meta'}) WHERE m.revision = $expected_revision WITH m
+<the change>
+SET m.revision = m.revision + 1 RETURN m.revision
+```
+
+**8. Memory, read first** (`memory.py`, `Q_RECALL`):
+```cypher
+MATCH (a:Asset) WHERE a.id IN $assets MATCH (p:Plan)-[:PROTECTS]->(a)
+WITH DISTINCT p OPTIONAL MATCH (p)-[:CERTIFIED_BY]->(c:Certificate)
+RETURN properties(p), properties(c) ORDER BY p.created_at DESC LIMIT $limit
+```
+
+**Graph commands:** `GRAPH.COPY` creates each visitor's sandbox from `template`, and a candidate graph from the sandbox for each Path Hunter round.
+
 ## Architecture
 ```mermaid
 flowchart LR
