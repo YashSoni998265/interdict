@@ -24,7 +24,7 @@
 }
 
 .overlay-picker__label--verified {
-  color: rgb(4 120 87);
+  color: rgb(var(--green-text));
 }
 
 .overlay-picker__label--not-verified {

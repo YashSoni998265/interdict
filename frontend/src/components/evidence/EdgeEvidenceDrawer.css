@@ -30,20 +30,20 @@
 .edge-evidence-drawer__state--active {
   border-color: rgb(244 63 94 / 0.4);
   background-color: rgb(244 63 94 / 0.1);
-  color: rgb(159 18 57);
+  color: rgb(var(--rose-text-strong));
 }
 
 .edge-evidence-drawer__state--cut {
   border-style: dashed;
   border-color: rgb(124 58 237 / 0.5);
   background-color: rgb(139 92 246 / 0.1);
-  color: rgb(91 33 182);
+  color: rgb(var(--violet-text-strong));
 }
 
 .edge-evidence-drawer__state--residual {
   border-color: rgb(234 88 12 / 0.5);
   background-color: rgb(249 115 22 / 0.1);
-  color: rgb(154 52 18);
+  color: rgb(var(--orange-text-strong));
 }
 
 .edge-evidence-drawer__state--cleared {

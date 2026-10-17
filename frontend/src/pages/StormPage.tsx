@@ -13,7 +13,6 @@ import { ClusterCard } from '@/components/storm/ClusterCard';
 import { Funnel } from '@/components/storm/Funnel';
 import { Banner, EmptyState, ErrorState, LoadingState } from '@/components/states';
 import { Button } from '@/components/ui/button';
-import { Disclosure } from '@/components/ui/disclosure';
 import { Popover } from '@/components/ui/popover';
 import { cn } from '@/lib/cn';
 import { formatUtc } from '@/lib/format';
@@ -248,9 +247,10 @@ export default function StormPage() {
                   </>
                 )}
               </div>
-              <Disclosure summary="How we got here: every step of the triage, with its graph proof" className="storm-page__how">
+              <div className="storm-page__how">
+                <h3 className="storm-page__how-title">How we got here: every step of the triage, with its graph proof</h3>
                 <Funnel storm={data} />
-              </Disclosure>
+              </div>
             </section>
             <Restraint
               storm={data}

@@ -65,4 +65,9 @@ export default defineConfig([
     extends: [js.configs.recommended],
     languageOptions: { globals: globals.node, sourceType: 'module' },
   },
+  {
+    // Plain scripts served as they are (public/theme.js runs before the app, in the browser).
+    files: ['public/**/*.js'],
+    languageOptions: { globals: globals.browser, sourceType: 'script' },
+  },
 ]);

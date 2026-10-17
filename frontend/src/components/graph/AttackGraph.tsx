@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SubgraphView } from '@/api/types';
 import { edgeState, type Overlay } from '@/lib/graphState';
 import { layoutGraph, type Positions } from '@/lib/layout';
+import { useColorTheme } from '@/lib/theme';
 
 import { ErrorState, LoadingState } from '../states';
 import { Button } from '../ui/button';
@@ -76,6 +77,7 @@ export function AttackGraph({
   onSelectNode,
   onOpenEdge,
 }: AttackGraphProps) {
+  const colorTheme = useColorTheme();
   const structure = useMemo(
     () => `${subgraph.nodes.map((n) => n.id).join('|')}#${subgraph.edges.map((e) => e.id).join('|')}`,
     [subgraph],
@@ -220,11 +222,11 @@ export function AttackGraph({
           panOnScroll={false}
           preventScrolling={false}
           zoomOnDoubleClick={false}
-          colorMode="dark"
+          colorMode={colorTheme}
           proOptions={{ hideAttribution: true }}
           aria-label={`Attack subgraph with ${subgraph.nodes.length} nodes and ${subgraph.edges.length} attack steps. The table view is the text alternative.`}
         >
-          <Background gap={22} size={1} color="rgb(199 199 204)" />
+          <Background gap={22} size={1} color="rgb(var(--line-strong))" />
           <ZoomBar />
         </ReactFlow>
       )}

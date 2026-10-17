@@ -20,7 +20,7 @@
 }
 
 .num__block-4 {
-  color: rgb(161 98 7);
+  color: rgb(var(--yellow-text));
 }
 
 .num__block-5 {

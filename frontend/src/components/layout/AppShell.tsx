@@ -17,6 +17,7 @@ import { Tip } from '../ui/tooltip';
 
 import { Wordmark } from './Logo';
 import { SimulationBadge } from './SimulationBadge';
+import { ThemeToggle } from './ThemeToggle';
 import './AppShell.css';
 
 function NavItem({ to, children, end = false, match }: { to: string; children: string; end?: boolean; match?: boolean }) {
@@ -71,6 +72,7 @@ function Header({ onOpenSandbox }: { onOpenSandbox: () => void }) {
             </Tip>
           ) : null}
           <SimulationBadge compact />
+          <ThemeToggle />
           <Button size="sm" variant="secondary" onClick={onOpenSandbox} aria-label="Open the sandbox: break it yourself">
             <Wrench aria-hidden />
             <span className="header__wide-label">Break it yourself</span>

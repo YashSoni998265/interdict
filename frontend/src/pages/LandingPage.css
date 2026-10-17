@@ -72,7 +72,7 @@
   padding: 1.25rem 1.5rem;
   font-size: 1rem;
   line-height: 1.5;
-  color: rgb(133 77 14);
+  color: rgb(var(--yellow-text-strong));
 }
 
 .landing-hero__field-placeholder {

@@ -74,7 +74,7 @@
   padding-right: 0.75rem;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: rgb(146 64 14);
+  color: rgb(var(--amber-text-strong));
 }
 
 .header__wide-label {

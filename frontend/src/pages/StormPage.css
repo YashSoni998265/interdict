@@ -29,7 +29,7 @@
 .evidence-status__button--not-complete {
   border-color: rgb(250 204 21 / 0.3);
   background-color: rgb(250 204 21 / 0.1);
-  color: rgb(161 98 7);
+  color: rgb(var(--yellow-text));
 }
 
 .evidence-status__icon {
@@ -89,7 +89,7 @@
 }
 
 .evidence-status__cell--yellow {
-  color: rgb(161 98 7);
+  color: rgb(var(--yellow-text));
 }
 
 .evidence-status__cell--not-yellow {
@@ -345,11 +345,11 @@
 }
 
 .storm-headline__tile--red .storm-headline__value {
-  color: rgb(225 29 72);
+  color: rgb(var(--rose-figure));
 }
 
 .storm-headline__tile--yellow .storm-headline__value {
-  color: rgb(161 98 7);
+  color: rgb(var(--yellow-text));
 }
 
 .storm-headline__label {
@@ -365,7 +365,15 @@
 }
 
 .storm-page__how {
-  margin-top: 1rem;
+  margin-top: 1.75rem;
+}
+
+.storm-page__how-title {
+  margin-bottom: 0.875rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: rgb(var(--fg-muted));
 }
 
 .storm-page__heading-row {

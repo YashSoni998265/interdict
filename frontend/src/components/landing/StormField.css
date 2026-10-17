@@ -77,7 +77,7 @@
 }
 
 .storm-field__step--red .storm-field__value {
-  color: rgb(225 29 72);
+  color: rgb(var(--rose-figure));
 }
 
 .storm-field__label {

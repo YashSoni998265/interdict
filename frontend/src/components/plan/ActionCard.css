@@ -15,7 +15,7 @@
 }
 
 .flow-list--yellow {
-  color: rgb(161 98 7);
+  color: rgb(var(--yellow-text));
 }
 
 .flow-list--not-yellow {
@@ -45,7 +45,7 @@
   width: 0.875rem;
   height: 0.875rem;
   flex-shrink: 0;
-  color: rgb(109 40 217);
+  color: rgb(var(--violet-text));
 }
 
 .action-card__block {
@@ -74,7 +74,7 @@
 }
 
 .action-card__label {
-  color: rgb(109 40 217);
+  color: rgb(var(--violet-text));
 }
 
 .action-card__label-2 {
@@ -116,9 +116,9 @@
 }
 
 .action-card__label-6 {
-  color: rgb(109 40 217);
+  color: rgb(var(--violet-text));
   text-decoration-line: line-through;
-  text-decoration-color: rgb(109 40 217 / 0.7);
+  text-decoration-color: rgb(var(--violet-text) / 0.7);
 }
 
 .action-card__disclosure {

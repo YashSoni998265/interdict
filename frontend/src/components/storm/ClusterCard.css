@@ -97,7 +97,7 @@
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
-  color: rgb(185 28 28);
+  color: rgb(var(--red-text));
 }
 
 .cluster-card__block-2 {

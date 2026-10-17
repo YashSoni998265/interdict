@@ -162,7 +162,7 @@
 }
 
 .document__label--string {
-  color: rgb(161 98 7);
+  color: rgb(var(--yellow-text));
 }
 
 .document__label--not-string {
@@ -246,7 +246,7 @@
 }
 
 .document__text--not-agreement {
-  color: rgb(153 27 27);
+  color: rgb(var(--red-text-strong));
 }
 
 .document__block-5 {
@@ -332,7 +332,7 @@
 .document__label-9 {
   font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 12px;
-  color: rgb(161 98 7);
+  color: rgb(var(--yellow-text));
 }
 
 .document__list-2 {
@@ -495,7 +495,7 @@
   width: 1.75rem;
   height: 1.75rem;
   flex-shrink: 0;
-  color: rgb(4 120 87);
+  color: rgb(var(--green-text));
 }
 
 .certificate-page__icon-3 {
@@ -503,7 +503,7 @@
   width: 1.75rem;
   height: 1.75rem;
   flex-shrink: 0;
-  color: rgb(82 82 91);
+  color: rgb(var(--zinc-text));
 }
 
 .certificate-page__block {
@@ -518,11 +518,11 @@
 }
 
 .certificate-page__heading--current {
-  color: rgb(4 120 87);
+  color: rgb(var(--green-text));
 }
 
 .certificate-page__heading--not-current {
-  color: rgb(63 63 70);
+  color: rgb(var(--zinc-text-strong));
 }
 
 .certificate-page__text {
