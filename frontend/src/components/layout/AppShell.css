@@ -192,7 +192,11 @@
   overflow: hidden;
 }
 
+/* The page's scroll container. Positioned, so absolutely positioned content inside it (screen-reader
+   labels, for one) is placed and scrolled with the page instead of stretching the window past the
+   footer. */
 .app-shell__main {
+  position: relative;
   display: flex;
   min-height: 0px;
   flex: 1 1 0%;
