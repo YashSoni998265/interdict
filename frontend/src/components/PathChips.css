@@ -1,0 +1,65 @@
+/* Styles for PathChips.tsx */
+
+.path-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.path-chips-2 {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.path-chips__icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex-shrink: 0;
+  color: rgb(var(--fg-subtle));
+}
+
+.path-chips__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 0.25rem;
+  border-width: 1px;
+  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.path-chips__chip--xs {
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  font-size: 10.5px;
+}
+
+.path-chips__chip--not-xs {
+  padding-left: 0.375rem;
+  padding-right: 0.375rem;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  font-size: 11.5px;
+}
+
+.path-chips__chip--t {
+  background-color: rgb(var(--canvas));
+}
+
+.path-chips__chip--not-t {
+  border-color: rgb(var(--line));
+  background-color: rgb(var(--canvas));
+  color: rgb(var(--fg));
+}
+
+.path-chips__chip--last {
+  font-weight: 500;
+}
+
+.path-chips__icon-2 {
+  width: 0.75rem;
+  height: 0.75rem;
+}

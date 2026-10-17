@@ -11,12 +11,13 @@ import { Button } from '../ui/button';
 import { Tag } from '../ui/tag';
 
 import { EDGE_STYLE } from './graphTheme';
+import './GraphTable.css';
 
 const STATE_TEXT: Record<string, string> = {
-  active: 'text-rose-300',
-  cut: 'text-violet-300',
-  residual: 'text-orange-300',
-  cleared: 'text-fg-subtle',
+  active: 'graph-table__state--active',
+  cut: 'graph-table__state--cut',
+  residual: 'graph-table__state--residual',
+  cleared: 'graph-table__state--cleared',
 };
 
 /** The text alternative to the graph: every attack step and workload, keyboard reachable. */
@@ -34,19 +35,19 @@ export function GraphTable({
   onOpenEdge: (id: string) => void;
 }) {
   return (
-    <div className="space-y-4 p-3">
-      <div className="overflow-x-auto rounded-md border border-line">
-        <table className="w-full min-w-[34rem] text-left text-2xs">
-          <caption className="px-2.5 py-2 text-left text-ui font-medium text-fg">
+    <div className="graph-table">
+      <div className="graph-table__box">
+        <table className="graph-table__table">
+          <caption className="graph-table__caption">
             Attack steps ({overlay.label})
           </caption>
-          <thead className="bg-surface text-fg-subtle">
+          <thead className="graph-table__head">
             <tr>
-              <th scope="col" className="px-2.5 py-1.5 font-medium">Step</th>
-              <th scope="col" className="px-2.5 py-1.5 font-medium">Kind</th>
-              <th scope="col" className="px-2.5 py-1.5 font-medium">Technique</th>
-              <th scope="col" className="px-2.5 py-1.5 font-medium">State</th>
-              <th scope="col" className="px-2.5 py-1.5 font-medium">
+              <th scope="col" className="graph-table__heading-cell">Step</th>
+              <th scope="col" className="graph-table__heading-cell">Kind</th>
+              <th scope="col" className="graph-table__heading-cell">Technique</th>
+              <th scope="col" className="graph-table__heading-cell">State</th>
+              <th scope="col" className="graph-table__heading-cell">
                 <span className="sr-only">Evidence</span>
               </th>
             </tr>
@@ -55,22 +56,22 @@ export function GraphTable({
             {subgraph.edges.map((edge) => {
               const state = edgeState(edge, overlay);
               return (
-                <tr key={edge.id} className="border-t border-line align-top">
-                  <th scope="row" className="px-2.5 py-1.5 font-mono font-normal text-fg">
+                <tr key={edge.id} className="graph-table-2">
+                  <th scope="row" className="graph-table__heading-cell-2">
                     {nodeLabel(edge.source)} → {nodeLabel(edge.target)}
-                    {edge.ports.length > 0 ? <span className="text-fg-subtle"> :{edge.ports.join(',')}</span> : null}
+                    {edge.ports.length > 0 ? <span className="graph-table__label"> :{edge.ports.join(',')}</span> : null}
                   </th>
-                  <td className="px-2.5 py-1.5 font-mono text-fg-muted">{edge.kind ?? '–'}</td>
-                  <td className="px-2.5 py-1.5 text-fg-muted">
-                    {edge.technique_id ? <span className="font-mono">{edge.technique_id}</span> : null} {edge.technique}
+                  <td className="graph-table__cell">{edge.kind ?? '–'}</td>
+                  <td className="graph-table__cell-2">
+                    {edge.technique_id ? <span className="graph-table__label-2">{edge.technique_id}</span> : null} {edge.technique}
                   </td>
-                  <td className={cn('px-2.5 py-1.5', STATE_TEXT[state])}>
+                  <td className={cn('graph-table__cell-3', STATE_TEXT[state])}>
                     {EDGE_STYLE[state].label}
                     {state === 'cut' && edge.cut_by.length > 0 ? (
-                      <div className="mt-0.5 break-all font-mono text-[10.5px] text-fg-subtle">{edge.cut_by.join(', ')}</div>
+                      <div className="graph-table__block">{edge.cut_by.join(', ')}</div>
                     ) : null}
                   </td>
-                  <td className="px-2.5 py-1.5 text-right">
+                  <td className="graph-table__cell-4">
                     <Button size="xs" variant="ghost" onClick={() => onOpenEdge(edge.id)} aria-label={`Open evidence for ${edge.source} to ${edge.target}`}>
                       <FileSearch aria-hidden />
                       Evidence
@@ -83,32 +84,32 @@ export function GraphTable({
         </table>
       </div>
 
-      <div className="overflow-x-auto rounded-md border border-line">
-        <table className="w-full min-w-[34rem] text-left text-2xs">
-          <caption className="px-2.5 py-2 text-left text-ui font-medium text-fg">Nodes</caption>
-          <thead className="bg-surface text-fg-subtle">
+      <div className="graph-table__box">
+        <table className="graph-table__table">
+          <caption className="graph-table__caption">Nodes</caption>
+          <thead className="graph-table__head">
             <tr>
-              <th scope="col" className="px-2.5 py-1.5 font-medium">Node</th>
-              <th scope="col" className="px-2.5 py-1.5 font-medium">Kind</th>
-              <th scope="col" className="px-2.5 py-1.5 font-medium">Roles and CVEs</th>
-              <th scope="col" className="px-2.5 py-1.5 text-right font-medium">Alerts</th>
-              <th scope="col" className="px-2.5 py-1.5 font-medium">
+              <th scope="col" className="graph-table__heading-cell">Node</th>
+              <th scope="col" className="graph-table__heading-cell">Kind</th>
+              <th scope="col" className="graph-table__heading-cell">Roles and CVEs</th>
+              <th scope="col" className="graph-table__heading-cell-3">Alerts</th>
+              <th scope="col" className="graph-table__heading-cell">
                 <span className="sr-only">Select</span>
               </th>
             </tr>
           </thead>
           <tbody>
             {subgraph.nodes.map((node) => (
-              <tr key={node.id} className={cn('border-t border-line align-top', node.id === selectedNodeId && 'bg-elevated/60')}>
-                <th scope="row" className="px-2.5 py-1.5 font-mono font-normal text-fg">
+              <tr key={node.id} className={cn('graph-table-2', node.id === selectedNodeId && 'graph-table--alt')}>
+                <th scope="row" className="graph-table__heading-cell-2">
                   {nodeLabel(node.id)}
                 </th>
-                <td className="px-2.5 py-1.5 text-fg-muted">
+                <td className="graph-table__cell-2">
                   {node.kind === 'Database' && node.crown_jewel ? 'Crown jewel' : node.kind}
                 </td>
-                <td className="px-2.5 py-1.5">
+                <td className="graph-table__cell-3">
                   {node.kind === 'Pod' ? (
-                    <div className="flex flex-wrap gap-1">
+                    <div className="graph-table__row">
                       {node.roles.map((role) => (
                         <Tag key={role}>{ROLE[role].label}</Tag>
                       ))}
@@ -124,13 +125,13 @@ export function GraphTable({
                       ))}
                     </div>
                   ) : (
-                    <span className="text-fg-subtle">–</span>
+                    <span className="graph-table__label">–</span>
                   )}
                 </td>
-                <td className="px-2.5 py-1.5 text-right text-fg">
+                <td className="graph-table__cell-5">
                   {node.kind === 'Pod' ? <Num metric="podAlerts" value={node.alerts} /> : '–'}
                 </td>
-                <td className="px-2.5 py-1.5 text-right">
+                <td className="graph-table__cell-4">
                   {node.kind === 'Pod' ? (
                     <Button
                       size="xs"
@@ -153,11 +154,11 @@ export function GraphTable({
 
 export function GraphLegend() {
   return (
-    <ul className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[10.5px] text-fg-muted" aria-label="Legend">
+    <ul className="graph-legend" aria-label="Legend">
       {(Object.keys(EDGE_STYLE) as (keyof typeof EDGE_STYLE)[]).map((state) => {
         const style = EDGE_STYLE[state];
         return (
-          <li key={state} className="flex items-center gap-1.5">
+          <li key={state} className="graph-legend-2">
             <svg width="22" height="8" aria-hidden>
               <line x1="1" y1="4" x2="21" y2="4" stroke={style.stroke} strokeWidth={style.width + 0.25} strokeDasharray={style.dash} />
             </svg>

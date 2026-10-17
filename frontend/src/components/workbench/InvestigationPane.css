@@ -1,0 +1,158 @@
+/* Styles for InvestigationPane.tsx */
+
+.agent-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.agent-line__icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.empty-timeline > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1rem;
+  margin-bottom: 0;
+}
+
+.empty-timeline {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.empty-timeline__block > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.375rem;
+  margin-bottom: 0;
+}
+
+.empty-timeline__title {
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  color: rgb(var(--fg));
+}
+
+.empty-timeline__text {
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  color: rgb(var(--fg-muted));
+}
+
+.empty-timeline__list > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.375rem;
+  margin-bottom: 0;
+}
+
+.empty-timeline-2 {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+}
+
+.empty-timeline__label {
+  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: rgb(var(--fg-subtle));
+}
+
+.empty-timeline__label-2 {
+  color: rgb(var(--fg));
+}
+
+.empty-timeline__label-3 {
+  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 11px;
+  color: rgb(var(--fg-subtle));
+}
+
+.investigation-pane__block {
+  flex-shrink: 0;
+  border-bottom-width: 1px;
+  border-color: rgb(var(--line));
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+}
+
+.investigation-pane__block > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+.investigation-pane__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 0.75rem;
+  row-gap: 0.25rem;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: rgb(var(--fg-muted));
+}
+
+.investigation-pane__label {
+  color: rgb(var(--fg-subtle));
+}
+
+.investigation-pane__label--ran {
+  color: rgb(var(--fg));
+}
+
+.investigation-pane__label--not-ran {
+  color: rgb(var(--fg-subtle));
+}
+
+.investigation-pane__label-2 {
+  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  color: rgb(var(--fg-subtle));
+}
+
+.investigation-pane__list > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.125rem;
+  margin-bottom: 0;
+}
+
+.investigation-pane {
+  display: flex;
+  gap: 0.375rem;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: rgb(253 224 71);
+}
+
+.investigation-pane__icon {
+  margin-top: 1px;
+  width: 0.75rem;
+  height: 0.75rem;
+  flex-shrink: 0;
+}
+
+.investigation-pane__banner {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.investigation-pane__block-2 {
+  min-height: 0px;
+  flex: 1 1 0%;
+  overflow-y: auto;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.investigation-pane__block-2 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+.investigation-pane__list-2 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}

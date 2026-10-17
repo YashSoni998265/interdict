@@ -2,6 +2,7 @@ import { Quote } from 'lucide-react';
 
 import type { UntrustedText as UntrustedTextValue } from '@/api/types';
 import { cn } from '@/lib/cn';
+import './UntrustedText.css';
 
 export interface UntrustedTextProps {
   value: UntrustedTextValue | string | null | undefined;
@@ -25,17 +26,17 @@ function textOf(value: UntrustedTextProps['value']): string | null {
  */
 export function UntrustedText({ value, className, truncate = false }: UntrustedTextProps) {
   const text = textOf(value);
-  if (text === null) return <span className="text-fg-subtle">no title recorded</span>;
+  if (text === null) return <span className="untrusted-text">no title recorded</span>;
   return (
-    <span className={cn('inline-flex min-w-0 max-w-full items-start gap-1.5', className)} data-untrusted="true">
+    <span className={cn('untrusted-text-2', className)} data-untrusted="true">
       <span
-        className="mt-[3px] inline-flex shrink-0 items-center rounded-sm border border-dashed border-line-strong px-0.5 text-fg-subtle"
+        className="untrusted-text__chip"
         aria-hidden
       >
-        <Quote className="size-2.5" />
+        <Quote className="untrusted-text__icon" />
       </span>
       <span className="sr-only">Untrusted scanner text: </span>
-      <span className={cn('min-w-0 break-words font-mono text-[12px] text-fg-muted', truncate && 'truncate')} title={truncate ? text : undefined}>
+      <span className={cn('untrusted-text__label', truncate && 'untrusted-text__label--truncate')} title={truncate ? text : undefined}>
         {text}
       </span>
     </span>

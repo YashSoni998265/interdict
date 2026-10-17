@@ -18,13 +18,14 @@ import { Button } from '../ui/button';
 import { Skeleton } from '../ui/misc';
 import { Tag } from '../ui/tag';
 import { Tip } from '../ui/tooltip';
+import './ClusterCard.css';
 
 function PlanLine({ cluster }: { cluster: ClusterView }) {
   const plan = usePlanPreview(cluster.id);
   if (plan.isPending) {
     return (
-      <div className="flex items-center gap-2 text-2xs text-fg-subtle" role="status">
-        <Skeleton className="h-4 w-20" />
+      <div className="plan-line" role="status">
+        <Skeleton className="plan-line__skeleton" />
         Computing the initial plan…
       </div>
     );
@@ -35,18 +36,18 @@ function PlanLine({ cluster }: { cluster: ClusterView }) {
   const report = plan.data;
   if (report.status === 'PLAN_FOUND' && isEmptyPlan(report.plan) && report.chains.length === 0) {
     return (
-      <p className="text-2xs leading-4 text-fg-muted">
-        <span className="font-medium text-fg">No chain within the planner’s 3-hop bound.</span> The path is longer, so
+      <p className="plan-line-2">
+        <span className="plan-line__label">No chain within the planner’s 3-hop bound.</span> The path is longer, so
         the Path Hunter (no hop limit) finds it and the planner closes it.
       </p>
     );
   }
   if (report.status === 'PLAN_FOUND' && report.plan) {
     return (
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div className="plan-line-3">
         <StatusBadge status="PLAN_FOUND" size="sm" />
-        <span className="text-2xs text-fg-muted">
-          <Num metric="planActions" value={report.plan.actions.length} className="text-fg" />{' '}
+        <span className="plan-line__label-2">
+          <Num metric="planActions" value={report.plan.actions.length} className="plan-line__num" />{' '}
           {plural(report.plan.actions.length, 'action')}
         </span>
         <StatusBadge status={report.plan.impact_status} knownBroken={report.plan.known_broken.length} size="sm" />
@@ -67,8 +68,8 @@ function Outcome({ clusterId }: { clusterId: string }) {
   const hunt = analysis.hunt;
   if (!hunt) return null;
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      <span className="text-2xs text-fg-subtle">This session:</span>
+    <div className="outcome">
+      <span className="outcome__label">This session:</span>
       <OutcomeBadge hunt={hunt} size="sm" />
     </div>
   );
@@ -79,27 +80,27 @@ export function ClusterCard({ cluster, storm }: { cluster: ClusterView; storm: S
   return (
     <article
       className={cn(
-        'flex flex-col rounded-lg border bg-surface transition-colors hover:border-line-strong',
-        cluster.beyond_bound ? 'border-dashed border-line-strong' : 'border-line',
+        'cluster-card',
+        cluster.beyond_bound ? 'cluster-card--beyond-bound' : 'cluster-card--not-beyond-bound',
       )}
       aria-labelledby={`cluster-${cluster.id}`}
     >
-      <div className="space-y-3 px-4 pt-4">
-        <div className="flex items-start gap-2">
-          <Database className="mt-0.5 size-4 shrink-0 text-red-400" aria-hidden />
-          <div className="min-w-0 flex-1">
-            <h3 id={`cluster-${cluster.id}`} className="truncate font-mono text-ui font-medium text-fg">
+      <div className="cluster-card__block">
+        <div className="cluster-card__row">
+          <Database className="cluster-card__icon" aria-hidden />
+          <div className="cluster-card__block-2">
+            <h3 id={`cluster-${cluster.id}`} className="cluster-card__title">
               {cluster.target}
             </h3>
-            <div className="text-2xs text-fg-muted">
-              crown jewel · via <span className="font-mono text-fg">{cluster.entry_ingress}</span>
+            <div className="cluster-card__block-3">
+              crown jewel · via <span className="cluster-card__label">{cluster.entry_ingress}</span>
             </div>
           </div>
           {cluster.beyond_bound ? (
             <Tip
               content={
-                <div className="space-y-1">
-                  <div className="font-mono text-2xs text-fg-muted">CALCULATED_GRAPH</div>
+                <div className="cluster-card__block-4">
+                  <div className="cluster-card__block-5">CALCULATED_GRAPH</div>
                   <div>
                     {hops} LATERAL steps on the witness path, more than the planner enumerates (3). Triage still finds it
                     by reachability, and the Path Hunter verifies it without a hop limit.
@@ -107,9 +108,9 @@ export function ClusterCard({ cluster, storm }: { cluster: ClusterView; storm: S
                 </div>
               }
             >
-              <button type="button" className="cursor-help rounded">
+              <button type="button" className="cluster-card__button">
                 <Tag tone="orange">
-                  <Telescope className="size-3" aria-hidden />
+                  <Telescope className="cluster-card__icon-2" aria-hidden />
                   Deep: {hops} lateral hops
                 </Tag>
               </button>
@@ -119,10 +120,10 @@ export function ClusterCard({ cluster, storm }: { cluster: ClusterView; storm: S
 
         <PathChips path={cluster.witness_path} tone="red" size="xs" />
 
-        <dl className="grid grid-cols-2 gap-2 text-2xs">
-          <div className="rounded-md border border-line bg-canvas px-2.5 py-1.5">
-            <dt className="text-fg-subtle">Chains ≤ 3 hops</dt>
-            <dd className="mt-0.5 text-ui font-semibold text-fg">
+        <dl className="cluster-card__details">
+          <div className="cluster-card__box">
+            <dt className="cluster-card__term">Chains ≤ 3 hops</dt>
+            <dd className="cluster-card__value">
               <Num
                 metric="clusterChains"
                 value={cluster.chain_ids.length}
@@ -130,18 +131,18 @@ export function ClusterCard({ cluster, storm }: { cluster: ClusterView; storm: S
               />
             </dd>
           </div>
-          <div className="rounded-md border border-line bg-canvas px-2.5 py-1.5">
-            <dt className="text-fg-subtle">Workloads</dt>
-            <dd className="mt-0.5 text-ui font-semibold text-fg">
+          <div className="cluster-card__box">
+            <dt className="cluster-card__term">Workloads</dt>
+            <dd className="cluster-card__value">
               <Num metric="clusterWorkloads" value={cluster.workloads.length} />
             </dd>
           </div>
         </dl>
 
-        <ul className="space-y-1" aria-label="Workload roles">
+        <ul className="cluster-card__list" aria-label="Workload roles">
           {cluster.workloads.map((pod) => (
-            <li key={pod} className="flex flex-wrap items-center gap-1 text-2xs">
-              <span className="font-mono text-fg-muted">{pod}</span>
+            <li key={pod} className="cluster-card-2">
+              <span className="cluster-card__label-2">{pod}</span>
               {(storm.roles[pod] ?? []).map((role) => (
                 <Tag key={role} title={ROLE[role].description}>
                   {ROLE[role].label}
@@ -152,12 +153,12 @@ export function ClusterCard({ cluster, storm }: { cluster: ClusterView; storm: S
         </ul>
       </div>
 
-      <div className="mt-4 space-y-2 border-t border-line px-4 py-3">
+      <div className="cluster-card__block-6">
         <PlanLine cluster={cluster} />
         <Outcome clusterId={cluster.id} />
       </div>
-      <div className="mt-auto px-4 pb-4">
-        <Button asChild variant="primary" size="sm" className="w-full">
+      <div className="cluster-card__block-7">
+        <Button asChild variant="primary" size="sm" className="cluster-card__button-2">
           <Link to={`/clusters/${cluster.id}`}>
             Investigate
             <ArrowRight aria-hidden />

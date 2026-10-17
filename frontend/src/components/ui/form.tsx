@@ -1,6 +1,7 @@
 import { forwardRef, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from 'react';
 
 import { cn } from '@/lib/cn';
+import './form.css';
 
 export function Field({
   label,
@@ -19,17 +20,17 @@ export function Field({
 }) {
   const hintId = hint ? `${htmlFor}-hint` : undefined;
   return (
-    <div className={cn('space-y-1.5', className)}>
-      <label htmlFor={htmlFor} className="block text-2xs font-medium uppercase tracking-[0.06em] text-fg-muted">
+    <div className={cn('field', className)}>
+      <label htmlFor={htmlFor} className="field__label">
         {label}
       </label>
       {children}
       {error ? (
-        <p className="text-2xs text-red-400" role="alert">
+        <p className="field__text" role="alert">
           {error}
         </p>
       ) : hint ? (
-        <p id={hintId} className="text-2xs text-fg-subtle">
+        <p id={hintId} className="field__text-2">
           {hint}
         </p>
       ) : null}
@@ -38,13 +39,13 @@ export function Field({
 }
 
 const control =
-  'h-8 w-full rounded-md border border-line bg-canvas px-2.5 text-ui text-fg transition-colors hover:border-line-strong focus-visible:border-accent disabled:opacity-50';
+  'form-control';
 
 export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>(function Select(
   { className, ...props },
   ref,
 ) {
-  return <select ref={ref} className={cn(control, 'pr-7 font-mono text-[12px]', className)} {...props} />;
+  return <select ref={ref} className={cn(control, 'select', className)} {...props} />;
 });
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(function Input(

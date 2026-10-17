@@ -1,0 +1,173 @@
+/* Styles for EdgeEvidenceDrawer.tsx */
+
+.edge-evidence-drawer__block > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1.25rem;
+  margin-bottom: 0;
+}
+
+.edge-evidence-drawer__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.edge-evidence-drawer__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 0.375rem;
+  border-width: 1px;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+}
+
+.edge-evidence-drawer__state--active {
+  border-color: rgb(244 63 94 / 0.4);
+  background-color: rgb(244 63 94 / 0.1);
+  color: rgb(254 205 211);
+}
+
+.edge-evidence-drawer__state--cut {
+  border-style: dashed;
+  border-color: rgb(167 139 250 / 0.5);
+  background-color: rgb(139 92 246 / 0.1);
+  color: rgb(221 214 254);
+}
+
+.edge-evidence-drawer__state--residual {
+  border-color: rgb(251 146 60 / 0.5);
+  background-color: rgb(249 115 22 / 0.1);
+  color: rgb(254 215 170);
+}
+
+.edge-evidence-drawer__state--cleared {
+  border-color: rgb(var(--line));
+  background-color: rgb(var(--elevated));
+  color: rgb(var(--fg-muted));
+}
+
+.edge-evidence-drawer__icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.edge-evidence-drawer__label {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: rgb(var(--fg-subtle));
+}
+
+.edge-evidence-drawer__section > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.375rem;
+  margin-bottom: 0;
+}
+
+.edge-evidence-drawer__code {
+  display: block;
+  border-radius: 0.375rem;
+  border-width: 1px;
+  border-color: rgb(var(--line));
+  background-color: rgb(var(--canvas));
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  color: rgb(var(--fg));
+}
+
+.edge-evidence-drawer__text {
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  color: rgb(var(--fg-muted));
+}
+
+.edge-evidence-drawer__details {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  column-gap: 0.75rem;
+  row-gap: 0.375rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+}
+
+.edge-evidence-drawer__term {
+  color: rgb(var(--fg-muted));
+}
+
+.edge-evidence-drawer__value {
+  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  color: rgb(var(--fg));
+}
+
+.edge-evidence-drawer__value-2 {
+  color: rgb(var(--fg));
+}
+
+.edge-evidence-drawer__label-2 {
+  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.edge-evidence-drawer__block-2 {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: rgb(var(--fg-subtle));
+}
+
+.edge-evidence-drawer__row-2 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.edge-evidence-drawer__label-3 {
+  color: rgb(var(--fg-subtle));
+}
+
+.edge-evidence-drawer__section-2 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+.edge-evidence-drawer__list > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+}
+
+.edge-evidence-drawer > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.375rem;
+  margin-bottom: 0;
+}
+
+.edge-evidence-drawer__row-3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.edge-evidence-drawer__label-4 {
+  word-break: break-all;
+  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  color: rgb(var(--fg));
+}
+
+.edge-evidence-drawer__block-3 {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: rgb(var(--fg-muted));
+}
+
+.edge-evidence-drawer__text-2 {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: rgb(var(--fg-subtle));
+}

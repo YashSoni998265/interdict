@@ -5,6 +5,7 @@ import { formatCount, formatMs } from '@/lib/format';
 import { CATEGORY_TEXT, METRICS, type MetricId } from '@/lib/numberSources';
 
 import { Tip } from './ui/tooltip';
+import './Num.css';
 
 export interface NumProps {
   metric: MetricId;
@@ -44,15 +45,15 @@ export function Num({ metric, value, format = 'count', truncated = false, detail
   return (
     <Tip
       content={
-        <div className="space-y-1" data-testid="num-source">
-          <div className="font-mono text-2xs tracking-tight text-fg-muted">
+        <div className="num__block" data-testid="num-source">
+          <div className="num__block-2">
             {source.category}
             {'qualifier' in source && source.qualifier ? ` · ${source.qualifier}` : ''}
           </div>
-          <div className="text-2xs text-fg-subtle">{CATEGORY_TEXT[source.category]}</div>
+          <div className="num__block-3">{CATEGORY_TEXT[source.category]}</div>
           <div>{source.formula}</div>
-          {truncated ? <div className="text-yellow-300">Truncated: the true count is at least this.</div> : null}
-          {detail ? <div className="border-t border-line pt-1 text-fg-muted">{detail}</div> : null}
+          {truncated ? <div className="num__block-4">Truncated: the true count is at least this.</div> : null}
+          {detail ? <div className="num__block-5">{detail}</div> : null}
         </div>
       }
     >
@@ -60,8 +61,8 @@ export function Num({ metric, value, format = 'count', truncated = false, detail
         type="button"
         data-metric={metric}
         className={cn(
-          'tabular inline cursor-help rounded-sm text-inherit',
-          !plain && 'underline decoration-fg-subtle/45 decoration-dotted decoration-1 underline-offset-[3px] hover:decoration-fg-muted',
+          'tabular num__button',
+          !plain && 'num__button--not-plain',
           className,
         )}
       >

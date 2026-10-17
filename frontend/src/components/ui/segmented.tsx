@@ -2,6 +2,7 @@ import * as ToggleGroup from '@radix-ui/react-toggle-group';
 import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/cn';
+import './segmented.css';
 
 export interface SegmentedOption<T extends string> {
   value: T;
@@ -37,7 +38,7 @@ export function Segmented<T extends string>({
         if (next) onValueChange(next as T);
       }}
       aria-label={label}
-      className={cn('inline-flex items-center rounded-md border border-line bg-canvas p-0.5', className)}
+      className={cn('segmented', className)}
     >
       {options.map((option) => (
         <ToggleGroup.Item
@@ -46,8 +47,8 @@ export function Segmented<T extends string>({
           disabled={option.disabled}
           aria-label={option.ariaLabel}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-[5px] font-medium text-fg-muted transition-colors hover:text-fg disabled:pointer-events-none disabled:opacity-40 data-[state=on]:bg-elevated data-[state=on]:text-fg data-[state=on]:shadow-[0_0_0_1px_rgb(var(--line))] [&_svg]:shrink-0',
-            size === 'xs' ? 'h-6 px-2 text-2xs [&_svg]:size-3' : 'h-7 px-2.5 text-ui [&_svg]:size-3.5',
+            'segmented-2',
+            size === 'xs' ? 'segmented--xs' : 'segmented--not-xs',
           )}
         >
           {option.label}

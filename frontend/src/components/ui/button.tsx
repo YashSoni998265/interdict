@@ -3,24 +3,25 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
 
 import { cn } from '@/lib/cn';
+import './button.css';
 
 const buttonVariants = cva(
-  'inline-flex shrink-0 select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors duration-150 disabled:pointer-events-none disabled:opacity-45 [&_svg]:shrink-0',
+  'button',
   {
     variants: {
       variant: {
-        primary: 'bg-fg text-canvas hover:bg-white active:bg-zinc-200',
-        secondary: 'border border-line bg-elevated text-fg hover:border-line-strong hover:bg-hover',
-        outline: 'border border-line bg-transparent text-fg hover:bg-elevated',
-        ghost: 'text-fg-muted hover:bg-hover hover:text-fg',
-        link: 'h-auto px-0 text-accent underline-offset-4 hover:underline',
+        primary: 'button--primary',
+        secondary: 'button--secondary',
+        outline: 'button--outline',
+        ghost: 'button--ghost',
+        link: 'button--link',
       },
       size: {
-        xs: 'h-6 px-2 text-2xs [&_svg]:size-3',
-        sm: 'h-7 px-2.5 text-ui [&_svg]:size-3.5',
-        md: 'h-8 px-3 text-ui [&_svg]:size-4',
-        lg: 'h-10 px-4 text-sm [&_svg]:size-4',
-        icon: 'size-7 [&_svg]:size-4',
+        xs: 'button--xs',
+        sm: 'button--sm',
+        md: 'button--md',
+        lg: 'button--lg',
+        icon: 'button--icon',
       },
     },
     defaultVariants: { variant: 'secondary', size: 'md' },

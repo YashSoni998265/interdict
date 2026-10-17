@@ -27,6 +27,7 @@ import {
 } from '@/lib/status';
 
 import { Tip } from './ui/tooltip';
+import './StatusBadge.css';
 
 const STATUS_ICONS: Record<StatusIconName, LucideIcon> = {
   alert: TriangleAlert,
@@ -47,7 +48,7 @@ const STATUS_ICONS: Record<StatusIconName, LucideIcon> = {
 
 export function StatusIcon({ name, className }: { name: StatusIconName; className?: string }) {
   const Icon = STATUS_ICONS[name];
-  return <Icon className={cn('size-3.5 shrink-0', className)} aria-hidden strokeWidth={2} />;
+  return <Icon className={cn('status-icon', className)} aria-hidden strokeWidth={2} />;
 }
 
 export interface StatusBadgeProps {
@@ -64,9 +65,9 @@ export interface StatusBadgeProps {
 }
 
 const SIZE = {
-  sm: 'gap-1 px-1.5 py-px text-2xs [&_svg]:size-3',
-  md: 'gap-1.5 px-2 py-0.5 text-ui [&_svg]:size-3.5',
-  lg: 'gap-2 px-3 py-1.5 text-sm font-semibold [&_svg]:size-4',
+  sm: 'status-badge--sm',
+  md: 'status-badge--md',
+  lg: 'status-badge--lg',
 };
 
 /** The single rendering of an engine status: tone + icon + words, never colour alone. */
@@ -88,9 +89,9 @@ export function StatusBadge({
   const badge = (
     <span
       className={cn(
-        'inline-flex max-w-full items-center rounded-md border font-medium leading-5',
-        descriptor.tone === 'neutral' ? 'border-line bg-elevated text-fg' : [tone.text, tone.bg, tone.border],
-        descriptor.tone === 'violet' && 'border-dashed',
+        'status-badge',
+        descriptor.tone === 'neutral' ? 'status-badge--neutral' : [tone.text, tone.bg, tone.border],
+        descriptor.tone === 'violet' && 'status-badge--violet',
         SIZE[size],
         className,
       )}
@@ -98,16 +99,16 @@ export function StatusBadge({
       data-tone={descriptor.tone}
     >
       <StatusIcon name={descriptor.icon} />
-      <span className="min-w-0">
+      <span className="status-badge__label">
         {descriptor.label}
-        {why ? <span className="font-normal opacity-85"> · {why}</span> : null}
+        {why ? <span className="status-badge__label-2"> · {why}</span> : null}
       </span>
     </span>
   );
 
   return tooltip ? (
     <Tip content={descriptor.description}>
-      <button type="button" className="inline-flex max-w-full cursor-help rounded-md text-left">
+      <button type="button" className="status-badge__button">
         {badge}
       </button>
     </Tip>

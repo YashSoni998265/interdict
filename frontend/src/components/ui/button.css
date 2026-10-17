@@ -1,0 +1,144 @@
+/* Styles for button.tsx */
+
+.button {
+  display: inline-flex;
+  flex-shrink: 0;
+  user-select: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  white-space: nowrap;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.button:disabled {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+.button svg {
+  flex-shrink: 0;
+}
+
+.button--primary {
+  background-color: rgb(var(--fg));
+  color: rgb(var(--canvas));
+}
+
+.button--primary:hover {
+  background-color: rgb(255 255 255);
+}
+
+.button--primary:active {
+  background-color: rgb(228 228 231);
+}
+
+.button--secondary {
+  border-width: 1px;
+  border-color: rgb(var(--line));
+  background-color: rgb(var(--elevated));
+  color: rgb(var(--fg));
+}
+
+.button--secondary:hover {
+  border-color: rgb(var(--line-strong));
+  background-color: rgb(var(--hover));
+}
+
+.button--outline {
+  border-width: 1px;
+  border-color: rgb(var(--line));
+  background-color: transparent;
+  color: rgb(var(--fg));
+}
+
+.button--outline:hover {
+  background-color: rgb(var(--elevated));
+}
+
+.button--ghost {
+  color: rgb(var(--fg-muted));
+}
+
+.button--ghost:hover {
+  background-color: rgb(var(--hover));
+  color: rgb(var(--fg));
+}
+
+.button--link {
+  height: auto;
+  padding-left: 0px;
+  padding-right: 0px;
+  color: rgb(var(--accent));
+  text-underline-offset: 4px;
+}
+
+.button--link:hover {
+  text-decoration-line: underline;
+}
+
+.button--xs {
+  height: 1.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+}
+
+.button--xs svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.button--sm {
+  height: 1.75rem;
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+}
+
+.button--sm svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.button--md {
+  height: 2rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+}
+
+.button--md svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.button--lg {
+  height: 2.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.button--lg svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.button--icon {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.button--icon svg {
+  width: 1rem;
+  height: 1rem;
+}
