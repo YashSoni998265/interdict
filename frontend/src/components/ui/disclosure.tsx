@@ -3,6 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
 import { cn } from '@/lib/cn';
+import './disclosure.css';
 
 export interface DisclosureProps {
   summary: ReactNode;
@@ -19,9 +20,9 @@ export function Disclosure({ summary, children, defaultOpen = false, className, 
   const [open, setOpen] = useState(defaultOpen);
   return (
     <Collapsible.Root open={open} onOpenChange={setOpen} className={className}>
-      <Collapsible.Trigger className="group inline-flex items-center gap-1.5 rounded text-ui font-medium text-fg-muted transition-colors hover:text-fg">
+      <Collapsible.Trigger className="group disclosure__trigger">
         <ChevronRight
-          className="size-3.5 transition-transform duration-150 group-data-[state=open]:rotate-90"
+          className="disclosure__icon"
           aria-hidden
         />
         {icon}
@@ -29,10 +30,10 @@ export function Disclosure({ summary, children, defaultOpen = false, className, 
       </Collapsible.Trigger>
       <Collapsible.Content
         className={cn(
-          'overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down',
+          'disclosure__content',
         )}
       >
-        {!lazy || open ? <div className="pt-2">{children}</div> : null}
+        {!lazy || open ? <div className="disclosure__block">{children}</div> : null}
       </Collapsible.Content>
     </Collapsible.Root>
   );

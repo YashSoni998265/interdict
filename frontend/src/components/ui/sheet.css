@@ -1,0 +1,213 @@
+/* Styles for sheet.tsx */
+
+.sheet__overlay {
+  position: fixed;
+  inset: 0px;
+  z-index: 40;
+  animation: fade-in 150ms ease-out;
+  background-color: rgb(0 0 0 / 0.6);
+  -webkit-backdrop-filter: blur(1px);
+  backdrop-filter: blur(1px);
+}
+
+.sheet__content {
+  position: fixed;
+  top: 0px;
+  bottom: 0px;
+  right: 0px;
+  z-index: 50;
+  display: flex;
+  width: 100%;
+  animation: slide-in-right 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  flex-direction: column;
+  border-left-width: 1px;
+  border-color: rgb(var(--line));
+  background-color: rgb(var(--pane));
+  box-shadow: 0 0 0 1px rgb(var(--elevated)), 0 12px 32px -12px rgb(var(--elevated));
+}
+
+.sheet__content:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.sheet__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border-bottom-width: 1px;
+  border-color: rgb(var(--line));
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.sheet__block {
+  min-width: 0px;
+  flex: 1 1 0%;
+}
+
+.sheet__title {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  color: rgb(var(--fg));
+}
+
+.sheet__description {
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  color: rgb(var(--fg-muted));
+}
+
+.sheet__close {
+  margin-right: -0.25rem;
+  border-radius: 0.375rem;
+  padding: 0.25rem;
+  color: rgb(var(--fg-muted));
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.sheet__close:hover {
+  background-color: rgb(var(--hover));
+  color: rgb(var(--fg));
+}
+
+.sheet__icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.sheet__block-2 {
+  min-height: 0px;
+  flex: 1 1 0%;
+  overflow-y: auto;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.sheet__footer {
+  border-top-width: 1px;
+  border-color: rgb(var(--line));
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.modal__overlay {
+  position: fixed;
+  inset: 0px;
+  z-index: 40;
+  animation: fade-in 150ms ease-out;
+  background-color: rgb(0 0 0 / 0.6);
+}
+
+.modal__content {
+  position: fixed;
+  left: 50%;
+  top: 5vh;
+  z-index: 50;
+  display: flex;
+  max-height: 90vh;
+  width: calc(100vw - 2rem);
+  transform: translate(-50%, 0);
+  animation: fade-up 200ms ease-out;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  border-width: 1px;
+  border-color: rgb(var(--line));
+  background-color: rgb(var(--pane));
+  box-shadow: 0 0 0 1px rgb(var(--elevated)), 0 12px 32px -12px rgb(var(--elevated));
+}
+
+.modal__content:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.modal__content--md {
+  max-width: 48rem;
+}
+
+.modal__content--not-md {
+  max-width: 1500px;
+}
+
+.modal__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border-bottom-width: 1px;
+  border-color: rgb(var(--line));
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.modal__block {
+  min-width: 0px;
+  flex: 1 1 0%;
+}
+
+.modal__title {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  color: rgb(var(--fg));
+}
+
+.modal__description {
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  color: rgb(var(--fg-muted));
+}
+
+.modal__close {
+  margin-right: -0.25rem;
+  border-radius: 0.375rem;
+  padding: 0.25rem;
+  color: rgb(var(--fg-muted));
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.modal__close:hover {
+  background-color: rgb(var(--hover));
+  color: rgb(var(--fg));
+}
+
+.modal__icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.modal__block-2 {
+  min-height: 0px;
+  flex: 1 1 0%;
+  overflow-y: auto;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+@media (min-width: 640px) {
+  .sheet__content--md {
+    max-width: 28rem;
+  }
+
+  .sheet__content--not-md {
+    max-width: 42rem;
+  }
+}

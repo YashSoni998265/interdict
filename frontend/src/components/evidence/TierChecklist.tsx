@@ -13,6 +13,7 @@ import { Disclosure } from '../ui/disclosure';
 import { Tag } from '../ui/tag';
 
 import { ProvenanceList } from './Provenance';
+import './TierChecklist.css';
 
 const MARK_ICON = { check: Check, cross: X, stale: Clock, unknown: CircleHelp } as const;
 
@@ -22,13 +23,13 @@ function Mark({ status }: { status: CollectionStatus }) {
   return (
     <span
       className={cn(
-        'mt-px flex size-5 shrink-0 items-center justify-center rounded border',
-        descriptor.mark === 'check' && 'border-line-strong bg-elevated text-fg',
-        descriptor.mark === 'cross' && 'border-line bg-canvas text-fg-muted',
-        (descriptor.mark === 'stale' || descriptor.mark === 'unknown') && 'border-yellow-400/40 bg-yellow-400/10 text-yellow-300',
+        'mark',
+        descriptor.mark === 'check' && 'mark--check',
+        descriptor.mark === 'cross' && 'mark--cross',
+        (descriptor.mark === 'stale' || descriptor.mark === 'unknown') && 'mark--stale',
       )}
     >
-      <Icon className="size-3" aria-hidden strokeWidth={2.5} />
+      <Icon className="mark__icon" aria-hidden strokeWidth={2.5} />
     </span>
   );
 }
@@ -48,21 +49,21 @@ function TierRow({
 }) {
   const descriptor = describeCollection(status);
   return (
-    <li className="flex gap-2.5 py-2">
+    <li className="tier-row">
       <Mark status={status} />
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-baseline gap-x-2">
-          <span className="text-ui font-medium text-fg">{name}</span>
-          <span className={cn('text-2xs', descriptor.tone === 'yellow' ? 'text-yellow-300' : 'text-fg-subtle')}>
+      <div className="tier-row__block">
+        <div className="tier-row__row">
+          <span className="tier-row__label">{name}</span>
+          <span className={cn('tier-row__label-2', descriptor.tone === 'yellow' ? 'tier-row__label--yellow' : 'tier-row__label--not-yellow')}>
             {descriptor.label}
           </span>
-          <span className="ml-auto text-2xs text-fg-subtle">
+          <span className="tier-row__label-3">
             <Num metric="evidenceRecords" value={count} plain /> {plural(count, 'record')}
           </span>
         </div>
-        <div className="mt-0.5 text-2xs leading-4 text-fg-muted">{summary}</div>
+        <div className="tier-row__block-2">{summary}</div>
         {provenance.length > 0 ? (
-          <Disclosure summary="Provenance" className="mt-1">
+          <Disclosure summary="Provenance" className="tier-row__disclosure">
             <ProvenanceList items={provenance} />
           </Disclosure>
         ) : null}
@@ -75,7 +76,7 @@ function Tiers({ view }: { view: WorkloadEvidenceView }) {
   const { exposure, vulnerability, reachability, authorization } = view.tiers;
   const flat = (records: { evidence: ProvenanceView[] }[]) => records.flatMap((r) => r.evidence);
   return (
-    <ul className="divide-y divide-line" aria-label={`Evidence tiers for ${view.pod.id}`}>
+    <ul className="tiers" aria-label={`Evidence tiers for ${view.pod.id}`}>
       <TierRow
         name="Exposure"
         status={exposure.status}
@@ -94,10 +95,10 @@ function Tiers({ view }: { view: WorkloadEvidenceView }) {
         provenance={flat(vulnerability.records)}
         summary={
           vulnerability.records.length > 0 ? (
-            <ul className="space-y-0.5">
+            <ul className="tiers__list">
               {vulnerability.records.map((r) => (
-                <li key={r.vuln_id} className="flex flex-wrap items-center gap-1">
-                  <span className="font-mono text-fg">{r.cve_id}</span>
+                <li key={r.vuln_id} className="tiers-2">
+                  <span className="tiers__label">{r.cve_id}</span>
                   <span>
                     {r.status.toLowerCase()} · {r.attack_vector ?? 'no vector (treated as NETWORK)'} ·{' '}
                     {r.severity.toLowerCase()}
@@ -125,7 +126,7 @@ function Tiers({ view }: { view: WorkloadEvidenceView }) {
         provenance={flat(reachability.records)}
         summary={
           reachability.records.length > 0 ? (
-            <span className="font-mono text-[11px]">
+            <span className="tiers__label-2">
               {reachability.records.map((r) => `${r.dst}:${r.port}/${r.protocol}`).join(' · ')}
             </span>
           ) : (
@@ -173,31 +174,31 @@ export function TierChecklist({ podId }: { podId: string }) {
   }
   const view = evidence.data;
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span className="font-mono text-ui font-medium text-fg">{view.pod.id}</span>
-        <span className="text-2xs text-fg-muted">
+    <div className="tier-checklist">
+      <div className="tier-checklist__row">
+        <span className="tier-checklist__label">{view.pod.id}</span>
+        <span className="tier-checklist__label-2">
           {view.pod.namespace}/app={view.pod.app}
         </span>
-        <span className="ml-auto text-2xs text-fg-subtle">evaluated {formatUtc(view.evaluated_at)}</span>
+        <span className="tier-checklist__label-3">evaluated {formatUtc(view.evaluated_at)}</span>
       </div>
       <Tiers view={view} />
-      <div className="space-y-1 border-t border-line pt-2 text-2xs text-fg-muted">
+      <div className="tier-checklist__block">
         <div>
-          <span className="text-fg-subtle">Dependency manifest </span>
+          <span className="tier-checklist__label-4">Dependency manifest </span>
           <Tag mono>{view.pod.dependency_manifest}</Tag>{' '}
           {MANIFEST_TEXT[view.pod.dependency_manifest] ?? ''}
         </div>
         <div>
-          <span className="text-fg-subtle">Egress </span>
+          <span className="tier-checklist__label-4">Egress </span>
           {view.egress_isolated
             ? `isolated by ${view.egress_policies.join(', ')}`
             : 'not isolated: no egress policy selects it, so all outbound flows are allowed'}
         </div>
         {view.declared_dependencies.length > 0 ? (
           <div>
-            <span className="text-fg-subtle">Declared dependencies (synthetic fixture) </span>
-            <span className="font-mono text-[11px] text-fg">
+            <span className="tier-checklist__label-4">Declared dependencies (synthetic fixture) </span>
+            <span className="tier-checklist__label-5">
               {view.declared_dependencies.map((d) => `${d.dst}:${d.port}/${d.protocol}`).join(' · ')}
             </span>
           </div>

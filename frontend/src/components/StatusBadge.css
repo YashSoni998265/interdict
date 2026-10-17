@@ -1,0 +1,90 @@
+/* Styles for StatusBadge.tsx */
+
+.status-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+}
+
+.status-badge {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  border-radius: 0.375rem;
+  border-width: 1px;
+  font-weight: 500;
+  line-height: 1.25rem;
+}
+
+.status-badge--neutral {
+  border-color: rgb(var(--line));
+  background-color: rgb(var(--elevated));
+  color: rgb(var(--fg));
+}
+
+.status-badge--violet {
+  border-style: dashed;
+}
+
+.status-badge--sm {
+  gap: 0.25rem;
+  padding-left: 0.375rem;
+  padding-right: 0.375rem;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+}
+
+.status-badge--sm svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.status-badge--md {
+  gap: 0.375rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+}
+
+.status-badge--md svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.status-badge--lg {
+  gap: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+}
+
+.status-badge--lg svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.status-badge__label {
+  min-width: 0px;
+}
+
+.status-badge__label-2 {
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.status-badge__button {
+  display: inline-flex;
+  max-width: 100%;
+  cursor: help;
+  border-radius: 0.375rem;
+  text-align: left;
+}

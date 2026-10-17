@@ -1,0 +1,77 @@
+/* Styles for QueryList.tsx */
+
+.query-list {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: rgb(var(--fg-subtle));
+}
+
+.query-list-2 {
+  width: 100%;
+  text-align: left;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+}
+
+.query-list__head {
+  color: rgb(var(--fg-subtle));
+}
+
+.query-list__heading-cell {
+  padding-bottom: 0.25rem;
+  padding-right: 0.5rem;
+  font-weight: 500;
+}
+
+.query-list__heading-cell-2 {
+  padding-bottom: 0.25rem;
+  padding-right: 0.5rem;
+  text-align: right;
+  font-weight: 500;
+}
+
+.query-list__heading-cell-3 {
+  padding-bottom: 0.25rem;
+  text-align: right;
+  font-weight: 500;
+}
+
+.query-list__body {
+  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.query-list-3 {
+  border-top-width: 1px;
+  border-color: rgb(var(--line) / 0.7);
+}
+
+.query-list__cell {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-right: 0.5rem;
+  color: rgb(var(--fg));
+}
+
+.query-list__label {
+  color: rgb(var(--fg-subtle));
+}
+
+.query-list__label-2 {
+  margin-left: 0.25rem;
+  color: rgb(248 113 113);
+}
+
+.query-list__cell-2 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-right: 0.5rem;
+  text-align: right;
+  color: rgb(var(--fg-muted));
+}
+
+.query-list__cell-3 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  text-align: right;
+  color: rgb(var(--fg-muted));
+}

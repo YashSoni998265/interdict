@@ -38,7 +38,7 @@ describe('<UntrustedText> (solution.md §10.8)', () => {
     const user = userEvent.setup();
     render(
       <TooltipProvider>
-        <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <MemoryRouter>
           <AlertTable storm={storm} />
         </MemoryRouter>
       </TooltipProvider>,

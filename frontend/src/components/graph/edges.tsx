@@ -13,6 +13,7 @@ import { cn } from '@/lib/cn';
 import type { EdgeState } from '@/lib/graphState';
 
 import { EDGE_STYLE, edgeCaption, edgeDescription } from './graphTheme';
+import './edges.css';
 
 export type AttackEdge = Edge<
   { view: SubgraphEdgeView; state: EdgeState; highlighted: boolean; onOpen: (edgeId: string) => void },
@@ -20,10 +21,10 @@ export type AttackEdge = Edge<
 >;
 
 const LABEL_TONE: Record<EdgeState, string> = {
-  active: 'border-rose-500/45 text-rose-200',
-  cut: 'border-dashed border-violet-400/60 text-violet-200',
-  residual: 'border-orange-400/60 text-orange-200',
-  cleared: 'border-line text-fg-subtle',
+  active: 'attack-edge__label--active',
+  cut: 'attack-edge__label--cut',
+  residual: 'attack-edge__label--residual',
+  cleared: 'attack-edge__label--cleared',
 };
 
 export function AttackEdgeComponent({
@@ -64,16 +65,16 @@ export function AttackEdgeComponent({
         <button
           type="button"
           className={cn(
-            'nodrag nopan absolute flex items-center gap-1 rounded border bg-canvas/95 px-1.5 py-px font-mono text-[10px] leading-4 transition-colors hover:bg-elevated',
+            'nodrag nopan attack-edge__button',
             LABEL_TONE[data.state],
-            data.highlighted && 'ring-1 ring-accent',
+            data.highlighted && 'attack-edge__button--highlighted',
           )}
           style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`, pointerEvents: 'all' }}
           onClick={() => data.onOpen(data.view.id)}
           aria-label={edgeDescription(data.view, data.state)}
         >
-          {data.state === 'cut' ? <Scissors className="size-3" aria-hidden /> : null}
-          <span className={cn(data.state === 'cut' && 'line-through decoration-violet-300/80')}>{edgeCaption(data.view)}</span>
+          {data.state === 'cut' ? <Scissors className="attack-edge__icon" aria-hidden /> : null}
+          <span className={cn(data.state === 'cut' && 'attack-edge__label--cut-2')}>{edgeCaption(data.view)}</span>
         </button>
       </EdgeLabelRenderer>
     </>

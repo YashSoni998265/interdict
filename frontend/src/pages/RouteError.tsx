@@ -1,6 +1,7 @@
 import { isRouteErrorResponse, Link, useRouteError } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
+import './RouteError.css';
 
 /** Last-resort error screen: says what failed, never shows a blank page. */
 export function RouteError() {
@@ -11,12 +12,12 @@ export function RouteError() {
       ? error.message
       : 'Unknown error';
   return (
-    <div className="mx-auto flex min-h-screen max-w-lg flex-col justify-center gap-3 px-4" role="alert">
-      <h1 className="text-lg font-semibold text-fg">This screen failed to render</h1>
-      <p className="text-ui text-fg-muted">
-        Nothing was concluded from it. The error was: <code className="font-mono text-2xs text-fg">{message}</code>
+    <div className="route-error" role="alert">
+      <h1 className="route-error__heading">This screen failed to render</h1>
+      <p className="route-error__text">
+        Nothing was concluded from it. The error was: <code className="route-error__code">{message}</code>
       </p>
-      <div className="flex gap-2">
+      <div className="route-error__row">
         <Button variant="primary" onClick={() => window.location.reload()}>
           Reload
         </Button>

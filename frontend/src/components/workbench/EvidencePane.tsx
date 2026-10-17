@@ -19,6 +19,7 @@ import { Segmented } from '../ui/segmented';
 import { Modal } from '../ui/sheet';
 
 import { Pane } from './Pane';
+import './EvidencePane.css';
 
 function OverlayPicker({
   overlays,
@@ -33,7 +34,7 @@ function OverlayPicker({
   computedAt: number | null;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2 px-3 py-2">
+    <div className="overlay-picker">
       {overlays.length > 1 ? (
         <Segmented
           size="xs"
@@ -43,9 +44,9 @@ function OverlayPicker({
           options={overlays.map((o) => ({ value: o.id, label: o.label, ariaLabel: `${o.label}: ${o.hint}` }))}
         />
       ) : (
-        <span className="text-2xs font-medium text-fg">{value.label}</span>
+        <span className="overlay-picker__label">{value.label}</span>
       )}
-      <span className={cn('text-2xs', value.verified && computedAt === null ? 'text-emerald-300' : 'text-fg-muted')}>
+      <span className={cn('overlay-picker__label-2', value.verified && computedAt === null ? 'overlay-picker__label--verified' : 'overlay-picker__label--not-verified')}>
         {value.hint}
         {computedAt !== null && value.kind !== 'baseline' ? ` (at revision ${computedAt}, not current)` : ''}
       </span>
@@ -61,19 +62,19 @@ function NodeInfo({ subgraph, nodeId, overlay }: { subgraph: SubgraphView; nodeI
   const Icon = node.kind === 'Internet' ? Globe : Crown;
   const steps = node.kind === 'Internet' ? outgoing : incoming;
   return (
-    <div className="space-y-2 text-ui">
-      <div className="flex items-center gap-2">
-        <Icon className="size-4 text-fg-muted" aria-hidden />
-        <span className="font-mono font-medium text-fg">{nodeLabel(node.id)}</span>
+    <div className="node-info">
+      <div className="node-info__row">
+        <Icon className="node-info__icon" aria-hidden />
+        <span className="node-info__label">{nodeLabel(node.id)}</span>
       </div>
-      <p className="text-2xs text-fg-muted">
+      <p className="node-info__text">
         {node.kind === 'Internet'
           ? 'The untrusted source. Every chain starts here with an ENTRY step into an exposed, vulnerable workload.'
           : 'A crown jewel. Chains end here with a GOAL step from a workload that reaches it and holds an Allow grant.'}
       </p>
-      <ul className="space-y-1 text-2xs">
+      <ul className="node-info__list">
         {steps.map((edge) => (
-          <li key={edge.id} className="font-mono text-fg-muted">
+          <li key={edge.id} className="node-info-2">
             {nodeLabel(edge.source)} → {nodeLabel(edge.target)} · {edge.kind} · {EDGE_STYLE[edgeState(edge, overlay)].label}
           </li>
         ))}
@@ -132,20 +133,20 @@ export function EvidencePane({
         </>
       }
     >
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="evidence-pane__block">
         {subgraph.isPending ? (
-          <div className="px-3">
+          <div className="evidence-pane__block-2">
             <LoadingState
               title="Loading the focused attack subgraph"
               detail={`GET /api/clusters/${cluster.id}/subgraph: the cluster’s chains as ATTACK_STEP edges`}
             />
           </div>
         ) : subgraph.error ? (
-          <div className="p-3">
+          <div className="evidence-pane__block-3">
             <ErrorState error={subgraph.error} title="The attack subgraph could not be loaded" onRetry={() => void subgraph.refetch()} />
           </div>
         ) : data?.edges.length === 0 ? (
-          <div className="p-3">
+          <div className="evidence-pane__block-3">
             <EmptyState title="No chains reach this target">
               The subgraph for {cluster.target} has no attack steps at this revision, so there is nothing to cut.
             </EmptyState>
@@ -154,18 +155,18 @@ export function EvidencePane({
           <>
             <OverlayPicker overlays={overlays} value={overlay} onChange={onOverlayChange} computedAt={computedAt} />
             {subgraph.isPlaceholderData || (subgraph.isFetching && !subgraph.isPending) ? (
-              <p className="px-3 pb-1 text-2xs text-fg-subtle" role="status">
+              <p className="evidence-pane__text" role="status">
                 Updating the graph with the Path Hunter’s paths…
               </p>
             ) : null}
             {revision !== null && data.revision < revision ? (
-              <p className="px-3 pb-1 text-2xs text-fg-subtle">
+              <p className="evidence-pane__text">
                 Computed at revision {data.revision}; the sandbox is at revision {revision}.
                 {client.mode === 'mock' ? ' The mock API cannot recompute it.' : ''}
               </p>
             ) : null}
             {view === 'graph' ? (
-              <div className="h-[clamp(300px,46vh,520px)] border-y border-line bg-canvas">
+              <div className="evidence-pane__block-4">
                 <AttackGraph
                   subgraph={data}
                   overlay={overlay}
@@ -177,7 +178,7 @@ export function EvidencePane({
                 />
               </div>
             ) : (
-              <div className="border-y border-line bg-canvas">
+              <div className="evidence-pane__block-5">
                 <GraphTable
                   subgraph={data}
                   overlay={overlay}
@@ -187,14 +188,14 @@ export function EvidencePane({
                 />
               </div>
             )}
-            <div className="px-3 py-2">
+            <div className="evidence-pane__block-6">
               <GraphLegend />
-              <p className="mt-1 text-[10.5px] text-fg-subtle">
+              <p className="evidence-pane__text-2">
                 Select a workload for its evidence tiers; select a step label for its evidence.
               </p>
             </div>
-            <section className="border-t border-line px-3 py-3" aria-label="Evidence tiers">
-              <div className="section-label mb-2">Evidence tiers</div>
+            <section className="evidence-pane__section" aria-label="Evidence tiers">
+              <div className="section-label evidence-pane__block-7">Evidence tiers</div>
               {selectedKind === 'Pod' ? (
                 <TierChecklist podId={selectedNodeId} />
               ) : (
@@ -208,9 +209,9 @@ export function EvidencePane({
               title={`Attack subgraph: ${cluster.target} via ${cluster.entry_ingress}`}
               description={`${overlay.label}: ${overlay.hint}`}
             >
-              <div className="space-y-3">
+              <div className="evidence-pane__block-8">
                 <OverlayPicker overlays={overlays} value={overlay} onChange={onOverlayChange} computedAt={computedAt} />
-                <div className="h-[68vh] rounded-lg border border-line bg-canvas">
+                <div className="evidence-pane__box">
                   <AttackGraph
                     subgraph={data}
                     overlay={overlay}

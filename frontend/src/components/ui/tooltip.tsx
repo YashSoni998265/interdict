@@ -2,6 +2,7 @@ import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/cn';
+import './tooltip.css';
 
 export const TooltipProvider = TooltipPrimitive.Provider;
 
@@ -27,12 +28,12 @@ export function Tip({ content, children, side = 'top', align = 'center', classNa
           sideOffset={6}
           collisionPadding={8}
           className={cn(
-            'z-50 max-w-xs animate-fade-in rounded-md border border-line bg-elevated px-2.5 py-2 text-ui text-fg shadow-elevated',
+            'tip__content',
             className,
           )}
         >
           {content}
-          <TooltipPrimitive.Arrow className="fill-elevated" width={10} height={5} />
+          <TooltipPrimitive.Arrow className="tip__arrow" width={10} height={5} />
         </TooltipPrimitive.Content>
       </TooltipPrimitive.Portal>
     </TooltipPrimitive.Root>

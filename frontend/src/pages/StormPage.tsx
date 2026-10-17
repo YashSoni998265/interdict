@@ -18,6 +18,7 @@ import { cn } from '@/lib/cn';
 import { formatUtc } from '@/lib/format';
 import { describeCollection, reasonText } from '@/lib/status';
 import { restraintExample } from '@/lib/storm';
+import './StormPage.css';
 
 function EvidenceStatus({ storm }: { storm: StormView }) {
   const tiers = Object.entries(storm.tiers);
@@ -28,32 +29,32 @@ function EvidenceStatus({ storm }: { storm: StormView }) {
         <button
           type="button"
           className={cn(
-            'inline-flex h-7 items-center gap-1.5 rounded-md border px-2 text-2xs font-medium transition-colors',
-            storm.complete ? 'border-line text-fg-muted hover:text-fg' : 'border-yellow-400/30 bg-yellow-400/10 text-yellow-300',
+            'evidence-status__button',
+            storm.complete ? 'evidence-status__button--complete' : 'evidence-status__button--not-complete',
           )}
         >
-          {storm.complete ? <CircleCheck className="size-3.5" aria-hidden /> : <StatusIcon name="question" />}
+          {storm.complete ? <CircleCheck className="evidence-status__icon" aria-hidden /> : <StatusIcon name="question" />}
           {storm.complete ? 'Evidence complete: every tier fresh and verified' : 'Evidence incomplete'}
         </button>
       }
     >
-      <div className="space-y-2">
-        <div className="text-ui font-medium text-fg">Scope completeness (§6.6)</div>
-        <table className="w-full text-left text-2xs">
-          <thead className="text-fg-subtle">
+      <div className="evidence-status__block">
+        <div className="evidence-status__block-2">Scope completeness (§6.6)</div>
+        <table className="evidence-status__table">
+          <thead className="evidence-status__head">
             <tr>
-              <th scope="col" className="pb-1 font-medium">Tier</th>
-              <th scope="col" className="pb-1 font-medium">Status</th>
-              <th scope="col" className="pb-1 text-right font-medium">Rows</th>
+              <th scope="col" className="evidence-status__heading-cell">Tier</th>
+              <th scope="col" className="evidence-status__heading-cell">Status</th>
+              <th scope="col" className="evidence-status__heading-cell-2">Rows</th>
             </tr>
           </thead>
           <tbody>
             {tiers.map(([name, tier]) => {
               const mark = describeCollection(tier.status);
               return (
-                <tr key={name} className="border-t border-line/70">
-                  <td className="py-1 text-fg">{name}</td>
-                  <td className={cn('py-1 font-mono', mark.tone === 'yellow' ? 'text-yellow-300' : 'text-fg-muted')}>
+                <tr key={name} className="evidence-status">
+                  <td className="evidence-status__cell">{name}</td>
+                  <td className={cn('evidence-status__cell-2', mark.tone === 'yellow' ? 'evidence-status__cell--yellow' : 'evidence-status__cell--not-yellow')}>
                     {tier.status}
                     {tier.stale ? (
                       <>
@@ -68,7 +69,7 @@ function EvidenceStatus({ storm }: { storm: StormView }) {
                       </>
                     ) : null}
                   </td>
-                  <td className="py-1 text-right text-fg-muted">
+                  <td className="evidence-status__cell-3">
                     <Num metric="tierRows" value={tier.rows} plain />
                   </td>
                 </tr>
@@ -76,7 +77,7 @@ function EvidenceStatus({ storm }: { storm: StormView }) {
             })}
           </tbody>
         </table>
-        <p className="text-2xs text-fg-subtle">
+        <p className="evidence-status__text">
           COLLECTED_EMPTY is a verified absence (for example no identity rows), not missing data.
         </p>
       </div>
@@ -108,11 +109,11 @@ function GraphStats({ storm }: { storm: StormView }) {
       : []),
   ];
   return (
-    <dl className="flex flex-wrap gap-x-5 gap-y-1 text-2xs text-fg-muted">
+    <dl className="graph-stats">
       {items.map((item) => (
-        <div key={item.label} className="flex items-baseline gap-1.5">
+        <div key={item.label} className="graph-stats-2">
           <dt>{item.label}</dt>
-          <dd className="font-medium text-fg">{item.node}</dd>
+          <dd className="graph-stats__value">{item.node}</dd>
         </div>
       ))}
     </dl>
@@ -124,15 +125,15 @@ function Restraint({ storm, onShow }: { storm: StormView; onShow: (cve: string) 
   if (!example) return null;
   const reasonFor = (pod: string) => storm.alerts?.find((a) => a.pod === pod && a.cve_id === example.cve)?.reason;
   return (
-    <section className="rounded-lg border border-line bg-surface p-4" aria-labelledby="restraint">
-      <div className="flex items-start gap-2">
-        <Scale className="mt-0.5 size-4 shrink-0 text-fg-muted" aria-hidden />
-        <div className="min-w-0 flex-1">
-          <h2 id="restraint" className="text-ui font-semibold text-fg">
+    <section className="restraint" aria-labelledby="restraint">
+      <div className="restraint__row">
+        <Scale className="restraint__icon" aria-hidden />
+        <div className="restraint__block">
+          <h2 id="restraint" className="restraint__title">
             Same vulnerability, different verdicts
           </h2>
-          <p className="mt-0.5 text-2xs text-fg-muted">
-            <span className="font-mono text-fg">{example.cve}</span> is reported on several workloads. The graph, not the
+          <p className="restraint__text">
+            <span className="restraint__label">{example.cve}</span> is reported on several workloads. The graph, not the
             CVE, decides what matters.
           </p>
         </div>
@@ -140,19 +141,19 @@ function Restraint({ storm, onShow }: { storm: StormView; onShow: (cve: string) 
           Show these alerts
         </Button>
       </div>
-      <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+      <ul className="restraint__list">
         {example.onPath.map((pod) => (
-          <li key={pod} className="rounded-md border border-red-500/30 bg-red-500/[0.06] px-3 py-2">
-            <div className="font-mono text-ui text-fg">{pod}</div>
-            <StatusBadge status="ON_ATTACK_PATH" size="sm" className="mt-1" />
-            <p className="mt-1 text-2xs text-fg-muted">{reasonFor(pod)}</p>
+          <li key={pod} className="restraint-2">
+            <div className="restraint__block-2">{pod}</div>
+            <StatusBadge status="ON_ATTACK_PATH" size="sm" className="restraint__status-badge" />
+            <p className="restraint__text-2">{reasonFor(pod)}</p>
           </li>
         ))}
         {example.notOnPath.map((pod) => (
-          <li key={pod} className="rounded-md border border-amber-500/30 bg-amber-500/[0.06] px-3 py-2">
-            <div className="font-mono text-ui text-fg">{pod}</div>
-            <StatusBadge status="NOT_ON_ATTACK_PATH" size="sm" className="mt-1" />
-            <p className="mt-1 text-2xs text-fg-muted">{reasonFor(pod)}: no fix is proposed for it.</p>
+          <li key={pod} className="restraint-3">
+            <div className="restraint__block-2">{pod}</div>
+            <StatusBadge status="NOT_ON_ATTACK_PATH" size="sm" className="restraint__status-badge" />
+            <p className="restraint__text-2">{reasonFor(pod)}: no fix is proposed for it.</p>
           </li>
         ))}
       </ul>
@@ -168,7 +169,7 @@ export default function StormPage() {
 
   if (storm.isPending) {
     return (
-      <div className="mx-auto w-full max-w-[1400px] px-4 py-8">
+      <div className="storm-page">
         <LoadingState
           title="Triaging the alert storm"
           detail="GET /api/storm: evidence tiers, ATTACK_STEP build, reachability, bounded chains and clusters"
@@ -178,7 +179,7 @@ export default function StormPage() {
   }
   if (storm.error) {
     return (
-      <div className="mx-auto w-full max-w-[1400px] px-4 py-8">
+      <div className="storm-page">
         <ErrorState error={storm.error} title="The storm report could not be loaded" onRetry={() => void storm.refetch()} />
       </div>
     );
@@ -188,20 +189,20 @@ export default function StormPage() {
   const outdated = revision !== null && data.revision < revision;
 
   return (
-    <div className="flex flex-1 flex-col">
-      <div className="mx-auto w-full max-w-[1400px] space-y-6 px-4 py-6">
-        <header className="flex flex-wrap items-end gap-x-6 gap-y-3">
-          <div className="min-w-0">
-            <h1 className="text-xl font-semibold tracking-tight text-fg">Alert storm</h1>
-            <p className="mt-1 text-ui text-fg-muted">
-              <span className="font-mono text-fg">{data.storm_id}</span> · evaluated {formatUtc(data.evaluated_at)} ·
-              revision <Num metric="revision" value={data.revision} className="text-fg" />
+    <div className="storm-page-2">
+      <div className="storm-page__block">
+        <header className="storm-page__header">
+          <div className="storm-page__block-2">
+            <h1 className="storm-page__heading">Alert storm</h1>
+            <p className="storm-page__text">
+              <span className="storm-page__label">{data.storm_id}</span> · evaluated {formatUtc(data.evaluated_at)} ·
+              revision <Num metric="revision" value={data.revision} className="storm-page__num" />
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="storm-page__row">
             <EvidenceStatus storm={data} />
           </div>
-          <div className="w-full">
+          <div className="storm-page__block-3">
             <GraphStats storm={data} />
           </div>
         </header>
@@ -226,13 +227,13 @@ export default function StormPage() {
 
         {!data.complete ? (
           <Banner tone="yellow" title="Not enough fresh evidence: the scope is incomplete" role="alert">
-            <ul className="mt-1 space-y-1">
+            <ul className="storm-page__list">
               {data.issues.map((issue, index) => (
                 <li key={`${issue.reason}-${index}`}>
-                  <span className="font-mono text-2xs text-fg">{issue.reason}</span>: {reasonText(issue.reason)}.{' '}
+                  <span className="storm-page__label-2">{issue.reason}</span>: {reasonText(issue.reason)}.{' '}
                   {issue.detail}
                   {issue.evidence_ids.length > 0 ? (
-                    <span className="block font-mono text-2xs text-fg-subtle">{issue.evidence_ids.join(', ')}</span>
+                    <span className="storm-page__label-3">{issue.evidence_ids.join(', ')}</span>
                   ) : null}
                 </li>
               ))}
@@ -247,7 +248,7 @@ export default function StormPage() {
           </EmptyState>
         ) : (
           <>
-            <section aria-labelledby="funnel" className="space-y-3">
+            <section aria-labelledby="funnel" className="storm-page__section">
               <h2 id="funnel" className="section-label">
                 From alerts to attack paths
               </h2>
@@ -262,14 +263,14 @@ export default function StormPage() {
               }}
             />
 
-            <section aria-labelledby="clusters" className="space-y-3">
-              <div className="flex flex-wrap items-baseline gap-3">
+            <section aria-labelledby="clusters" className="storm-page__section">
+              <div className="storm-page__row-2">
                 <h2 id="clusters" className="section-label">
                   Clusters: one per crown jewel and entry ingress
                 </h2>
-                <span className="text-2xs text-fg-subtle">Each cluster is investigated and fixed on its own.</span>
+                <span className="storm-page__label-4">Each cluster is investigated and fixed on its own.</span>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="storm-page__grid">
                 {data.clusters.map((cluster) => (
                   <ClusterCard key={cluster.id} cluster={cluster} storm={data} />
                 ))}
@@ -280,18 +281,18 @@ export default function StormPage() {
                   fix.
                 </EmptyState>
               ) : null}
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="storm-page__grid">
                 <ScenarioCard />
               </div>
             </section>
 
-            <section id="alerts" aria-labelledby="alerts-title" className="scroll-mt-20 space-y-3">
-              <div className="flex flex-wrap items-baseline gap-3">
+            <section id="alerts" aria-labelledby="alerts-title" className="storm-page__section-2">
+              <div className="storm-page__row-2">
                 <h2 id="alerts-title" className="section-label">
                   Every alert
                 </h2>
-                <span className="inline-flex items-center gap-1 text-2xs text-fg-subtle">
-                  <Quote className="size-3" aria-hidden />
+                <span className="storm-page__label-5">
+                  <Quote className="storm-page__icon" aria-hidden />
                   Titles are untrusted scanner text, shown inert. Try searching for “IGNORE”.
                 </span>
               </div>

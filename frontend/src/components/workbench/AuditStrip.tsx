@@ -7,21 +7,22 @@ import { cn } from '@/lib/cn';
 import { formatClock, shortHash } from '@/lib/format';
 
 import { Tip } from '../ui/tooltip';
+import './AuditStrip.css';
 
 function ChainStatus({ valid }: { valid: boolean | null }) {
   if (valid === null) {
-    return <span className="inline-flex items-center gap-1 text-fg-subtle">chain status not reported</span>;
+    return <span className="chain-status">chain status not reported</span>;
   }
   return valid ? (
     <Tip content="The API re-verified every link: Hash_N = SHA256(Payload_N ‖ Hash_{N−1}). Tamper-evident, not tamper-proof.">
-      <button type="button" className="inline-flex cursor-help items-center gap-1 text-fg-muted">
-        <ShieldCheck className="size-3.5" aria-hidden />
+      <button type="button" className="chain-status__button">
+        <ShieldCheck className="chain-status__icon" aria-hidden />
         Hash chain verified
       </button>
     </Tip>
   ) : (
-    <span className="inline-flex items-center gap-1 text-red-400" role="alert">
-      <ShieldX className="size-3.5" aria-hidden />
+    <span className="chain-status-2" role="alert">
+      <ShieldX className="chain-status__icon" aria-hidden />
       Hash chain broken
     </span>
   );
@@ -36,65 +37,65 @@ export function AuditStrip() {
   const latest = events.slice(-4).reverse();
 
   return (
-    <div className="shrink-0 border-t border-line bg-canvas">
-      <div className="flex h-9 items-center gap-3 px-3 text-2xs">
+    <div className="audit-strip">
+      <div className="audit-strip__row">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-controls="audit-log"
-          className="inline-flex items-center gap-1.5 rounded font-semibold uppercase tracking-[0.08em] text-fg-muted hover:text-fg"
+          className="audit-strip__button"
         >
-          <ChevronUp className={cn('size-3.5 transition-transform', !open && 'rotate-180')} aria-hidden />
+          <ChevronUp className={cn('audit-strip__icon', !open && 'audit-strip__icon--not-open')} aria-hidden />
           Audit
         </button>
         <ChainStatus valid={audit.data?.chainValid ?? null} />
-        <ol className="flex min-w-0 flex-1 items-center gap-4 overflow-hidden" aria-label="Latest audit events">
+        <ol className="audit-strip__list" aria-label="Latest audit events">
           {latest.map((event) => (
-            <li key={event.seq} className="flex shrink-0 items-center gap-1.5 font-mono text-[11px] text-fg-muted">
-              <span className="text-fg-subtle">#{event.seq}</span>
-              <span className="text-fg">{event.event_type}</span>
-              <span className="hidden text-fg-subtle xl:inline">rev {event.graph_revision}</span>
-              <span className="hidden text-fg-subtle 2xl:inline">{shortHash(event.hash, 8, 0)}</span>
+            <li key={event.seq} className="audit-strip-2">
+              <span className="audit-strip__label">#{event.seq}</span>
+              <span className="audit-strip__label-2">{event.event_type}</span>
+              <span className="audit-strip__label-3">rev {event.graph_revision}</span>
+              <span className="audit-strip__label-4">{shortHash(event.hash, 8, 0)}</span>
             </li>
           ))}
           {events.length === 0 ? (
-            <li className="text-fg-subtle">{audit.isPending ? 'Loading the audit stream…' : audit.error ? 'Audit stream unavailable' : 'No events yet'}</li>
+            <li className="audit-strip__item">{audit.isPending ? 'Loading the audit stream…' : audit.error ? 'Audit stream unavailable' : 'No events yet'}</li>
           ) : null}
         </ol>
-        {client.mode === 'mock' ? <span className="hidden shrink-0 text-fg-subtle lg:inline">mock log, chained in this browser</span> : null}
+        {client.mode === 'mock' ? <span className="audit-strip__label-5">mock log, chained in this browser</span> : null}
       </div>
       {open ? (
-        <div id="audit-log" className="max-h-[38vh] overflow-auto border-t border-line">
-          <table className="w-full min-w-[56rem] text-left text-2xs">
+        <div id="audit-log" className="audit-strip__block">
+          <table className="audit-strip__table">
             <caption className="sr-only">Audit events, newest first</caption>
-            <thead className="sticky top-0 bg-surface text-fg-subtle">
+            <thead className="audit-strip__head">
               <tr>
-                <th scope="col" className="px-3 py-1.5 font-medium">#</th>
-                <th scope="col" className="px-3 py-1.5 font-medium">Time (UTC)</th>
-                <th scope="col" className="px-3 py-1.5 font-medium">Event</th>
-                <th scope="col" className="px-3 py-1.5 font-medium">Revision</th>
-                <th scope="col" className="px-3 py-1.5 font-medium">Trace</th>
-                <th scope="col" className="px-3 py-1.5 font-medium">
-                  <span className="inline-flex items-center gap-1">
-                    <Link2 className="size-3" aria-hidden />
+                <th scope="col" className="audit-strip__heading-cell">#</th>
+                <th scope="col" className="audit-strip__heading-cell">Time (UTC)</th>
+                <th scope="col" className="audit-strip__heading-cell">Event</th>
+                <th scope="col" className="audit-strip__heading-cell">Revision</th>
+                <th scope="col" className="audit-strip__heading-cell">Trace</th>
+                <th scope="col" className="audit-strip__heading-cell">
+                  <span className="audit-strip__label-6">
+                    <Link2 className="audit-strip__icon-2" aria-hidden />
                     prev_hash → hash
                   </span>
                 </th>
               </tr>
             </thead>
-            <tbody className="font-mono text-[11px]">
+            <tbody className="audit-strip__body">
               {[...events].reverse().map((event) => (
-                <tr key={event.seq} className="border-t border-line/70">
-                  <td className="px-3 py-1 text-fg-subtle">{event.seq}</td>
-                  <td className="px-3 py-1 text-fg-muted">{formatClock(event.timestamp)}</td>
-                  <td className="px-3 py-1 text-fg">{event.event_type}</td>
-                  <td className="px-3 py-1 text-fg-muted">{event.graph_revision}</td>
-                  <td className="px-3 py-1 text-fg-subtle">{event.trace_id ?? event.investigation_id ?? '–'}</td>
-                  <td className="px-3 py-1 text-fg-subtle">
+                <tr key={event.seq} className="audit-strip-3">
+                  <td className="audit-strip__cell">{event.seq}</td>
+                  <td className="audit-strip__cell-2">{formatClock(event.timestamp)}</td>
+                  <td className="audit-strip__cell-3">{event.event_type}</td>
+                  <td className="audit-strip__cell-2">{event.graph_revision}</td>
+                  <td className="audit-strip__cell">{event.trace_id ?? event.investigation_id ?? '–'}</td>
+                  <td className="audit-strip__cell">
                     <span title={event.prev_hash}>{shortHash(event.prev_hash, 6, 4)}</span>
                     {' → '}
-                    <span className="text-fg-muted" title={event.hash}>
+                    <span className="audit-strip__label-7" title={event.hash}>
                       {shortHash(event.hash, 6, 4)}
                     </span>
                   </td>
