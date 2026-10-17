@@ -113,8 +113,13 @@
   height: 0.875rem;
 }
 
+/* The rows scroll inside this box, under the sticky column headings, so the page stays one screen of
+   table with the filters above and the page controls below. */
 .alert-table__box {
-  overflow-x: auto;
+  position: relative;
+  max-height: max(18rem, calc(100vh - 14rem));
+  max-height: max(18rem, calc(100dvh - 14rem));
+  overflow: auto;
   border-radius: 0.5rem;
   border-width: 1px;
   border-color: rgb(var(--line));
