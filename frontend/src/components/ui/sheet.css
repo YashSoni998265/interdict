@@ -5,9 +5,9 @@
   inset: 0px;
   z-index: 40;
   animation: fade-in 150ms ease-out;
-  background-color: rgb(0 0 0 / 0.6);
-  -webkit-backdrop-filter: blur(1px);
-  backdrop-filter: blur(1px);
+  background-color: rgb(29 29 31 / 0.28);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 .sheet__content {
@@ -23,7 +23,7 @@
   border-left-width: 1px;
   border-color: rgb(var(--line));
   background-color: rgb(var(--pane));
-  box-shadow: 0 0 0 1px rgb(var(--elevated)), 0 12px 32px -12px rgb(var(--elevated));
+  box-shadow: var(--shadow-elevated);
 }
 
 .sheet__content:focus {
@@ -106,7 +106,7 @@
   inset: 0px;
   z-index: 40;
   animation: fade-in 150ms ease-out;
-  background-color: rgb(0 0 0 / 0.6);
+  background-color: rgb(29 29 31 / 0.28);
 }
 
 .modal__content {
@@ -125,7 +125,7 @@
   border-width: 1px;
   border-color: rgb(var(--line));
   background-color: rgb(var(--pane));
-  box-shadow: 0 0 0 1px rgb(var(--elevated)), 0 12px 32px -12px rgb(var(--elevated));
+  box-shadow: var(--shadow-elevated);
 }
 
 .modal__content:focus {

@@ -113,7 +113,7 @@ function Workbench({ cluster, storm, initialPod }: { cluster: ClusterView; storm
       <div className="workbench__row">
         <Link to="/storm" className="workbench__link">
           <ArrowLeft className="workbench__icon" aria-hidden />
-          Storm
+          Explore
         </Link>
         <div className="workbench__block">
           <h1 className="workbench__heading">
@@ -121,7 +121,6 @@ function Workbench({ cluster, storm, initialPod }: { cluster: ClusterView; storm
             <span className="workbench__label-2"> via </span>
             <span className="workbench__label">{cluster.entry_ingress}</span>
           </h1>
-          <div className="workbench__block-2">{cluster.id}</div>
         </div>
         {cluster.beyond_bound ? (
           <Tag tone="orange">
@@ -130,7 +129,7 @@ function Workbench({ cluster, storm, initialPod }: { cluster: ClusterView; storm
           </Tag>
         ) : null}
         <span className="workbench__label-3">
-          T_scope
+          Protects
           <Tag mono>{cluster.target}</Tag>
         </span>
         <div className="workbench__row-2">

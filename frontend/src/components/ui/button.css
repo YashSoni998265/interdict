@@ -1,4 +1,4 @@
-/* Styles for button.tsx */
+/* Styles for button.tsx: pill-shaped controls, one blue primary action per view */
 
 .button {
   display: inline-flex;
@@ -8,11 +8,16 @@
   justify-content: center;
   gap: 0.375rem;
   white-space: nowrap;
-  border-radius: 0.375rem;
+  border-radius: 9999px;
   font-weight: 500;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
+  letter-spacing: -0.01em;
+  transition-property: color, background-color, border-color, box-shadow, transform;
+  transition-timing-function: var(--ease-out);
+  transition-duration: 200ms;
+}
+
+.button:active {
+  transform: scale(0.97);
 }
 
 .button:disabled {
@@ -25,39 +30,36 @@
 }
 
 .button--primary {
-  background-color: rgb(var(--fg));
-  color: rgb(var(--canvas));
+  background-color: rgb(var(--accent-fill));
+  color: rgb(255 255 255);
 }
 
 .button--primary:hover {
-  background-color: rgb(255 255 255);
+  background-color: rgb(0 119 237);
 }
 
 .button--primary:active {
-  background-color: rgb(228 228 231);
+  background-color: rgb(0 98 196);
 }
 
 .button--secondary {
-  border-width: 1px;
-  border-color: rgb(var(--line));
-  background-color: rgb(var(--elevated));
+  background-color: rgb(var(--fg) / 0.06);
   color: rgb(var(--fg));
 }
 
 .button--secondary:hover {
-  border-color: rgb(var(--line-strong));
-  background-color: rgb(var(--hover));
+  background-color: rgb(var(--fg) / 0.1);
 }
 
 .button--outline {
   border-width: 1px;
-  border-color: rgb(var(--line));
-  background-color: transparent;
+  border-color: rgb(var(--line-strong));
+  background-color: rgb(var(--surface));
   color: rgb(var(--fg));
 }
 
 .button--outline:hover {
-  background-color: rgb(var(--elevated));
+  border-color: rgb(var(--fg-subtle));
 }
 
 .button--ghost {
@@ -65,7 +67,7 @@
 }
 
 .button--ghost:hover {
-  background-color: rgb(var(--hover));
+  background-color: rgb(var(--fg) / 0.06);
   color: rgb(var(--fg));
 }
 
@@ -81,11 +83,15 @@
   text-decoration-line: underline;
 }
 
+.button--link:active {
+  transform: none;
+}
+
 .button--xs {
-  height: 1.5rem;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
-  font-size: 0.6875rem;
+  height: 1.625rem;
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+  font-size: 0.75rem;
   line-height: 1rem;
 }
 
@@ -95,9 +101,9 @@
 }
 
 .button--sm {
-  height: 1.75rem;
-  padding-left: 0.625rem;
-  padding-right: 0.625rem;
+  height: 2rem;
+  padding-left: 0.875rem;
+  padding-right: 0.875rem;
   font-size: 0.8125rem;
   line-height: 1.25rem;
 }
@@ -108,10 +114,10 @@
 }
 
 .button--md {
-  height: 2rem;
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
-  font-size: 0.8125rem;
+  height: 2.375rem;
+  padding-left: 1.125rem;
+  padding-right: 1.125rem;
+  font-size: 0.875rem;
   line-height: 1.25rem;
 }
 
@@ -121,21 +127,21 @@
 }
 
 .button--lg {
-  height: 2.5rem;
-  padding-left: 1rem;
-  padding-right: 1rem;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
+  height: 3rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  font-size: 1rem;
+  line-height: 1.5rem;
 }
 
 .button--lg svg {
-  width: 1rem;
-  height: 1rem;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 
 .button--icon {
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2rem;
+  height: 2rem;
 }
 
 .button--icon svg {

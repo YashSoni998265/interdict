@@ -118,9 +118,48 @@ export default function SystemPage() {
     <div className="system-page-2">
       <div className="system-page__block">
         <header>
-          <h1 className="system-page__heading">System</h1>
-          <p className="system-page__text">What runs this deployment and how fast it measured, so the numbers can be checked.</p>
+          <h1 className="system-page__heading">Under the hood</h1>
+          <p className="system-page__text">
+            The tools the agent uses, the graph it reasons over, and how fast each query ran, so every number can be
+            checked.
+          </p>
         </header>
+
+        <div className="system-page__grid">
+          <Card title="The agent’s MCP tools" subtitle="The only actions the agent can take: typed, parameterised, never model-written Cypher">
+            {s.tools && s.tools.length > 0 ? (
+              <ul className="system-page__list">
+                {s.tools.map((entry) => {
+                  const tool = entryName(entry);
+                  return (
+                    <li key={tool.name} className="system-page-5">
+                      <span className="system-page__label-3">{tool.name}</span>
+                      {tool.description ? <span className="system-page__label-4"> · {tool.description}</span> : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="system-page__text-3">Not reported by this API.</p>
+            )}
+          </Card>
+          <Card title="Sandbox operations" subtitle="Typed changes a visitor can make to their own sandbox; never callable by the agent">
+            {s.sandbox_operations && s.sandbox_operations.length > 0 ? (
+              <ul className="system-page__list">
+                {s.sandbox_operations.map((entry) => {
+                  const op = entryName(entry);
+                  return (
+                    <li key={op.name} className="system-page-6">
+                      {op.name}
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="system-page__text-3">Not reported by this API.</p>
+            )}
+          </Card>
+        </div>
 
         <div className="system-page__grid">
           <Card title="Deployment">
@@ -224,41 +263,6 @@ export default function SystemPage() {
           </Card>
         ) : null}
 
-        <div className="system-page__grid">
-          <Card title="MCP tools" subtitle="The only actions the agent can take: typed, parameterised, never model-written Cypher">
-            {s.tools && s.tools.length > 0 ? (
-              <ul className="system-page__list">
-                {s.tools.map((entry) => {
-                  const tool = entryName(entry);
-                  return (
-                    <li key={tool.name} className="system-page-5">
-                      <span className="system-page__label-3">{tool.name}</span>
-                      {tool.description ? <span className="system-page__label-4"> · {tool.description}</span> : null}
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <p className="system-page__text-3">Not reported by this API.</p>
-            )}
-          </Card>
-          <Card title="Sandbox operations" subtitle="Typed changes a visitor can make to their own sandbox; never callable by the agent">
-            {s.sandbox_operations && s.sandbox_operations.length > 0 ? (
-              <ul className="system-page__list">
-                {s.sandbox_operations.map((entry) => {
-                  const op = entryName(entry);
-                  return (
-                    <li key={op.name} className="system-page-6">
-                      {op.name}
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <p className="system-page__text-3">Not reported by this API.</p>
-            )}
-          </Card>
-        </div>
       </div>
       <Footer />
     </div>

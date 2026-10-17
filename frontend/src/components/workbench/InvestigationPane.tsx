@@ -1,5 +1,5 @@
 import { Bot, Clock, Cpu, Play, PlugZap, RotateCcw, TriangleAlert } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useSystem } from '@/api/queries';
 import type { ClusterView, InvestigationMode } from '@/api/types';
@@ -12,7 +12,6 @@ import { Banner, ErrorState, LoadingState } from '../states';
 import { DoneItem, ErrorItem, LifecycleDivider, NarrationItem, ReportCard, StepCard } from '../timeline/TimelineItems';
 import { LifecycleRail } from '../timeline/LifecycleRail';
 import { Button } from '../ui/button';
-import { Segmented } from '../ui/segmented';
 
 import { Pane } from './Pane';
 import './InvestigationPane.css';
@@ -24,7 +23,7 @@ function AgentLine() {
     return (
       <span className="agent-line">
         <Cpu className="agent-line__icon" aria-hidden />
-        Mock API: replays the recorded deterministic run for either mode
+        Replay of the recorded deterministic run
       </span>
     );
   }
@@ -37,7 +36,7 @@ function AgentLine() {
   ) : (
     <span className="agent-line">
       <PlugZap className="agent-line__icon" aria-hidden />
-      Agent: deterministic only (no API key)
+      Deterministic mode: graph tools over MCP, no LLM
     </span>
   );
 }
@@ -63,7 +62,7 @@ function EmptyTimeline({ onStart, disabled }: { onStart: () => void; disabled: b
       </ol>
       <Button variant="primary" onClick={onStart} disabled={disabled}>
         <Play aria-hidden />
-        Investigate
+        Run the agent
       </Button>
     </div>
   );
@@ -81,9 +80,8 @@ export function InvestigationPane({
   const run = useRun(cluster.id);
   const revision = useSandboxState((s) => s.revision);
   const agentAvailable = system.data?.agent_available ?? false;
-  // Default to the agent when the API has one; the user's choice wins once made.
-  const [chosen, setMode] = useState<InvestigationMode | null>(run?.requestedMode ?? null);
-  const mode: InvestigationMode = chosen ?? (agentAvailable ? 'agent' : 'deterministic');
+  // The agent when the API has one, otherwise the deterministic pipeline (the same MCP tools).
+  const mode: InvestigationMode = agentAvailable ? 'agent' : 'deterministic';
   const scroller = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
   const items = derived?.items ?? [];
@@ -120,22 +118,10 @@ export function InvestigationPane({
       title="Investigation"
       subtitle={<AgentLine />}
       actions={
-        <>
-          <Segmented
-            size="xs"
-            label="Investigation mode"
-            value={mode}
-            onValueChange={setMode}
-            options={[
-              { value: 'agent', label: 'Agent', ariaLabel: agentAvailable ? 'Agent (Claude)' : 'Agent (falls back to deterministic)' },
-              { value: 'deterministic', label: 'Deterministic', ariaLabel: 'Deterministic, no AI narrator' },
-            ]}
-          />
-          <Button size="sm" variant="primary" onClick={start} disabled={busy}>
-            {run ? <RotateCcw aria-hidden /> : <Play aria-hidden />}
-            {busy ? 'Running…' : run ? 'Re-run' : 'Investigate'}
-          </Button>
-        </>
+        <Button size="sm" variant="primary" onClick={start} disabled={busy}>
+          {run ? <RotateCcw aria-hidden /> : <Play aria-hidden />}
+          {busy ? 'Running…' : run ? 'Re-run' : 'Run the agent'}
+        </Button>
       }
     >
       <div className="investigation-pane__block">
@@ -145,7 +131,6 @@ export function InvestigationPane({
             <span className="investigation-pane__label">Ran: </span>
             <span className={cn(ran ? 'investigation-pane__label--ran' : 'investigation-pane__label--not-ran')}>{ran ? ranModeText(ran) : run ? `requested ${run.requestedMode}` : 'not run yet'}</span>
           </span>
-          {run?.investigationId ? <span className="investigation-pane__label-2">{run.investigationId}</span> : null}
         </div>
         {notes.length > 0 ? (
           <ul className="investigation-pane__list">

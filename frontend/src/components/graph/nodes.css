@@ -18,7 +18,7 @@
   background-color: rgb(var(--elevated));
   padding-left: 0.75rem;
   padding-right: 0.75rem;
-  box-shadow: 0 0 0 1px rgb(var(--elevated)), 0 12px 32px -12px rgb(var(--elevated));
+  box-shadow: var(--shadow-elevated);
   transition-property: box-shadow;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
@@ -66,7 +66,7 @@
   padding-right: 0.75rem;
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
-  box-shadow: 0 0 0 1px rgb(var(--elevated)), 0 12px 32px -12px rgb(var(--elevated));
+  box-shadow: var(--shadow-elevated);
   transition-property: box-shadow,opacity;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
@@ -94,7 +94,7 @@
   width: 0.875rem;
   height: 0.875rem;
   flex-shrink: 0;
-  color: rgb(248 113 113);
+  color: rgb(185 28 28);
 }
 
 .pod-node__block {
@@ -126,7 +126,7 @@
   font-size: 10px;
   font-weight: 500;
   line-height: 1rem;
-  color: rgb(252 165 165);
+  color: rgb(153 27 27);
 }
 
 .pod-node__row-3 {
@@ -163,7 +163,7 @@
   background-color: rgb(var(--elevated));
   padding-left: 0.75rem;
   padding-right: 0.75rem;
-  box-shadow: 0 0 0 1px rgb(var(--elevated)), 0 12px 32px -12px rgb(var(--elevated));
+  box-shadow: var(--shadow-elevated);
 }
 
 .database-node--selected {
@@ -182,7 +182,7 @@
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
-  color: rgb(248 113 113);
+  color: rgb(185 28 28);
 }
 
 .database-node__block {
@@ -210,5 +210,5 @@
 .database-node__icon-2 {
   width: 0.75rem;
   height: 0.75rem;
-  color: rgb(252 211 77);
+  color: rgb(180 83 9);
 }

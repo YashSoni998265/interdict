@@ -5,6 +5,7 @@ import { AppShell } from './components/layout/AppShell';
 import { RouteError } from './pages/RouteError';
 
 const LandingPage = lazy(() => import('./pages/LandingPage'));
+const DemoPage = lazy(() => import('./pages/DemoPage'));
 const StormPage = lazy(() => import('./pages/StormPage'));
 const WorkbenchPage = lazy(() => import('./pages/WorkbenchPage'));
 const CertificatePage = lazy(() => import('./pages/CertificatePage'));
@@ -18,6 +19,7 @@ const routes: RouteObject[] = [
     errorElement: <RouteError />,
     children: [
       { index: true, element: <LandingPage /> },
+      { path: 'demo', element: <DemoPage /> },
       { path: 'storm', element: <StormPage /> },
       { path: 'clusters/:clusterId', element: <WorkbenchPage /> },
       { path: 'certificates/:certificateId', element: <CertificatePage /> },

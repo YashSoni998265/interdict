@@ -156,7 +156,7 @@
 .round-card__block-3 {
   font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 11px;
-  color: rgb(196 181 253);
+  color: rgb(109 40 217);
 }
 
 .round-card__label-4 {
@@ -185,7 +185,7 @@
 
 .round-card__label-6 {
   text-decoration-line: line-through;
-  text-decoration-color: rgb(167 139 250 / 0.7);
+  text-decoration-color: rgb(109 40 217 / 0.7);
 }
 
 .round-card__block-5 {
@@ -236,7 +236,7 @@
 }
 
 .round-card__label-10 {
-  color: rgb(253 186 116);
+  color: rgb(194 65 12);
 }
 
 .round-card__block-6 {
@@ -266,7 +266,7 @@
   font-size: 0.6875rem;
   line-height: 1rem;
   font-weight: 500;
-  color: rgb(253 186 116);
+  color: rgb(194 65 12);
 }
 
 .round-card__icon {
@@ -275,7 +275,7 @@
 }
 
 .round-card__num-2 {
-  color: rgb(254 215 170);
+  color: rgb(154 52 18);
 }
 
 .round-card__list > :not([hidden]) ~ :not([hidden]) {
@@ -294,7 +294,7 @@
 .round-card__text {
   font-size: 0.6875rem;
   line-height: 1rem;
-  color: rgb(110 231 183);
+  color: rgb(4 120 87);
 }
 
 .round-card__block-8 > :not([hidden]) ~ :not([hidden]) {

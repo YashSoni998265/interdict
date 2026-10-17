@@ -1,4 +1,4 @@
-import { ArrowLeft, BadgeCheck, Clock, Download, FlaskConical, RotateCcw } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, ChevronDown, Clock, Download, FlaskConical, RotateCcw } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
@@ -17,12 +17,39 @@ import { formatRelative, formatUtc, shortHash } from '@/lib/format';
 import { describeCollection, VARIANT } from '@/lib/status';
 import './CertificatePage.css';
 
-function Section({ title, children, id }: { title: string; children: ReactNode; id: string }) {
+function Section({
+  title,
+  children,
+  id,
+  collapsed = false,
+}: {
+  title: string;
+  children: ReactNode;
+  id: string;
+  /** Technical detail starts folded so the claim, methods and exclusions stay in view. */
+  collapsed?: boolean;
+}) {
+  const heading = (
+    <h2 id={id} className="certificate-page-section__title">
+      {title}
+    </h2>
+  );
+  if (collapsed) {
+    return (
+      <section aria-labelledby={id} className="certificate-page-section">
+        <details className="certificate-page-section__details">
+          <summary className="certificate-page-section__summary">
+            {heading}
+            <ChevronDown className="certificate-page-section__chevron" aria-hidden />
+          </summary>
+          <div className="certificate-page-section__block">{children}</div>
+        </details>
+      </section>
+    );
+  }
   return (
     <section aria-labelledby={id} className="certificate-page-section">
-      <h2 id={id} className="certificate-page-section__title">
-        {title}
-      </h2>
+      {heading}
       <div className="certificate-page-section__block">{children}</div>
     </section>
   );
@@ -111,7 +138,7 @@ function Document({ c }: { c: CertificateView }) {
         </dl>
       </Section>
 
-      <Section id="snapshot" title="Snapshot">
+      <Section id="snapshot" title="Snapshot" collapsed>
         <dl>
           <Row label="Sandbox graph">
             <span className="document__label-3">{c.snapshot.sandbox_graph_key}</span>
@@ -141,7 +168,7 @@ function Document({ c }: { c: CertificateView }) {
         </p>
       </Section>
 
-      <Section id="threat-model" title="Threat model and assumptions">
+      <Section id="threat-model" title="Threat model and assumptions" collapsed>
         <dl>
           <Row label="Threat model">
             <span className="document__label-5">{c.threat_model.id}</span>
@@ -173,7 +200,7 @@ function Document({ c }: { c: CertificateView }) {
         </dl>
       </Section>
 
-      <Section id="evidence" title="Evidence">
+      <Section id="evidence" title="Evidence" collapsed>
         <dl>
           <Row label="Completeness">
             <span className="document__label-6">
@@ -331,7 +358,7 @@ function Document({ c }: { c: CertificateView }) {
         </ul>
       </Section>
 
-      <Section id="provenance" title="Provenance">
+      <Section id="provenance" title="Provenance" collapsed>
         <dl>
           <Row label="Engine git SHA">
             <span className="document__label-3">{c.provenance.engine_git_sha ?? 'not recorded'}</span>

@@ -1,10 +1,10 @@
 /* Styles for SystemPage.tsx */
 
 .card {
-  border-radius: 0.5rem;
-  border-width: 1px;
-  border-color: rgb(var(--line));
+  overflow: hidden;
+  border-radius: var(--radius-card);
   background-color: rgb(var(--surface));
+  box-shadow: var(--shadow-card);
 }
 
 .card__header {
@@ -17,9 +17,10 @@
 }
 
 .card__title {
-  font-size: 0.8125rem;
-  line-height: 1.25rem;
-  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.375rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
   color: rgb(var(--fg));
 }
 
@@ -161,10 +162,7 @@
   margin-right: auto;
   width: 100%;
   max-width: 64rem;
-  padding-left: 1rem;
-  padding-right: 1rem;
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
+  padding: 2.5rem 1.25rem 3rem;
 }
 
 .system-page__block > :not([hidden]) ~ :not([hidden]) {
@@ -173,17 +171,18 @@
 }
 
 .system-page__heading {
-  font-size: 1.25rem;
-  line-height: 1.75rem;
-  font-weight: 600;
-  letter-spacing: -0.025em;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.08;
+  font-weight: 700;
+  letter-spacing: -0.04em;
   color: rgb(var(--fg));
 }
 
 .system-page__text {
-  margin-top: 0.25rem;
-  font-size: 0.8125rem;
-  line-height: 1.25rem;
+  margin-top: 0.75rem;
+  max-width: 42rem;
+  font-size: 1.0625rem;
+  line-height: 1.55;
   color: rgb(var(--fg-muted));
 }
 

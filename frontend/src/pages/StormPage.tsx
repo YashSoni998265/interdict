@@ -1,18 +1,19 @@
-import { CircleCheck, Clock, Quote, RefreshCw, Scale } from 'lucide-react';
+import { ArrowRight, CircleCheck, Clock, Quote, RefreshCw, Scale } from 'lucide-react';
 import { useState } from 'react';
 
 import { useStorm } from '@/api/queries';
 import type { StormView } from '@/api/types';
 import { useApi, useSandboxState } from '@/app/services';
 import { Footer } from '@/components/layout/Footer';
+import { CountUp } from '@/components/motion/CountUp';
 import { Num } from '@/components/Num';
 import { StatusBadge, StatusIcon } from '@/components/StatusBadge';
 import { AlertTable } from '@/components/storm/AlertTable';
 import { ClusterCard } from '@/components/storm/ClusterCard';
 import { Funnel } from '@/components/storm/Funnel';
-import { ScenarioCard } from '@/components/storm/ScenarioCard';
 import { Banner, EmptyState, ErrorState, LoadingState } from '@/components/states';
 import { Button } from '@/components/ui/button';
+import { Disclosure } from '@/components/ui/disclosure';
 import { Popover } from '@/components/ui/popover';
 import { cn } from '@/lib/cn';
 import { formatUtc } from '@/lib/format';
@@ -85,41 +86,6 @@ function EvidenceStatus({ storm }: { storm: StormView }) {
   );
 }
 
-function GraphStats({ storm }: { storm: StormView }) {
-  const stats = storm.graph_stats;
-  const steps = storm.attack_steps;
-  const items = [
-    { label: 'Pods', node: <Num metric="graphPods" value={stats.pods} /> },
-    { label: 'Crown jewels', node: <Num metric="crownJewels" value={stats.crown_jewels.length} /> },
-    { label: 'Observed flows', node: <Num metric="graphFlows" value={stats.observed_flows} /> },
-    { label: 'Vulnerability findings', node: <Num metric="graphFindings" value={stats.vulnerability_findings} /> },
-    ...(steps
-      ? [
-          {
-            label: 'ATTACK_STEP edges',
-            node: (
-              <Num
-                metric="attackSteps"
-                value={steps.total}
-                detail={`${steps.entry} ENTRY · ${steps.lateral} LATERAL · ${steps.goal} GOAL`}
-              />
-            ),
-          },
-        ]
-      : []),
-  ];
-  return (
-    <dl className="graph-stats">
-      {items.map((item) => (
-        <div key={item.label} className="graph-stats-2">
-          <dt>{item.label}</dt>
-          <dd className="graph-stats__value">{item.node}</dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
-
 function Restraint({ storm, onShow }: { storm: StormView; onShow: (cve: string) => void }) {
   const example = restraintExample(storm.alerts);
   if (!example) return null;
@@ -166,6 +132,7 @@ export default function StormPage() {
   const storm = useStorm();
   const revision = useSandboxState((s) => s.revision);
   const [search, setSearch] = useState('');
+  const [showAlerts, setShowAlerts] = useState(false);
 
   if (storm.isPending) {
     return (
@@ -201,9 +168,6 @@ export default function StormPage() {
           </div>
           <div className="storm-page__row">
             <EvidenceStatus storm={data} />
-          </div>
-          <div className="storm-page__block-3">
-            <GraphStats storm={data} />
           </div>
         </header>
 
@@ -249,30 +213,52 @@ export default function StormPage() {
         ) : (
           <>
             <section aria-labelledby="funnel" className="storm-page__section">
-              <h2 id="funnel" className="section-label">
+              <h2 id="funnel" className="sr-only">
                 From alerts to attack paths
               </h2>
-              <Funnel storm={data} />
+              <div className="storm-headline">
+                <div className="storm-headline__tile">
+                  <CountUp value={data.total_alerts} className="storm-headline__value" />
+                  <span className="storm-headline__label">alerts in the storm</span>
+                </div>
+                <ArrowRight className="storm-headline__arrow" aria-hidden />
+                <div className="storm-headline__tile storm-headline__tile--red">
+                  <CountUp value={data.counts.ON_ATTACK_PATH} from={data.total_alerts} className="storm-headline__value" />
+                  <span className="storm-headline__label">on a real attack path</span>
+                </div>
+                <ArrowRight className="storm-headline__arrow" aria-hidden />
+                <div className="storm-headline__tile">
+                  <CountUp value={data.clusters.length} className="storm-headline__value" />
+                  <span className="storm-headline__label">places to fix</span>
+                </div>
+              </div>
+              <Disclosure summary="How we got here: every step of the triage, with its graph proof" className="storm-page__how">
+                <Funnel storm={data} />
+              </Disclosure>
             </section>
-
             <Restraint
               storm={data}
               onShow={(cve) => {
                 setSearch(cve);
-                document.getElementById('alerts')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                setShowAlerts(true);
+                window.setTimeout(
+                  () => document.getElementById('alerts')?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+                  50,
+                );
               }}
             />
-
             <section aria-labelledby="clusters" className="storm-page__section">
-              <div className="storm-page__row-2">
-                <h2 id="clusters" className="section-label">
-                  Clusters: one per crown jewel and entry ingress
+              <div className="storm-page__heading-row">
+                <h2 id="clusters" className="storm-page__section-title">
+                  Where to act
                 </h2>
-                <span className="storm-page__label-4">Each cluster is investigated and fixed on its own.</span>
+                <span className="storm-page__section-hint">
+                  One cluster per crown jewel and way in. Each is investigated and fixed on its own.
+                </span>
               </div>
               <div className="storm-page__grid">
                 {data.clusters.map((cluster) => (
-                  <ClusterCard key={cluster.id} cluster={cluster} storm={data} />
+                  <ClusterCard key={cluster.id} cluster={cluster} />
                 ))}
               </div>
               {data.clusters.length === 0 ? (
@@ -281,22 +267,24 @@ export default function StormPage() {
                   fix.
                 </EmptyState>
               ) : null}
-              <div className="storm-page__grid">
-                <ScenarioCard />
-              </div>
             </section>
-
-            <section id="alerts" aria-labelledby="alerts-title" className="storm-page__section-2">
-              <div className="storm-page__row-2">
-                <h2 id="alerts-title" className="section-label">
+            <section id="alerts" aria-labelledby="alerts-title" className="storm-page__section">
+              <div className="storm-page__heading-row">
+                <h2 id="alerts-title" className="storm-page__section-title">
                   Every alert
                 </h2>
-                <span className="storm-page__label-5">
+                <span className="storm-page__section-hint">
                   <Quote className="storm-page__icon" aria-hidden />
                   Titles are untrusted scanner text, shown inert. Try searching for “IGNORE”.
                 </span>
               </div>
-              <AlertTable storm={data} initialQuery={search} />
+              {showAlerts ? (
+                <AlertTable storm={data} initialQuery={search} />
+              ) : (
+                <Button variant="secondary" onClick={() => setShowAlerts(true)}>
+                  Show all {data.total_alerts.toLocaleString('en-US')} alerts
+                </Button>
+              )}
             </section>
           </>
         )}

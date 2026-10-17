@@ -5,15 +5,18 @@ import { Link } from 'react-router-dom';
 
 import { keys, useSandboxOperation, useSandboxReset, useStorm, useSystem } from '@/api/queries';
 import type { SandboxOperation, SandboxOpName } from '@/api/types';
+import { useBreakIt } from '@/app/breakIt';
 import { useApi, useSandboxState } from '@/app/services';
 import { cn } from '@/lib/cn';
 import { formatUtc, shortHash } from '@/lib/format';
+import { tierOfEdge } from '@/lib/evidence';
 import { describeSandboxResult } from '@/lib/status';
 
 import { Num } from '../Num';
 import { StatusIcon } from '../StatusBadge';
 import { Banner, ErrorState } from '../states';
 import { Button } from '../ui/button';
+import { Disclosure } from '../ui/disclosure';
 import { Field, Input, Select } from '../ui/form';
 import { Segmented } from '../ui/segmented';
 import { Tag } from '../ui/tag';
@@ -35,14 +38,6 @@ function opName(entry: unknown): string | undefined {
     if (typeof named.name === 'string') return named.name;
   }
   return undefined;
-}
-
-function tierOfEdge(edgeId: string): string {
-  if (/^ev-(exposes|routes|targets)-/.test(edgeId)) return 'exposure';
-  if (/^ev-(runs|hasvuln)-/.test(edgeId)) return 'vulnerability';
-  if (edgeId.startsWith('ev-reach-')) return 'reachability';
-  if (/^ev-(assumes|grants|applies)-/.test(edgeId)) return 'authorization';
-  return 'evidence';
 }
 
 /** Plain-language preview of what an operation changes, before it is applied. */
@@ -109,6 +104,7 @@ export function SandboxPanel({ preset, compact = false }: { preset?: SandboxOper
   const apply = useSandboxOperation();
   const reset = useSandboxReset();
   const formId = useId();
+  const quickly = useBreakIt(storm.data?.workloads_on_path[0] ?? null);
 
   const allowedOps = useMemo(() => {
     const listed = system.data?.sandbox_operations?.map(opName).filter(Boolean) as string[] | undefined;
@@ -231,167 +227,204 @@ export function SandboxPanel({ preset, compact = false }: { preset?: SandboxOper
         </Banner>
       ) : null}
 
-      <form id={formId} onSubmit={submit} className="sandbox-panel__form" aria-label="Sandbox operation">
-        <Segmented
-          label="Operation"
-          value={op}
-          onValueChange={(value) => {
-            setOp(value);
-            apply.reset();
-          }}
-          options={allowedOps.map((o) => ({ value: o.op, label: o.short, ariaLabel: o.label }))}
-        />
-
-        {op === 'EXPOSE_WORKLOAD' ? (
-          <div className="sandbox-panel__block">
-            <Field label="Workload" htmlFor={`${formId}-expose`} hint="EXPOSE_WORKLOAD(pod_id)">
-              <Select id={`${formId}-expose`} value={exposeValue} onChange={(e) => setExposePod(e.target.value)}>
-                {podOptions}
-              </Select>
-            </Field>
-            {has('batch-1') ? (
-              <button
-                type="button"
-                className="sandbox-panel__button"
-                onClick={() => setExposePod('batch-1')}
-              >
-                Demo step 1: expose batch-1 (same DEMO-CVE-001 as auth-1, but not on any path)
-              </button>
-            ) : null}
-          </div>
-        ) : null}
-
-        {op === 'ADD_LATERAL_REACH' ? (
-          <div className="sandbox-panel__block">
-            <div className="sandbox-panel__grid">
-              <Field label="From" htmlFor={`${formId}-src`}>
-                <Select id={`${formId}-src`} value={srcValue} onChange={(e) => setSrc(e.target.value)}>
-                  {podOptions}
-                </Select>
-              </Field>
-              <ArrowRight className="sandbox-panel__icon" aria-hidden />
-              <Field label="To" htmlFor={`${formId}-dst`}>
-                <Select id={`${formId}-dst`} value={dstValue} onChange={(e) => setDst(e.target.value)}>
-                  {podOptions}
-                </Select>
-              </Field>
-              <Field label="Port" htmlFor={`${formId}-port`} error={portError}>
-                <Input
-                  id={`${formId}-port`}
-                  inputMode="numeric"
-                  value={port}
-                  onChange={(e) => setPort(e.target.value)}
-                  aria-invalid={portError ? true : undefined}
-                  className="sandbox-panel__input"
-                />
-              </Field>
-            </div>
-            <p className="sandbox-panel__text">ADD_LATERAL_REACH(src_pod_id, dst_pod_id, port)</p>
-            {has('batch-1') && has('checkout-1') ? (
-              <button
-                type="button"
-                className="sandbox-panel__button"
-                onClick={() => {
-                  setSrc('batch-1');
-                  setDst('checkout-1');
-                  setPort('8080');
-                }}
-              >
-                Demo step 2: batch-1 → checkout-1 :8080 (creates a new chain to prod-payments-db)
-              </button>
-            ) : null}
-          </div>
-        ) : null}
-
-        {op === 'EXPIRE_EVIDENCE' ? (
-          <div className="sandbox-panel__block">
-            <Field
-              label="Evidence edge"
-              htmlFor={`${formId}-edge`}
-              hint="EXPIRE_EVIDENCE(edge_ref): edges recorded for workloads on attack paths"
-            >
-              {edgeOptions.length > 0 ? (
-                <Select id={`${formId}-edge`} value={edgeValue} onChange={(e) => setEdgeRef(e.target.value)}>
-                  {[...new Set(edgeOptions.map((o) => o.pod))].map((pod) => (
-                    <optgroup key={pod} label={pod}>
-                      {edgeOptions
-                        .filter((o) => o.pod === pod)
-                        .map((o) => (
-                          <option key={o.id} value={o.id}>
-                            {o.tier} · {o.id}
-                          </option>
-                        ))}
-                    </optgroup>
-                  ))}
-                </Select>
-              ) : (
-                <Input
-                  id={`${formId}-edge`}
-                  value={edgeRef}
-                  onChange={(e) => setEdgeRef(e.target.value)}
-                  placeholder={evidenceQueries.some((q) => q.isLoading) ? 'Loading evidence edges…' : 'ev-reach-…'}
-                  className="sandbox-panel__input"
-                />
-              )}
-            </Field>
-          </div>
-        ) : null}
-
-        <div className="sandbox-panel__box">
-          <div className="section-label sandbox-panel__block-2">What this changes</div>
-          <Preview operation={operation} />
-          <div className="sandbox-panel__row-2">
-            <Clock className="sandbox-panel__icon-2" aria-hidden />
-            If applied: the revision goes up by one, and every certificate issued at the current revision becomes
-            “Certificate no longer current”.
-          </div>
-        </div>
-
-        <div className="sandbox-panel__row-3">
-          <Button type="submit" variant="primary" disabled={!operation || apply.isPending}>
+      <section className="sandbox-quick" aria-label="One-click scenarios">
+        <div className="sandbox-quick__card">
+          <div className="sandbox-quick__title">Open a new attack path</div>
+          <p className="sandbox-quick__text">
+            Exposes <span className="sandbox-quick__mono">batch-1</span> (same DEMO-CVE-001 as auth-1) and lets it reach{' '}
+            <span className="sandbox-quick__mono">checkout-1</span> on port 8080: a new chain to prod-payments-db.
+          </p>
+          <Button variant="primary" size="sm" onClick={() => void quickly.openPath()} disabled={!quickly.canOpenPath || quickly.busy}>
             <Play aria-hidden />
-            {apply.isPending ? 'Applying…' : 'Apply to my sandbox'}
+            Open a new attack path
           </Button>
-          <span className="sandbox-panel__label">Typed and allowlisted; the agent can never call these.</span>
         </div>
-      </form>
-
-      <div aria-live="polite" className="sandbox-panel__block">
-        {apply.error ? (
-          <ErrorState error={apply.error} title="The operation could not be sent" onRetry={() => operation && apply.mutate(operation)} compact />
+        <div className="sandbox-quick__card">
+          <div className="sandbox-quick__title">Make evidence stale</div>
+          <p className="sandbox-quick__text">
+            Expires one piece of evidence. Verdicts that depend on it become inconclusive, never “safe”.
+          </p>
+          <Button variant="secondary" size="sm" onClick={() => void quickly.makeStale()} disabled={!quickly.canMakeStale || quickly.busy}>
+            <Clock aria-hidden />
+            Make evidence stale
+          </Button>
+        </div>
+        {quickly.last && quickly.last.scenario !== 'reset' ? (
+          <p className="sandbox-quick__result" aria-live="polite">
+            Now at revision {quickly.last.revision}:{' '}
+            {quickly.last.responses.map((r) => describeSandboxResult(r.result).label).join(', ')}. Certificates from earlier
+            revisions are no longer current; re-run an investigation to recompute.
+          </p>
         ) : null}
-        {last && lastDescriptor ? (
-          <div
-            className={cn(
-              'sandbox-panel__box-2',
-              last.result === 'APPLIED' ? 'sandbox-panel__box--applied' : 'sandbox-panel__box--not-applied',
-            )}
-          >
-            <div className="sandbox-panel__row-4">
-              <StatusIcon name={lastDescriptor.icon} />
-              {lastDescriptor.label}
-              <span className="sandbox-panel__label-2">{last.result}</span>
-            </div>
-            <p className="sandbox-panel__text-2">{last.detail}</p>
-            {last.superseded_certificates.length > 0 ? (
-              <div className="sandbox-panel__block-3">
-                <div className="section-label">Certificate no longer current</div>
-                <ul className="sandbox-panel__list">
-                  {last.superseded_certificates.map((id) => (
-                    <li key={id}>
-                      <Link to={`/certificates/${id}`} className="sandbox-panel__link">
-                        {shortHash(id, 12, 6)}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+        {quickly.error ? <ErrorState error={quickly.error} title="The sandbox change failed" compact /> : null}
+      </section>
+
+      <Disclosure summary="Advanced: make a custom change" defaultOpen={Boolean(preset)} className="sandbox-panel__advanced">
+        <div className="sandbox-panel__advanced-body">
+          <form id={formId} onSubmit={submit} className="sandbox-panel__form" aria-label="Sandbox operation">
+            <Segmented
+              label="Operation"
+              value={op}
+              onValueChange={(value) => {
+                setOp(value);
+                apply.reset();
+              }}
+              options={allowedOps.map((o) => ({ value: o.op, label: o.short, ariaLabel: o.label }))}
+            />
+
+            {op === 'EXPOSE_WORKLOAD' ? (
+              <div className="sandbox-panel__block">
+                <Field label="Workload" htmlFor={`${formId}-expose`} hint="EXPOSE_WORKLOAD(pod_id)">
+                  <Select id={`${formId}-expose`} value={exposeValue} onChange={(e) => setExposePod(e.target.value)}>
+                    {podOptions}
+                  </Select>
+                </Field>
+                {has('batch-1') ? (
+                  <button
+                    type="button"
+                    className="sandbox-panel__button"
+                    onClick={() => setExposePod('batch-1')}
+                  >
+                    Demo step 1: expose batch-1 (same DEMO-CVE-001 as auth-1, but not on any path)
+                  </button>
+                ) : null}
               </div>
-            ) : last.result === 'APPLIED' ? (
-              <p className="sandbox-panel__text-3">No certificate was current at the previous revision.</p>
+            ) : null}
+
+            {op === 'ADD_LATERAL_REACH' ? (
+              <div className="sandbox-panel__block">
+                <div className="sandbox-panel__grid">
+                  <Field label="From" htmlFor={`${formId}-src`}>
+                    <Select id={`${formId}-src`} value={srcValue} onChange={(e) => setSrc(e.target.value)}>
+                      {podOptions}
+                    </Select>
+                  </Field>
+                  <ArrowRight className="sandbox-panel__icon" aria-hidden />
+                  <Field label="To" htmlFor={`${formId}-dst`}>
+                    <Select id={`${formId}-dst`} value={dstValue} onChange={(e) => setDst(e.target.value)}>
+                      {podOptions}
+                    </Select>
+                  </Field>
+                  <Field label="Port" htmlFor={`${formId}-port`} error={portError}>
+                    <Input
+                      id={`${formId}-port`}
+                      inputMode="numeric"
+                      value={port}
+                      onChange={(e) => setPort(e.target.value)}
+                      aria-invalid={portError ? true : undefined}
+                      className="sandbox-panel__input"
+                    />
+                  </Field>
+                </div>
+                <p className="sandbox-panel__text">ADD_LATERAL_REACH(src_pod_id, dst_pod_id, port)</p>
+                {has('batch-1') && has('checkout-1') ? (
+                  <button
+                    type="button"
+                    className="sandbox-panel__button"
+                    onClick={() => {
+                      setSrc('batch-1');
+                      setDst('checkout-1');
+                      setPort('8080');
+                    }}
+                  >
+                    Demo step 2: batch-1 → checkout-1 :8080 (creates a new chain to prod-payments-db)
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+
+            {op === 'EXPIRE_EVIDENCE' ? (
+              <div className="sandbox-panel__block">
+                <Field
+                  label="Evidence edge"
+                  htmlFor={`${formId}-edge`}
+                  hint="EXPIRE_EVIDENCE(edge_ref): edges recorded for workloads on attack paths"
+                >
+                  {edgeOptions.length > 0 ? (
+                    <Select id={`${formId}-edge`} value={edgeValue} onChange={(e) => setEdgeRef(e.target.value)}>
+                      {[...new Set(edgeOptions.map((o) => o.pod))].map((pod) => (
+                        <optgroup key={pod} label={pod}>
+                          {edgeOptions
+                            .filter((o) => o.pod === pod)
+                            .map((o) => (
+                              <option key={o.id} value={o.id}>
+                                {o.tier} · {o.id}
+                              </option>
+                            ))}
+                        </optgroup>
+                      ))}
+                    </Select>
+                  ) : (
+                    <Input
+                      id={`${formId}-edge`}
+                      value={edgeRef}
+                      onChange={(e) => setEdgeRef(e.target.value)}
+                      placeholder={evidenceQueries.some((q) => q.isLoading) ? 'Loading evidence edges…' : 'ev-reach-…'}
+                      className="sandbox-panel__input"
+                    />
+                  )}
+                </Field>
+              </div>
+            ) : null}
+
+            <div className="sandbox-panel__box">
+              <div className="section-label sandbox-panel__block-2">What this changes</div>
+              <Preview operation={operation} />
+              <div className="sandbox-panel__row-2">
+                <Clock className="sandbox-panel__icon-2" aria-hidden />
+                If applied: the revision goes up by one, and every certificate issued at the current revision becomes
+                “Certificate no longer current”.
+              </div>
+            </div>
+
+            <div className="sandbox-panel__row-3">
+              <Button type="submit" variant="primary" disabled={!operation || apply.isPending}>
+                <Play aria-hidden />
+                {apply.isPending ? 'Applying…' : 'Apply to my sandbox'}
+              </Button>
+              <span className="sandbox-panel__label">Typed and allowlisted; the agent can never call these.</span>
+            </div>
+          </form>
+
+          <div aria-live="polite" className="sandbox-panel__block">
+            {apply.error ? (
+              <ErrorState error={apply.error} title="The operation could not be sent" onRetry={() => operation && apply.mutate(operation)} compact />
+            ) : null}
+            {last && lastDescriptor ? (
+              <div
+                className={cn(
+                  'sandbox-panel__box-2',
+                  last.result === 'APPLIED' ? 'sandbox-panel__box--applied' : 'sandbox-panel__box--not-applied',
+                )}
+              >
+                <div className="sandbox-panel__row-4">
+                  <StatusIcon name={lastDescriptor.icon} />
+                  {lastDescriptor.label}
+                  <span className="sandbox-panel__label-2">{last.result}</span>
+                </div>
+                <p className="sandbox-panel__text-2">{last.detail}</p>
+                {last.superseded_certificates.length > 0 ? (
+                  <div className="sandbox-panel__block-3">
+                    <div className="section-label">Certificate no longer current</div>
+                    <ul className="sandbox-panel__list">
+                      {last.superseded_certificates.map((id) => (
+                        <li key={id}>
+                          <Link to={`/certificates/${id}`} className="sandbox-panel__link">
+                            {shortHash(id, 12, 6)}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : last.result === 'APPLIED' ? (
+                  <p className="sandbox-panel__text-3">No certificate was current at the previous revision.</p>
+                ) : null}
+              </div>
             ) : null}
           </div>
-        ) : null}
-      </div>
+
+        </div>
+      </Disclosure>
 
       {history.length > 0 ? (
         <section className="sandbox-panel__section" aria-label="Sandbox history">
