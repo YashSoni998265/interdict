@@ -11,6 +11,7 @@ import { cn } from '@/lib/cn';
 import { formatUtc, shortHash } from '@/lib/format';
 import { tierOfEdge } from '@/lib/evidence';
 import { describeSandboxResult } from '@/lib/status';
+import { MAX_SANDBOX_OPERATIONS } from '@/state/sandbox';
 
 import { Num } from '../Num';
 import { StatusIcon } from '../StatusBadge';
@@ -27,8 +28,6 @@ const OPS: { op: SandboxOpName; label: string; short: string }[] = [
   { op: 'ADD_LATERAL_REACH', label: 'Add lateral reach', short: 'Add reach' },
   { op: 'EXPIRE_EVIDENCE', label: 'Expire evidence', short: 'Expire' },
 ];
-
-const MAX_OPERATIONS = 20;
 
 function opName(entry: unknown): string | undefined {
   if (typeof entry === 'string') return entry;
@@ -215,7 +214,7 @@ export function SandboxPanel({ preset, compact = false }: { preset?: SandboxOper
         </Tag>
         <Tag>
           <Num metric="sessionOperations" value={applied} className="sandbox-panel__num-2" /> of{' '}
-          <Num metric="maxOperations" value={MAX_OPERATIONS} className="sandbox-panel__num-2" /> operations used
+          <Num metric="maxOperations" value={MAX_SANDBOX_OPERATIONS} className="sandbox-panel__num-2" /> operations used
         </Tag>
         <Tag>Your session only</Tag>
       </div>
