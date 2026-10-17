@@ -18,11 +18,11 @@ import {
   Waypoints,
   type LucideIcon,
 } from 'lucide-react';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import { useSandboxReset, useStorm, useSubgraph } from '@/api/queries';
-import type { ClusterView, HuntReportView, StormView } from '@/api/types';
+import type { ClusterView, HuntReportView, PlanView, StormView } from '@/api/types';
 import { useBreakIt } from '@/app/breakIt';
 import { useClusterAnalysis, useHuntOutcome } from '@/app/hooks';
 import { useApi, useRun, useSandboxState, useServices } from '@/app/services';
@@ -30,6 +30,7 @@ import { AttackGraph } from '@/components/graph/AttackGraph';
 import { EDGE_STYLE } from '@/components/graph/graphTheme';
 import { CountUp } from '@/components/motion/CountUp';
 import { staticMotion } from '@/components/motion/staticMotion';
+import { Num } from '@/components/Num';
 import { OutcomeBadge } from '@/components/OutcomeBadge';
 import { ImpactSentence } from '@/components/plan/PlanReport';
 import { EmptyState, ErrorState, LoadingState } from '@/components/states';
@@ -43,7 +44,8 @@ import { ranModeText, toolTitle, TYPICAL_RUN } from '@/lib/investigation';
 import { huntPlanHandle, mergeFlows } from '@/lib/plan';
 import { policyYaml } from '@/lib/policyYaml';
 import { describeSandboxResult, VARIANT } from '@/lib/status';
-import { restraintExample } from '@/lib/storm';
+import { restraintExample, SEVERITY_ORDER } from '@/lib/storm';
+import { MAX_SANDBOX_OPERATIONS } from '@/state/sandbox';
 
 import './DemoPage.css';
 
@@ -225,35 +227,45 @@ function HunterChecks({ hunt }: { hunt: HuntReportView | undefined }) {
   const last = hunt?.rounds[hunt.rounds.length - 1];
   const scope = hunt?.t_scope ?? [];
   const reached = last ? last.o_reachable.filter((target) => scope.includes(target)) : [];
+  const ms = (value: number | undefined) => (value === undefined ? null : `${value < 1 ? value.toFixed(2) : Math.round(value)} ms`);
   const checks = [
     {
       letter: 'E',
       title: 'Path search',
+      detail: 'Lists every attack chain of up to 3 lateral hops.',
       result: last ? `${last.e_chains.length} ${plural(last.e_chains.length, 'chain')} left` : null,
+      time: ms(last?.latency_ms.E),
     },
     {
       letter: 'F',
       title: 'Max-flow in FalkorDB',
+      detail: 'Max-flow from the Internet to each crown jewel, at any depth; 0 means no path.',
       result: last ? scope.map((target) => `${target}: ${last.f_values[target] ?? '?'}`).join(', ') : null,
+      time: ms(last?.latency_ms.F),
     },
     {
       letter: 'O',
       title: 'Independent search',
+      detail: 'A separate breadth-first search over the exported attack steps, at any depth.',
       result: last ? (reached.length > 0 ? `reaches ${reached.join(', ')}` : 'reaches nothing in scope') : null,
+      time: ms(last?.latency_ms.O),
     },
   ];
   return (
-    <div className="demo-aside">
-      <p className="demo-aside__title">Three independent checks, on a copy of the graph</p>
-      <ul className="demo-methods">
+    <div className="demo-card demo-fill demo-spread">
+      <p className="demo-card__kicker">Three independent checks, on a copy of the graph</p>
+      <ul className="demo-spread__rows">
         {checks.map((check) => (
           <li key={check.letter} className="demo-method">
             <span className="demo-method__letter">{check.letter}</span>
             <span className="demo-method__title">{check.title}</span>
             {check.result ? <span className="demo-method__result">{check.result}</span> : null}
+            {check.time ? <span className="demo-method__time">{check.time}</span> : null}
+            <span className="demo-method__detail">{check.detail}</span>
           </li>
         ))}
       </ul>
+      <p className="demo-now__note">A certificate is issued only when all three find no path to the crown jewel.</p>
     </div>
   );
 }
@@ -324,6 +336,264 @@ function GatewayChecks() {
   );
 }
 
+/** Desktop layouts fit each step above the navigation line; on phones the step scrolls instead. */
+const DESKTOP = '(min-width: 1024px)';
+/** Shorter windows start at a tighter fit level, so the type does not change from step to step. */
+const START_LEVEL: [query: string, level: number][] = [
+  ['(max-height: 740px)', 2],
+  ['(max-height: 820px)', 1],
+];
+/** The data-fit value of each level: the levels add up, so level 2 also applies level 1's rules. */
+const FIT_LEVELS = ['', '1', '1 2', '1 2 3'];
+
+/**
+ * Tighten a step until it ends above the navigation line (DemoPage.css, "Fit levels"). Measured, so
+ * it also adapts to the sandbox banners above the demo and to results that arrive later. If even the
+ * last level cannot fit, the step scrolls inside its frame; the navigation never moves.
+ */
+function useFitToStage() {
+  const stop = useRef<(() => void) | null>(null);
+  return useCallback((stage: HTMLDivElement | null) => {
+    stop.current?.();
+    stop.current = null;
+    if (!stage) return;
+    let frame = 0;
+    let live = true;
+    const media = (query: string) => window.matchMedia?.(query).matches ?? false;
+    // Too tall: the step scrolls, or a card that fills the leftover space is smaller than its content.
+    const tooTall = () =>
+      stage.scrollHeight > stage.clientHeight ||
+      Array.from(stage.querySelectorAll<HTMLElement>('.demo-fill')).some((el) => el.scrollHeight > el.clientHeight + 1);
+    const fit = () => {
+      frame = 0;
+      if (!live) return;
+      let level = media(DESKTOP) ? (START_LEVEL.find(([query]) => media(query))?.[1] ?? 0) : 0;
+      stage.dataset.fit = FIT_LEVELS[level];
+      while (media(DESKTOP) && level < FIT_LEVELS.length - 1 && tooTall()) {
+        level += 1;
+        stage.dataset.fit = FIT_LEVELS[level];
+      }
+    };
+    const schedule = () => {
+      if (live && !frame) frame = requestAnimationFrame(fit);
+    };
+    fit();
+    const resize = new ResizeObserver(schedule);
+    resize.observe(stage);
+    const changes = new MutationObserver(schedule);
+    changes.observe(stage, { childList: true, subtree: true });
+    void document.fonts?.ready.then(schedule);
+    stop.current = () => {
+      live = false;
+      cancelAnimationFrame(frame);
+      resize.disconnect();
+      changes.disconnect();
+    };
+  }, []);
+}
+
+/** How many fixed-height rows fit in a box that the layout sizes (lists that fill to the line, never scroll). */
+function useRowsThatFit(rowHeight: number, fallback: number) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [rows, setRows] = useState(fallback);
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const measure = () => {
+      const style = getComputedStyle(element);
+      const height = element.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+      if (height > 0) setRows(Math.max(1, Math.floor(height / rowHeight)));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [rowHeight]);
+  return [ref, rows] as const;
+}
+
+/** Step 1: what the CVE score alone would have said. Hidden while evidence is stale: with alerts
+ * inconclusive, no count of alerts off a path could be called final. */
+function SeverityCard({ storm }: { storm: StormView }) {
+  const alerts = storm.alerts ?? [];
+  if (alerts.length === 0 || !storm.complete) return null;
+  const rows = SEVERITY_ORDER.map((severity) => {
+    const all = alerts.filter((a) => a.severity === severity);
+    return { severity, total: all.length, onPath: all.filter((a) => a.triage_class === 'ON_ATTACK_PATH').length };
+  });
+  const max = Math.max(1, ...rows.map((r) => r.total));
+  const critical = rows[0];
+  return (
+    <div className="demo-card demo-fill demo-severity">
+      <p className="demo-card__kicker">Severity is not the answer</p>
+      {critical && critical.total > 0 ? (
+        <p className="demo-severity__lead">
+          Of {critical.total} critical alerts, only <strong>{critical.onPath}</strong> sit on a real attack path.
+        </p>
+      ) : null}
+      <ul className="demo-severity__rows">
+        {rows.map((row) => (
+          <li key={row.severity} className="demo-severity__row">
+            <span className="demo-severity__label">{row.severity.toLowerCase()}</span>
+            <span className="demo-severity__bar" aria-hidden>
+              <span className="demo-severity__all" style={{ width: `${(row.total / max) * 100}%` }} />
+              <span className="demo-severity__on" style={{ width: `${(row.onPath / max) * 100}%` }} />
+            </span>
+            <span className="demo-severity__count">
+              <strong>{row.onPath}</strong> of {row.total}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="demo-severity__legend">
+        <span className="demo-severity__key demo-severity__key--on" aria-hidden /> on a real attack path
+        <span className="demo-severity__key" aria-hidden /> all alerts at that severity
+      </p>
+    </div>
+  );
+}
+
+/** Step 1: real alerts behind the 69, as many as fit. */
+function AlertsThatMatter({ storm }: { storm: StormView }) {
+  const [box, rows] = useRowsThatFit(38, 4);
+  const order: readonly string[] = SEVERITY_ORDER;
+  const onPath = (storm.alerts ?? [])
+    .filter((a) => a.triage_class === 'ON_ATTACK_PATH')
+    .sort((a, b) => order.indexOf(a.severity) - order.indexOf(b.severity) || a.alert_id.localeCompare(b.alert_id));
+  if (onPath.length === 0) return null;
+  // One alert per workload first, so the rows show where the alerts that matter come from.
+  const byPod = new Map<string, typeof onPath>();
+  for (const alert of onPath) byPod.set(alert.pod, [...(byPod.get(alert.pod) ?? []), alert]);
+  const mixed: typeof onPath = [];
+  for (let i = 0; mixed.length < onPath.length; i += 1) {
+    for (const group of byPod.values()) {
+      const alert = group[i];
+      if (alert) mixed.push(alert);
+    }
+  }
+  return (
+    <div className="demo-card demo-fill demo-list">
+      <p className="demo-card__kicker">
+        A few of the {storm.counts.ON_ATTACK_PATH} alerts that matter
+      </p>
+      <div ref={box} className="demo-list__box">
+        <ul className="demo-list__rows">
+          {mixed.slice(0, rows).map((alert) => (
+            <li key={alert.alert_id} className="demo-list__row">
+              <span className="demo-mono demo-list__id">{alert.alert_id}</span>
+              <span className="demo-mono demo-list__pod">{alert.pod}</span>
+              <span className="demo-mono demo-list__cve">{alert.cve_id}</span>
+              <span className={cn('demo-list__sev', `demo-list__sev--${alert.severity.toLowerCase()}`)}>
+                {alert.severity.toLowerCase()}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+const AGENT_RULES = [
+  'Uses only seven typed MCP tools; there is no query tool',
+  'Never writes Cypher: every query is a fixed, parameterised template',
+  'At most 12 tool calls per investigation',
+  'It cannot change your sandbox: sandbox operations are not tools',
+  'The final status, plan and certificate are copied from tool results',
+];
+
+/** Step 2: the guard rails around the agent. */
+function AgentRules() {
+  return (
+    <div className="demo-card demo-fill demo-spread">
+      <p className="demo-card__kicker">What the agent can and cannot do</p>
+      <ul className="demo-spread__rows">
+        {AGENT_RULES.map((rule) => (
+          <li key={rule} className="demo-rule">
+            <span className="demo-rule__icon">
+              <Check aria-hidden />
+            </span>
+            {rule}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Step 4: the policy file, as many lines as fit. */
+function PolicyPreview({ text }: { text: string }) {
+  const [box, rows] = useRowsThatFit(18, 12);
+  const lines = text.trimEnd().split('\n');
+  const shown = lines.length > rows ? [...lines.slice(0, Math.max(1, rows - 1)), '# … download for the full file'] : lines;
+  return (
+    <div className="demo-card demo-fill demo-yaml">
+      <p className="demo-card__kicker">Preview of the policy file</p>
+      <div ref={box} className="demo-yaml__box">
+        <pre className="demo-yaml__code">
+          {shown.map((line, index) => (
+            <span key={index} className="demo-yaml__line">
+              {line}
+            </span>
+          ))}
+        </pre>
+      </div>
+    </div>
+  );
+}
+
+/** Step 4: what the fix costs in legitimate traffic. */
+function ImpactTiles({ plan, total }: { plan: PlanView; total: number }) {
+  const tiles = [
+    { key: 'broken', node: <Num metric="declaredBroken" value={plan.known_broken.length} />, label: plural(plan.known_broken.length, 'declared dependency broken', 'declared dependencies broken') },
+    { key: 'unknown', node: <Num metric="unknownImpact" value={plan.unknown.length} />, label: plural(plan.unknown.length, 'flow with unknown impact', 'flows with unknown impact') },
+    { key: 'blocked', node: <Num metric="flowsBlocked" value={plan.blocked.length} />, label: plural(plan.blocked.length, 'flow blocked', 'flows blocked') },
+    { key: 'cut', node: <Num metric="pathsSevered" value={plan.covered.length} suffix={` / ${total}`} detail={`|C| = ${total} chains in the constraint set.`} />, label: 'attack paths cut' },
+  ];
+  return (
+    <ul className="demo-impact demo-fill" aria-label="Impact of the fix">
+      {tiles.map((tile) => (
+        <li key={tile.key} className="demo-impact__tile">
+          <span className="demo-impact__value">{tile.node}</span>
+          <span className="demo-impact__label">{tile.label}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Step 5: the visitor's sandbox, live. */
+function SandboxNow() {
+  const revision = useSandboxState((s) => s.revision);
+  const history = useSandboxState((s) => s.history);
+  const superseded = useSandboxState((s) => s.superseded);
+  const expired = useSandboxState((s) => s.expired);
+  const applied = history.filter((e) => e.response?.result === 'APPLIED').length;
+  const rows: { key: string; label: string; value: ReactNode }[] = [
+    { key: 'revision', label: 'Revision of your graph', value: revision ?? '…' },
+    { key: 'applied', label: 'Changes applied', value: <Num metric="sessionOperations" value={applied} /> },
+    { key: 'superseded', label: 'Certificates no longer current', value: Object.keys(superseded).length },
+    { key: 'expired', label: 'Evidence expired', value: expired.length },
+  ];
+  return (
+    <div className="demo-card demo-fill demo-spread">
+      <p className="demo-card__kicker">Your sandbox right now</p>
+      <dl className="demo-spread__rows">
+        {rows.map((row) => (
+          <div key={row.key} className="demo-now__row">
+            <dt>{row.label}</dt>
+            <dd className="demo-now__value">{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="demo-now__note">
+        Every change raises the revision, and a certificate from an earlier revision stops being current. Up to{' '}
+        {MAX_SANDBOX_OPERATIONS} changes per session; a reset starts over.
+      </p>
+    </div>
+  );
+}
+
 /* Step 1: the storm */
 
 function StepAlerts({ storm }: { storm: StormView }) {
@@ -332,7 +602,12 @@ function StepAlerts({ storm }: { storm: StormView }) {
   return (
     <StepShell
       step={1}
-      aside={<WhatMatters />}
+      aside={
+        <>
+          <WhatMatters />
+          <SeverityCard storm={storm} />
+        </>
+      }
       title={
         <>
           {storm.total_alerts.toLocaleString('en-US')} alerts.
@@ -396,6 +671,7 @@ function StepAlerts({ storm }: { storm: StormView }) {
               </div>
             </div>
           ) : null}
+          <AlertsThatMatter storm={storm} />
         </div>
       }
     />
@@ -460,11 +736,14 @@ function GraphStage({
   hunt,
   overlayId,
   height = 'md',
+  fill = false,
 }: {
   cluster: ClusterView;
   hunt: HuntReportView | undefined;
   overlayId?: string | null;
   height?: 'sm' | 'md';
+  /** Grow into the column's leftover height (desktop layout). */
+  fill?: boolean;
 }) {
   const analysis = useClusterAnalysis(cluster.id);
   const handle = hunt ? huntPlanHandle(hunt, analysis.plan) : null;
@@ -475,7 +754,7 @@ function GraphStage({
   );
   const overlay = overlays.find((o) => o.id === overlayId) ?? (overlays.length > 0 ? defaultOverlay(overlays) : null);
   return (
-    <div className={cn('demo-graph', `demo-graph--${height}`)}>
+    <div className={cn('demo-graph', `demo-graph--${height}`, fill && 'demo-fill')}>
       {subgraph.isPending ? (
         <LoadingState title="Loading the attack graph" detail={`GET /api/clusters/${cluster.id}/subgraph`} />
       ) : subgraph.error ? (
@@ -507,6 +786,7 @@ function StepAgent({ cluster }: { cluster: ClusterView }) {
   return (
     <StepShell
       step={2}
+      aside={<AgentRules />}
       title="The agent investigates."
       lede={
         <>
@@ -541,7 +821,7 @@ function StepAgent({ cluster }: { cluster: ClusterView }) {
       }
       visual={
         <div className="demo-agent">
-          <GraphStage cluster={cluster} hunt={undefined} overlayId="baseline" height="sm" />
+          <GraphStage cluster={cluster} hunt={undefined} overlayId="baseline" height="sm" fill />
           <AgentTimeline derived={derived} />
           {finished && analysis.hunt ? (
             <div className="demo-agent__outcome">
@@ -638,7 +918,7 @@ function StepHunt({ cluster }: { cluster: ClusterView }) {
               <span className={cn('demo-hunt__hint', shown.verified && 'demo-hunt__hint--verified')}>{shown.hint}</span>
             ) : null}
           </div>
-          <GraphStage cluster={cluster} hunt={hunt} overlayId={shown?.id ?? null} />
+          <GraphStage cluster={cluster} hunt={hunt} overlayId={shown?.id ?? null} fill />
           <ul className="demo-legend" aria-label="Legend">
             {(['active', 'residual', 'cut'] as const).map((state) => (
               <li key={state} className="demo-legend__item">
@@ -695,20 +975,22 @@ function StepAct({ cluster }: { cluster: ClusterView }) {
     );
   }
 
-  const exportYaml = () =>
-    download(
-      `interdict-policies-${plan.id}.yaml`,
-      policyYaml(
-        plan.actions.map((a) => a.policy_spec),
-        { planId: plan.id, certificateId: certificate?.certificate_id, revision: hunt.revision },
-      ),
-    );
+  const yaml = policyYaml(
+    plan.actions.map((a) => a.policy_spec),
+    { planId: plan.id, certificateId: certificate?.certificate_id, revision: hunt.revision },
+  );
+  const exportYaml = () => download(`interdict-policies-${plan.id}.yaml`, yaml);
 
   return (
     <StepShell
       step={4}
       title="It acts, with proof."
-      aside={<GatewayChecks />}
+      aside={
+        <>
+          <GatewayChecks />
+          <PolicyPreview text={yaml} />
+        </>
+      }
       lede={
         <>
           <p>
@@ -751,6 +1033,7 @@ function StepAct({ cluster }: { cluster: ClusterView }) {
               ))}
             </ul>
           </div>
+          <ImpactTiles plan={plan} total={hunt.plan?.chains.length ?? 0} />
           <div className={cn('demo-card', outcome.certificateCurrent ? 'demo-card--valid' : 'demo-card--muted')}>
             <p className="demo-card__kicker">The proof and the action</p>
             {certificate ? (
@@ -813,6 +1096,7 @@ function StepBreak({ cluster, storm }: { cluster: ClusterView; storm: StormView 
   return (
     <StepShell
       step={5}
+      aside={<SandboxNow />}
       title="Now try to break it."
       lede={
         <>
@@ -940,6 +1224,7 @@ export default function DemoPage() {
   const s = storm.data;
   const [pinned, setPinned] = useState<ClusterView | null>(() => rememberedCluster);
   const reset = useSandboxReset();
+  const fitStage = useFitToStage();
   // Keep following the same cluster: stale evidence makes the triage inconclusive and empties the
   // storm's clusters, but the demo must still show what happened to it (and offer a reset).
   useEffect(() => {
@@ -976,7 +1261,7 @@ export default function DemoPage() {
       );
   } else {
     body = (
-      <div key={step} className="demo-stage">
+      <div key={step} ref={fitStage} className="demo-stage">
         {step === 1 ? <StepAlerts storm={s} /> : null}
         {step === 2 ? <StepAgent cluster={cluster} /> : null}
         {step === 3 ? <StepHunt cluster={cluster} /> : null}

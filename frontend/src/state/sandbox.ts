@@ -2,6 +2,9 @@ import type { ApiError } from '@/api/errors';
 import type { SandboxOperation, SandboxOpResponse } from '@/api/types';
 import { createStore, type Store } from '@/lib/store';
 
+/** Operations a session may apply to its sandbox (the API enforces the same limit). */
+export const MAX_SANDBOX_OPERATIONS = 20;
+
 export interface SandboxEntry {
   id: number;
   kind: 'operation' | 'reset';
