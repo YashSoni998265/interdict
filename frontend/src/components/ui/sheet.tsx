@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/cn';
+import './sheet.css';
 
 export interface SheetProps {
   open: boolean;
@@ -31,30 +32,30 @@ export function Sheet({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-40 animate-fade-in bg-black/60 backdrop-blur-[1px]" />
+        <DialogPrimitive.Overlay className="sheet__overlay" />
         <DialogPrimitive.Content
           className={cn(
-            'fixed inset-y-0 right-0 z-50 flex w-full animate-slide-in-right flex-col border-l border-line bg-pane shadow-elevated focus:outline-none',
-            width === 'md' ? 'sm:max-w-md' : 'sm:max-w-2xl',
+            'sheet__content',
+            width === 'md' ? 'sheet__content--md' : 'sheet__content--not-md',
           )}
         >
-          <header className="flex items-start gap-3 border-b border-line px-5 py-4">
-            <div className="min-w-0 flex-1">
-              <DialogPrimitive.Title className="text-sm font-semibold text-fg">{title}</DialogPrimitive.Title>
-              <DialogPrimitive.Description className="mt-0.5 text-ui text-fg-muted">
+          <header className="sheet__header">
+            <div className="sheet__block">
+              <DialogPrimitive.Title className="sheet__title">{title}</DialogPrimitive.Title>
+              <DialogPrimitive.Description className="sheet__description">
                 {description}
               </DialogPrimitive.Description>
             </div>
             {headerExtra}
             <DialogPrimitive.Close
-              className="-mr-1 rounded-md p-1 text-fg-muted transition-colors hover:bg-hover hover:text-fg"
+              className="sheet__close"
               aria-label="Close"
             >
-              <X className="size-4" aria-hidden />
+              <X className="sheet__icon" aria-hidden />
             </DialogPrimitive.Close>
           </header>
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
-          {footer ? <footer className="border-t border-line px-5 py-3">{footer}</footer> : null}
+          <div className="sheet__block-2">{children}</div>
+          {footer ? <footer className="sheet__footer">{footer}</footer> : null}
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
@@ -75,28 +76,28 @@ export function Modal({ open, onOpenChange, title, description, children, size =
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-40 animate-fade-in bg-black/60" />
+        <DialogPrimitive.Overlay className="modal__overlay" />
         <DialogPrimitive.Content
           className={cn(
-            'fixed left-1/2 top-[5vh] z-50 flex max-h-[90vh] w-[calc(100vw-2rem)] -translate-x-1/2 animate-fade-up flex-col overflow-hidden rounded-xl border border-line bg-pane shadow-elevated focus:outline-none',
-            size === 'md' ? 'max-w-3xl' : 'max-w-[1500px]',
+            'modal__content',
+            size === 'md' ? 'modal__content--md' : 'modal__content--not-md',
           )}
         >
-          <header className="flex items-start gap-3 border-b border-line px-5 py-4">
-            <div className="min-w-0 flex-1">
-              <DialogPrimitive.Title className="text-sm font-semibold text-fg">{title}</DialogPrimitive.Title>
-              <DialogPrimitive.Description className="mt-0.5 text-ui text-fg-muted">
+          <header className="modal__header">
+            <div className="modal__block">
+              <DialogPrimitive.Title className="modal__title">{title}</DialogPrimitive.Title>
+              <DialogPrimitive.Description className="modal__description">
                 {description}
               </DialogPrimitive.Description>
             </div>
             <DialogPrimitive.Close
-              className="-mr-1 rounded-md p-1 text-fg-muted transition-colors hover:bg-hover hover:text-fg"
+              className="modal__close"
               aria-label="Close"
             >
-              <X className="size-4" aria-hidden />
+              <X className="modal__icon" aria-hidden />
             </DialogPrimitive.Close>
           </header>
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
+          <div className="modal__block-2">{children}</div>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>

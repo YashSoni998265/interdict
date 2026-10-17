@@ -1,0 +1,108 @@
+/* Styles for misc.tsx */
+
+.skeleton {
+  animation: pulse-soft 1.6s ease-in-out infinite;
+  border-radius: 0.375rem;
+  background-color: rgb(var(--elevated));
+}
+
+.progress-rail {
+  position: relative;
+  height: 0.125rem;
+  overflow: hidden;
+  border-radius: 9999px;
+  background-color: rgb(var(--elevated));
+}
+
+.progress-rail__overlay {
+  position: absolute;
+  top: 0px;
+  bottom: 0px;
+  width: 33.333333%;
+  animation: indeterminate 1.4s ease-in-out infinite;
+  border-radius: 9999px;
+  background-color: rgb(var(--accent) / 0.7);
+}
+
+.copy-button__button {
+  display: inline-flex;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+  color: rgb(var(--fg-subtle));
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.copy-button__button:hover {
+  background-color: rgb(var(--hover));
+  color: rgb(var(--fg));
+}
+
+.copy-button__icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.json-view {
+  position: relative;
+  border-radius: 0.375rem;
+  border-width: 1px;
+  border-color: rgb(var(--line));
+  background-color: rgb(var(--canvas));
+}
+
+.json-view__overlay {
+  position: absolute;
+  right: 0.375rem;
+  top: 0.375rem;
+}
+
+.json-view__pre {
+  overflow: auto;
+  padding-left: 0.75rem;
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+  padding-right: 2.25rem;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: rgb(var(--fg-muted));
+}
+
+.json-view__scroll {
+  max-height: 20rem;
+}
+
+.mono-id {
+  display: inline-flex;
+  min-width: 0px;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.mono-id__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgb(var(--fg));
+}
+
+.kbd {
+  border-radius: 0.25rem;
+  border-width: 1px;
+  border-color: rgb(var(--line));
+  background-color: rgb(var(--elevated));
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: rgb(var(--fg-muted));
+}

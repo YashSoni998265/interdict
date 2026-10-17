@@ -6,6 +6,7 @@ import type { SandboxOperation } from '@/api/types';
 import { Sheet } from '../ui/sheet';
 
 import { SandboxPanel } from './SandboxPanel';
+import './SandboxDrawer.css';
 
 export function SandboxDrawer({
   open,
@@ -27,10 +28,10 @@ export function SandboxDrawer({
         <Link
           to="/sandbox"
           onClick={() => onOpenChange(false)}
-          className="mt-0.5 inline-flex items-center gap-1 rounded text-2xs text-fg-muted hover:text-fg"
+          className="sandbox-drawer__link"
         >
           Full page
-          <ExternalLink className="size-3" aria-hidden />
+          <ExternalLink className="sandbox-drawer__icon" aria-hidden />
         </Link>
       }
     >

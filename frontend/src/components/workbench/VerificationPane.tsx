@@ -15,14 +15,15 @@ import { Button } from '../ui/button';
 import { Disclosure } from '../ui/disclosure';
 
 import { Pane } from './Pane';
+import './VerificationPane.css';
 
 function Section({ title, icon, children, aside }: { title: string; icon?: ReactNode; children: ReactNode; aside?: ReactNode }) {
   return (
-    <section className="space-y-2.5" aria-label={title}>
-      <div className="flex items-center gap-2">
+    <section className="section" aria-label={title}>
+      <div className="section__row">
         {icon}
         <h3 className="section-label">{title}</h3>
-        {aside ? <div className="ml-auto">{aside}</div> : null}
+        {aside ? <div className="section__block">{aside}</div> : null}
       </div>
       {children}
     </section>
@@ -83,18 +84,18 @@ export function VerificationPane({
         ) : null
       }
     >
-      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-3 py-3">
+      <div className="verification-pane__block">
         {hunt ? (
-          <div className="space-y-1.5 rounded-lg border border-line bg-surface px-3.5 py-3">
+          <div className="verification-pane__box">
             <div className="section-label">Outcome for {hunt.t_scope.join(', ')}</div>
             <OutcomeBadge hunt={hunt} size="lg" tooltip />
             {revision !== null && hunt.revision < revision ? (
-              <p className="text-2xs text-fg-muted">
+              <p className="verification-pane__text">
                 Computed at revision {hunt.revision}; the sandbox is now at revision {revision}. Re-run to recompute.
               </p>
             ) : null}
             {analysis.source === 'direct' ? (
-              <p className="text-2xs text-fg-subtle">Computed directly over REST (POST /api/plans, POST /api/hunts), without the timeline.</p>
+              <p className="verification-pane__text-2">Computed directly over REST (POST /api/plans, POST /api/hunts), without the timeline.</p>
             ) : null}
           </div>
         ) : null}
@@ -104,7 +105,7 @@ export function VerificationPane({
             title="No plan yet"
             icon={ListChecks}
             action={
-              <div className="flex flex-wrap gap-2">
+              <div className="verification-pane__row">
                 <Button size="sm" variant="primary" onClick={() => void workbench.start(cluster.id, 'deterministic')}>
                   <Play aria-hidden />
                   Investigate
@@ -140,12 +141,12 @@ export function VerificationPane({
                   : 'Verified plan'
                 : 'Final plan'
             }
-            icon={<ListChecks className="size-3.5 text-fg-subtle" aria-hidden />}
+            icon={<ListChecks className="verification-pane__icon" aria-hidden />}
           >
             <PlanReport report={finalPlan} flows={flows} chains={chains} verified={verified} />
             {plan?.plan && finalPlan.plan && plan.plan.id !== finalPlan.plan.id ? (
-              <Disclosure summary="Initial plan (the cluster’s own chains only)" className="pt-1">
-                <p className="mb-2 text-2xs text-fg-muted">
+              <Disclosure summary="Initial plan (the cluster’s own chains only)" className="verification-pane__disclosure">
+                <p className="verification-pane__text-3">
                   This was the cheapest plan before the Path Hunter ran. It cut the cluster’s own chains, but the Hunter
                   found other paths to the same target, so the plan was widened.
                 </p>
@@ -154,13 +155,13 @@ export function VerificationPane({
             ) : null}
           </Section>
         ) : plan ? (
-          <Section title="Proposed plan (not yet verified)" icon={<ListChecks className="size-3.5 text-fg-subtle" aria-hidden />}>
+          <Section title="Proposed plan (not yet verified)" icon={<ListChecks className="verification-pane__icon" aria-hidden />}>
             <PlanReport report={plan} flows={flows} chains={chains} verified={false} />
           </Section>
         ) : null}
 
         {hunt || hunting || huntLoading || direct?.hunt?.status === 'error' ? (
-          <Section title="Path Hunter" icon={<Radar className="size-3.5 text-fg-subtle" aria-hidden />}>
+          <Section title="Path Hunter" icon={<Radar className="verification-pane__icon" aria-hidden />}>
             {hunt ? (
               <HuntReport hunt={hunt} flows={flows} selectedRound={selectedRound} onSelectRound={onSelectRound} />
             ) : hunting || huntLoading ? (
@@ -174,7 +175,7 @@ export function VerificationPane({
           </Section>
         ) : plan && !running ? (
           <Section title="Path Hunter">
-            <p className="text-2xs text-fg-muted">
+            <p className="verification-pane__text">
               Not run yet. The plan is only trusted after the Hunter re-checks it on a copy of the graph, with no hop
               limit and over every crown jewel.
             </p>

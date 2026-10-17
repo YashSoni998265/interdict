@@ -1,0 +1,21 @@
+/* Styles for SandboxDrawer.tsx */
+
+.sandbox-drawer__link {
+  margin-top: 0.125rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: rgb(var(--fg-muted));
+}
+
+.sandbox-drawer__link:hover {
+  color: rgb(var(--fg));
+}
+
+.sandbox-drawer__icon {
+  width: 0.75rem;
+  height: 0.75rem;
+}

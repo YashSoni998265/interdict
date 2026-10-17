@@ -1,0 +1,42 @@
+/* Styles for NotFoundPage.tsx */
+
+.not-found-page {
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  width: 100%;
+  max-width: 32rem;
+  flex: 1 1 0%;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.75rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 4rem;
+  padding-bottom: 4rem;
+}
+
+.not-found-page__heading {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  color: rgb(var(--fg));
+}
+
+.not-found-page__text {
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  color: rgb(var(--fg-muted));
+}
+
+.not-found-page__code {
+  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: rgb(var(--fg));
+}
+
+.not-found-page__row {
+  display: flex;
+  gap: 0.5rem;
+}

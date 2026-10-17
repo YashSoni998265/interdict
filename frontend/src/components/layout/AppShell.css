@@ -1,0 +1,295 @@
+/* Styles for AppShell.tsx */
+
+.nav-item__part {
+  border-radius: 0.375rem;
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.nav-item__part--active {
+  background-color: rgb(var(--elevated));
+  color: rgb(var(--fg));
+}
+
+.nav-item__part--not-active {
+  color: rgb(var(--fg-muted));
+}
+
+.nav-item__part--not-active:hover {
+  color: rgb(var(--fg));
+}
+
+.header {
+  z-index: 30;
+  flex-shrink: 0;
+  border-bottom-width: 1px;
+  border-color: rgb(var(--line));
+  background-color: rgb(var(--canvas));
+}
+
+.header__row {
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  height: 3rem;
+  max-width: 1920px;
+  align-items: center;
+  gap: 0.75rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.header__link {
+  border-radius: 0.375rem;
+}
+
+.header__nav {
+  margin-left: 0.5rem;
+  display: none;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.header__row-2 {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.header__block > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
+
+.header__block-2 {
+  color: rgb(var(--fg-muted));
+}
+
+.header__button {
+  display: none;
+  height: 1.75rem;
+  cursor: help;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 0.375rem;
+  border-width: 1px;
+  border-color: rgb(var(--line));
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: rgb(var(--fg-muted));
+}
+
+.header__label {
+  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  color: rgb(var(--fg));
+}
+
+.header__chip {
+  display: none;
+  height: 1.75rem;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 0.375rem;
+  border-width: 1px;
+  border-color: rgb(var(--line));
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: rgb(var(--fg-muted));
+}
+
+.header__num {
+  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  color: rgb(var(--fg));
+}
+
+.header__label-2 {
+  display: none;
+}
+
+.header__nav-2 {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  border-top-width: 1px;
+  border-color: rgb(var(--line));
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+.global-banners {
+  margin-left: auto;
+  margin-right: auto;
+  max-height: 38vh;
+  width: 100%;
+  max-width: 1920px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.global-banners > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+.global-banners:empty {
+  display: none;
+}
+
+.global-banners:not(:empty) {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.global-banners__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 0.5rem;
+  row-gap: 0.125rem;
+  border-radius: 0.375rem;
+  border-width: 1px;
+  border-color: rgb(var(--line));
+  background-color: rgb(var(--surface));
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+}
+
+.global-banners__icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  color: rgb(var(--fg-muted));
+}
+
+.global-banners__label {
+  font-weight: 500;
+  color: rgb(var(--fg));
+}
+
+.global-banners__label-2 {
+  color: rgb(var(--fg-muted));
+}
+
+.global-banners-2 {
+  margin-right: 0.5rem;
+  display: inline-block;
+}
+
+.global-banners__code {
+  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: rgb(var(--fg));
+}
+
+.app-shell__link {
+  z-index: 50;
+  border-radius: 0.375rem;
+  background-color: rgb(var(--fg));
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: rgb(var(--canvas));
+}
+
+.app-shell__link:focus {
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  position: fixed;
+  left: 0.75rem;
+  top: 0.75rem;
+}
+
+.app-shell__stack {
+  display: flex;
+  height: 100dvh;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-shell__main {
+  display: flex;
+  min-height: 0px;
+  flex: 1 1 0%;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.app-shell__block {
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  max-width: 64rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .header__row {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .header__chip {
+    display: inline-flex;
+  }
+
+  .global-banners {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .header__nav {
+    display: flex;
+  }
+
+  .header__nav-2 {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .header__button {
+    display: inline-flex;
+  }
+
+  .header__label-2 {
+    display: inline;
+  }
+
+  .header__label-3 {
+    display: none;
+  }
+}

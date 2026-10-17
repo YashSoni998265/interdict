@@ -1,0 +1,82 @@
+/* Styles for VerificationPane.tsx */
+
+.section > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.625rem;
+  margin-bottom: 0;
+}
+
+.section__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section__block {
+  margin-left: auto;
+}
+
+.verification-pane__block {
+  min-height: 0px;
+  flex: 1 1 0%;
+  overflow-y: auto;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.verification-pane__block > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1.5rem;
+  margin-bottom: 0;
+}
+
+.verification-pane__box > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.375rem;
+  margin-bottom: 0;
+}
+
+.verification-pane__box {
+  border-radius: 0.5rem;
+  border-width: 1px;
+  border-color: rgb(var(--line));
+  background-color: rgb(var(--surface));
+  padding-left: 0.875rem;
+  padding-right: 0.875rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.verification-pane__text {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: rgb(var(--fg-muted));
+}
+
+.verification-pane__text-2 {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: rgb(var(--fg-subtle));
+}
+
+.verification-pane__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.verification-pane__icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: rgb(var(--fg-subtle));
+}
+
+.verification-pane__disclosure {
+  padding-top: 0.25rem;
+}
+
+.verification-pane__text-3 {
+  margin-bottom: 0.5rem;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: rgb(var(--fg-muted));
+}

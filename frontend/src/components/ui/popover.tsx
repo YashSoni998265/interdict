@@ -2,6 +2,7 @@ import * as PopoverPrimitive from '@radix-ui/react-popover';
 import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/cn';
+import './popover.css';
 
 export function Popover({
   trigger,
@@ -30,12 +31,12 @@ export function Popover({
           collisionPadding={12}
           aria-label={label}
           className={cn(
-            'z-50 w-[22rem] max-w-[calc(100vw-1.5rem)] animate-fade-in rounded-lg border border-line bg-elevated p-3.5 text-ui text-fg shadow-elevated focus:outline-none',
+            'popover__content',
             className,
           )}
         >
           {children}
-          <PopoverPrimitive.Arrow className="fill-elevated" width={12} height={6} />
+          <PopoverPrimitive.Arrow className="popover__arrow" width={12} height={6} />
         </PopoverPrimitive.Content>
       </PopoverPrimitive.Portal>
     </PopoverPrimitive.Root>

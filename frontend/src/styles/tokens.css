@@ -1,0 +1,20 @@
+/* Design tokens: surfaces, lines, text and the one accent colour (RGB channels) */
+
+:root {
+  /* Surfaces, darkest to lightest */
+  --canvas: 9 9 11;
+  --pane: 12 12 14;
+  --surface: 17 17 20;
+  --elevated: 24 24 27;
+  --hover: 32 32 36;
+  /* Lines */
+  --line: 39 39 44;
+  --line-strong: 63 63 70;
+  /* Text: every tier meets WCAG AA (4.5:1) on --canvas and --elevated */
+  --fg: 244 244 245;
+  --fg-muted: 161 161 170;
+  --fg-subtle: 139 139 148;
+  /* The one interactive accent (links, focus); status colours never double as accents */
+  --accent: 56 189 248;
+  color-scheme: dark;
+}

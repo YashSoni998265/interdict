@@ -24,6 +24,7 @@ import {
   PodNodeComponent,
   type GraphNode,
 } from './nodes';
+import './AttackGraph.css';
 
 const NODE_TYPES = {
   internet: InternetNodeComponent,
@@ -39,8 +40,8 @@ function ZoomBar() {
   const flow = useReactFlow();
   const duration = reducedMotion() ? 0 : 200;
   return (
-    <Panel position="bottom-left" className="!m-2">
-      <div className="flex items-center gap-0.5 rounded-md border border-line bg-elevated/95 p-0.5" role="group" aria-label="Zoom">
+    <Panel position="bottom-left" className="zoom-bar">
+      <div className="zoom-bar__row" role="group" aria-label="Zoom">
         <Button size="icon" variant="ghost" onClick={() => void flow.zoomIn({ duration })} aria-label="Zoom in">
           <Plus aria-hidden />
         </Button>
@@ -187,16 +188,16 @@ export function AttackGraph({
 
   if (error) {
     return (
-      <div className="p-3">
+      <div className="attack-graph">
         <ErrorState error={error} title="The graph could not be laid out" onRetry={() => setAttempt((n) => n + 1)} compact />
-        <p className="mt-2 text-2xs text-fg-muted">The table view shows the same steps and evidence.</p>
+        <p className="attack-graph__text">The table view shows the same steps and evidence.</p>
       </div>
     );
   }
   return (
-    <div ref={box} className="relative h-full w-full">
+    <div ref={box} className="attack-graph-2">
       {!layout ? (
-        <div className="px-4">
+        <div className="attack-graph__block">
           <LoadingState compact title="Laying out the attack subgraph" detail="ELK layered layout, left to right" />
         </div>
       ) : (

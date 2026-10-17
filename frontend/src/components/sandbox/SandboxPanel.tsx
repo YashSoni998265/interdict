@@ -17,6 +17,7 @@ import { Button } from '../ui/button';
 import { Field, Input, Select } from '../ui/form';
 import { Segmented } from '../ui/segmented';
 import { Tag } from '../ui/tag';
+import './SandboxPanel.css';
 
 const OPS: { op: SandboxOpName; label: string; short: string }[] = [
   { op: 'EXPOSE_WORKLOAD', label: 'Expose a workload', short: 'Expose' },
@@ -47,37 +48,37 @@ function tierOfEdge(edgeId: string): string {
 /** Plain-language preview of what an operation changes, before it is applied. */
 function Preview({ operation }: { operation: SandboxOperation | null }) {
   if (!operation) {
-    return <p className="text-ui text-fg-muted">Choose the inputs above to see what this change does.</p>;
+    return <p className="preview">Choose the inputs above to see what this change does.</p>;
   }
   switch (operation.op) {
     case 'EXPOSE_WORKLOAD': {
       const pod = operation.args.pod_id;
       return (
-        <div className="space-y-2 text-ui text-fg-muted">
+        <div className="preview-2">
           <p>
-            Adds a fresh route <span className="text-fg">Internet → default ingress → {pod}</span>’s Service (evidence
-            source <code className="font-mono text-2xs">SANDBOX_USER_CHANGE</code>, valid 2 h).
+            Adds a fresh route <span className="preview__label">Internet → default ingress → {pod}</span>’s Service (evidence
+            source <code className="preview__code">SANDBOX_USER_CHANGE</code>, valid 2 h).
           </p>
           <p>
             If {pod} runs an active, network-exploitable vulnerability this creates an ENTRY step. Exposure alone does
             not make a workload dangerous: it also needs a route onward to a crown jewel.
           </p>
-          <p className="text-2xs text-fg-subtle">The API rejects it if {pod} has no Service.</p>
+          <p className="preview__text">The API rejects it if {pod} has no Service.</p>
         </div>
       );
     }
     case 'ADD_LATERAL_REACH': {
       const { src_pod_id: src, dst_pod_id: dst, port } = operation.args;
       return (
-        <div className="space-y-2 text-ui text-fg-muted">
+        <div className="preview-2">
           <p>
-            Adds a fresh observed flow <span className="text-fg">{src} → {dst}:{port}</span>.
+            Adds a fresh observed flow <span className="preview__label">{src} → {dst}:{port}</span>.
           </p>
           <p>
             If {dst} has a network-exploitable vulnerability, the attacker can now move from {src} to {dst} (a LATERAL
             step), which can complete a new chain to a crown jewel.
           </p>
-          <p className="text-2xs text-fg-subtle">
+          <p className="preview__text">
             Rejected as “contradicts the egress policies in force” if a policy selecting {src} does not allow it.
           </p>
         </div>
@@ -85,10 +86,10 @@ function Preview({ operation }: { operation: SandboxOperation | null }) {
     }
     case 'EXPIRE_EVIDENCE':
       return (
-        <div className="space-y-2 text-ui text-fg-muted">
+        <div className="preview-2">
           <p>
-            Sets <code className="font-mono text-2xs">valid_until</code> of{' '}
-            <span className="font-mono text-[12px] text-fg">{operation.args.edge_ref}</span> in the past.
+            Sets <code className="preview__code">valid_until</code> of{' '}
+            <span className="preview__label-2">{operation.args.edge_ref}</span> in the past.
           </p>
           <p>
             The sandbox’s evidence is then incomplete, so triage, planning and the Path Hunter answer “Not enough fresh
@@ -210,15 +211,15 @@ export function SandboxPanel({ preset, compact = false }: { preset?: SandboxOper
   );
 
   return (
-    <div className={cn('space-y-5', compact ? '' : 'max-w-2xl')}>
-      <div className="flex flex-wrap items-center gap-2 text-2xs text-fg-muted">
+    <div className={cn('sandbox-panel', compact ? '' : 'sandbox-panel--not-compact')}>
+      <div className="sandbox-panel__row">
         <Tag>
           Sandbox revision{' '}
-          {revision !== null ? <Num metric="revision" value={revision} className="font-mono text-fg" /> : '…'}
+          {revision !== null ? <Num metric="revision" value={revision} className="sandbox-panel__num" /> : '…'}
         </Tag>
         <Tag>
-          <Num metric="sessionOperations" value={applied} className="text-fg" /> of{' '}
-          <Num metric="maxOperations" value={MAX_OPERATIONS} className="text-fg" /> operations used
+          <Num metric="sessionOperations" value={applied} className="sandbox-panel__num-2" /> of{' '}
+          <Num metric="maxOperations" value={MAX_OPERATIONS} className="sandbox-panel__num-2" /> operations used
         </Tag>
         <Tag>Your session only</Tag>
       </div>
@@ -230,7 +231,7 @@ export function SandboxPanel({ preset, compact = false }: { preset?: SandboxOper
         </Banner>
       ) : null}
 
-      <form id={formId} onSubmit={submit} className="space-y-4" aria-label="Sandbox operation">
+      <form id={formId} onSubmit={submit} className="sandbox-panel__form" aria-label="Sandbox operation">
         <Segmented
           label="Operation"
           value={op}
@@ -242,7 +243,7 @@ export function SandboxPanel({ preset, compact = false }: { preset?: SandboxOper
         />
 
         {op === 'EXPOSE_WORKLOAD' ? (
-          <div className="space-y-3">
+          <div className="sandbox-panel__block">
             <Field label="Workload" htmlFor={`${formId}-expose`} hint="EXPOSE_WORKLOAD(pod_id)">
               <Select id={`${formId}-expose`} value={exposeValue} onChange={(e) => setExposePod(e.target.value)}>
                 {podOptions}
@@ -251,7 +252,7 @@ export function SandboxPanel({ preset, compact = false }: { preset?: SandboxOper
             {has('batch-1') ? (
               <button
                 type="button"
-                className="text-2xs text-accent hover:underline"
+                className="sandbox-panel__button"
                 onClick={() => setExposePod('batch-1')}
               >
                 Demo step 1: expose batch-1 (same DEMO-CVE-001 as auth-1, but not on any path)
@@ -261,14 +262,14 @@ export function SandboxPanel({ preset, compact = false }: { preset?: SandboxOper
         ) : null}
 
         {op === 'ADD_LATERAL_REACH' ? (
-          <div className="space-y-3">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr_6rem] sm:items-end">
+          <div className="sandbox-panel__block">
+            <div className="sandbox-panel__grid">
               <Field label="From" htmlFor={`${formId}-src`}>
                 <Select id={`${formId}-src`} value={srcValue} onChange={(e) => setSrc(e.target.value)}>
                   {podOptions}
                 </Select>
               </Field>
-              <ArrowRight className="mx-auto mb-2 hidden size-4 text-fg-subtle sm:block" aria-hidden />
+              <ArrowRight className="sandbox-panel__icon" aria-hidden />
               <Field label="To" htmlFor={`${formId}-dst`}>
                 <Select id={`${formId}-dst`} value={dstValue} onChange={(e) => setDst(e.target.value)}>
                   {podOptions}
@@ -281,15 +282,15 @@ export function SandboxPanel({ preset, compact = false }: { preset?: SandboxOper
                   value={port}
                   onChange={(e) => setPort(e.target.value)}
                   aria-invalid={portError ? true : undefined}
-                  className="font-mono"
+                  className="sandbox-panel__input"
                 />
               </Field>
             </div>
-            <p className="text-2xs text-fg-subtle">ADD_LATERAL_REACH(src_pod_id, dst_pod_id, port)</p>
+            <p className="sandbox-panel__text">ADD_LATERAL_REACH(src_pod_id, dst_pod_id, port)</p>
             {has('batch-1') && has('checkout-1') ? (
               <button
                 type="button"
-                className="text-2xs text-accent hover:underline"
+                className="sandbox-panel__button"
                 onClick={() => {
                   setSrc('batch-1');
                   setDst('checkout-1');
@@ -303,7 +304,7 @@ export function SandboxPanel({ preset, compact = false }: { preset?: SandboxOper
         ) : null}
 
         {op === 'EXPIRE_EVIDENCE' ? (
-          <div className="space-y-3">
+          <div className="sandbox-panel__block">
             <Field
               label="Evidence edge"
               htmlFor={`${formId}-edge`}
@@ -329,56 +330,56 @@ export function SandboxPanel({ preset, compact = false }: { preset?: SandboxOper
                   value={edgeRef}
                   onChange={(e) => setEdgeRef(e.target.value)}
                   placeholder={evidenceQueries.some((q) => q.isLoading) ? 'Loading evidence edges…' : 'ev-reach-…'}
-                  className="font-mono"
+                  className="sandbox-panel__input"
                 />
               )}
             </Field>
           </div>
         ) : null}
 
-        <div className="rounded-lg border border-line bg-canvas px-3.5 py-3">
-          <div className="section-label mb-2">What this changes</div>
+        <div className="sandbox-panel__box">
+          <div className="section-label sandbox-panel__block-2">What this changes</div>
           <Preview operation={operation} />
-          <div className="mt-3 flex items-start gap-1.5 border-t border-line pt-2.5 text-2xs text-fg-subtle">
-            <Clock className="mt-px size-3 shrink-0" aria-hidden />
+          <div className="sandbox-panel__row-2">
+            <Clock className="sandbox-panel__icon-2" aria-hidden />
             If applied: the revision goes up by one, and every certificate issued at the current revision becomes
             “Certificate no longer current”.
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="sandbox-panel__row-3">
           <Button type="submit" variant="primary" disabled={!operation || apply.isPending}>
             <Play aria-hidden />
             {apply.isPending ? 'Applying…' : 'Apply to my sandbox'}
           </Button>
-          <span className="text-2xs text-fg-subtle">Typed and allowlisted; the agent can never call these.</span>
+          <span className="sandbox-panel__label">Typed and allowlisted; the agent can never call these.</span>
         </div>
       </form>
 
-      <div aria-live="polite" className="space-y-3">
+      <div aria-live="polite" className="sandbox-panel__block">
         {apply.error ? (
           <ErrorState error={apply.error} title="The operation could not be sent" onRetry={() => operation && apply.mutate(operation)} compact />
         ) : null}
         {last && lastDescriptor ? (
           <div
             className={cn(
-              'rounded-lg border px-3.5 py-3',
-              last.result === 'APPLIED' ? 'border-line bg-surface' : 'border-zinc-500/30 bg-zinc-500/10',
+              'sandbox-panel__box-2',
+              last.result === 'APPLIED' ? 'sandbox-panel__box--applied' : 'sandbox-panel__box--not-applied',
             )}
           >
-            <div className="flex items-center gap-2 text-ui font-medium text-fg">
+            <div className="sandbox-panel__row-4">
               <StatusIcon name={lastDescriptor.icon} />
               {lastDescriptor.label}
-              <span className="font-mono text-2xs font-normal text-fg-muted">{last.result}</span>
+              <span className="sandbox-panel__label-2">{last.result}</span>
             </div>
-            <p className="mt-1 text-ui text-fg-muted">{last.detail}</p>
+            <p className="sandbox-panel__text-2">{last.detail}</p>
             {last.superseded_certificates.length > 0 ? (
-              <div className="mt-2.5 space-y-1">
+              <div className="sandbox-panel__block-3">
                 <div className="section-label">Certificate no longer current</div>
-                <ul className="space-y-1">
+                <ul className="sandbox-panel__list">
                   {last.superseded_certificates.map((id) => (
                     <li key={id}>
-                      <Link to={`/certificates/${id}`} className="font-mono text-[12px] text-accent hover:underline">
+                      <Link to={`/certificates/${id}`} className="sandbox-panel__link">
                         {shortHash(id, 12, 6)}
                       </Link>
                     </li>
@@ -386,33 +387,33 @@ export function SandboxPanel({ preset, compact = false }: { preset?: SandboxOper
                 </ul>
               </div>
             ) : last.result === 'APPLIED' ? (
-              <p className="mt-2 text-2xs text-fg-subtle">No certificate was current at the previous revision.</p>
+              <p className="sandbox-panel__text-3">No certificate was current at the previous revision.</p>
             ) : null}
           </div>
         ) : null}
       </div>
 
       {history.length > 0 ? (
-        <section className="space-y-2" aria-label="Sandbox history">
+        <section className="sandbox-panel__section" aria-label="Sandbox history">
           <div className="section-label">This session</div>
-          <ol className="divide-y divide-line rounded-lg border border-line">
+          <ol className="sandbox-panel__list-2">
             {[...history].reverse().map((entry) => {
               const descriptor = entry.response ? describeSandboxResult(entry.response.result) : null;
               return (
-                <li key={entry.id} className="flex items-start gap-3 px-3 py-2 text-ui">
-                  <span className="mt-0.5 font-mono text-2xs text-fg-subtle">
+                <li key={entry.id} className="sandbox-panel-2">
+                  <span className="sandbox-panel__label-3">
                     {entry.fromRevision ?? '?'}→{entry.toRevision ?? '?'}
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-fg">
+                  <div className="sandbox-panel__block-4">
+                    <div className="sandbox-panel__block-5">
                       {entry.kind === 'reset' ? 'Reset to the baseline' : entry.operation?.op}
                       {entry.operation ? (
-                        <span className="ml-1.5 font-mono text-2xs text-fg-muted">
+                        <span className="sandbox-panel__label-4">
                           {Object.values(entry.operation.args).join(' · ')}
                         </span>
                       ) : null}
                     </div>
-                    <div className="text-2xs text-fg-subtle">
+                    <div className="sandbox-panel__block-6">
                       {formatUtc(entry.at)}
                       {descriptor ? ` · ${descriptor.label}` : ''}
                       {entry.error ? ` · ${entry.error.code}: ${entry.error.message}` : ''}
@@ -425,11 +426,11 @@ export function SandboxPanel({ preset, compact = false }: { preset?: SandboxOper
         </section>
       ) : null}
 
-      <section className="space-y-2 rounded-lg border border-line px-3.5 py-3" aria-label="Reset">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="text-ui font-medium text-fg">Reset the sandbox</div>
-            <p className="text-2xs text-fg-muted">
+      <section className="sandbox-panel__section-2" aria-label="Reset">
+        <div className="sandbox-panel__row-5">
+          <div className="sandbox-panel__block-4">
+            <div className="sandbox-panel__block-7">Reset the sandbox</div>
+            <p className="sandbox-panel__text-4">
               Re-copies the baseline graph. The revision still goes up (it never goes back), so earlier certificates
               stay no longer current.
             </p>
@@ -441,15 +442,15 @@ export function SandboxPanel({ preset, compact = false }: { preset?: SandboxOper
         </div>
         {reset.error ? <ErrorState error={reset.error} title="Reset failed" onRetry={() => reset.mutate()} compact /> : null}
         {reset.data ? (
-          <p className="text-2xs text-fg-muted" role="status">
+          <p className="sandbox-panel__text-4" role="status">
             Reset done: now at revision {reset.data.revision}. Results from earlier revisions are marked as outdated
             until you re-run them.
           </p>
         ) : null}
       </section>
 
-      <p className="flex items-start gap-1.5 text-2xs text-fg-subtle">
-        <CircleHelp className="mt-px size-3 shrink-0" aria-hidden />
+      <p className="sandbox-panel__text-5">
+        <CircleHelp className="sandbox-panel__icon-2" aria-hidden />
         GRANT_DB_ACCESS and REMOVE_POLICY are specified but not built in this version (solution.md §3.5).
       </p>
     </div>

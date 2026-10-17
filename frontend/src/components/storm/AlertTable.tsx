@@ -15,6 +15,7 @@ import { Button } from '../ui/button';
 import { Input, Select } from '../ui/form';
 import { Tag } from '../ui/tag';
 import { Tip } from '../ui/tooltip';
+import './AlertTable.css';
 
 type ClassFilter = 'ALL' | AlertTriageClass;
 
@@ -77,9 +78,9 @@ export function AlertTable({ storm, initialQuery = '' }: { storm: StormView; ini
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <div role="radiogroup" aria-label="Filter by triage class" className="flex flex-wrap items-center gap-1">
+    <div className="alert-table">
+      <div className="alert-table__row">
+        <div role="radiogroup" aria-label="Filter by triage class" className="alert-table__row-2">
           {CLASS_TABS.map((tab) => {
             const count = tab.value === 'ALL' ? storm.total_alerts : storm.counts[tab.value];
             const active = klass === tab.value;
@@ -91,17 +92,17 @@ export function AlertTable({ storm, initialQuery = '' }: { storm: StormView; ini
                 aria-checked={active}
                 onClick={() => setKlass(tab.value)}
                 className={cn(
-                  'inline-flex h-7 items-center gap-1.5 rounded-md border px-2.5 text-ui transition-colors',
-                  active ? 'border-line-strong bg-elevated text-fg' : 'border-line text-fg-muted hover:text-fg',
+                  'alert-table-2',
+                  active ? 'alert-table--active' : 'alert-table--not-active',
                 )}
               >
                 {tab.label}
-                <span className="tabular text-2xs text-fg-subtle">{formatCount(count)}</span>
+                <span className="tabular alert-table__label">{formatCount(count)}</span>
               </button>
             );
           })}
         </div>
-        <div className="ml-auto flex flex-wrap items-center gap-2">
+        <div className="alert-table__row-3">
           <label htmlFor={`${id}-severity`} className="sr-only">
             Severity
           </label>
@@ -109,7 +110,7 @@ export function AlertTable({ storm, initialQuery = '' }: { storm: StormView; ini
             id={`${id}-severity`}
             value={severity}
             onChange={(e) => setSeverity(e.target.value)}
-            className="h-7 w-auto font-sans text-ui"
+            className="alert-table__select"
           >
             <option value="ALL">All severities</option>
             {SEVERITY_ORDER.map((s) => (
@@ -118,8 +119,8 @@ export function AlertTable({ storm, initialQuery = '' }: { storm: StormView; ini
               </option>
             ))}
           </Select>
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-fg-subtle" aria-hidden />
+          <div className="alert-table__block">
+            <Search className="alert-table__icon" aria-hidden />
             <label htmlFor={`${id}-search`} className="sr-only">
               Search alerts by id, workload, CVE or title
             </label>
@@ -128,85 +129,85 @@ export function AlertTable({ storm, initialQuery = '' }: { storm: StormView; ini
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Alert, workload, CVE or title"
-              className="h-7 w-60 pl-7 pr-7"
+              className="alert-table__input"
             />
             {query ? (
               <button
                 type="button"
                 onClick={() => setQuery('')}
                 aria-label="Clear search"
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-fg-subtle hover:text-fg"
+                className="alert-table__button"
               >
-                <X className="size-3.5" aria-hidden />
+                <X className="alert-table__icon-2" aria-hidden />
               </button>
             ) : null}
           </div>
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-line">
-        <table className="w-full min-w-[960px] border-collapse text-left text-ui">
+      <div className="alert-table__box">
+        <table className="alert-table__table">
           <caption className="sr-only">
             Alerts in storm {storm.storm_id}, filtered: showing {first} to {last} of {filtered.length}.
           </caption>
-          <thead className="sticky top-0 z-10 bg-surface text-2xs uppercase tracking-[0.05em] text-fg-subtle">
-            <tr className="border-b border-line">
-              <th scope="col" className="px-3 py-2 font-medium">Alert</th>
-              <th scope="col" className="px-3 py-2 font-medium">Workload</th>
-              <th scope="col" className="px-3 py-2 font-medium">Vulnerability</th>
-              <th scope="col" className="px-3 py-2 font-medium">Triage class</th>
-              <th scope="col" className="px-3 py-2 font-medium">Reason</th>
-              <th scope="col" className="px-3 py-2 font-medium">
+          <thead className="alert-table__head">
+            <tr className="alert-table__row-4">
+              <th scope="col" className="alert-table__heading-cell">Alert</th>
+              <th scope="col" className="alert-table__heading-cell">Workload</th>
+              <th scope="col" className="alert-table__heading-cell">Vulnerability</th>
+              <th scope="col" className="alert-table__heading-cell">Triage class</th>
+              <th scope="col" className="alert-table__heading-cell">Reason</th>
+              <th scope="col" className="alert-table__heading-cell">
                 <Tip content="Titles are untrusted scanner text: shown as inert plain text and never used as instructions or queries.">
-                  <button type="button" className="cursor-help uppercase underline decoration-dotted underline-offset-2">
+                  <button type="button" className="alert-table__button-2">
                     Title (untrusted)
                   </button>
                 </Tip>
               </th>
-              <th scope="col" className="px-3 py-2 font-medium">Scanner</th>
-              <th scope="col" className="px-3 py-2 font-medium">Seen</th>
+              <th scope="col" className="alert-table__heading-cell">Scanner</th>
+              <th scope="col" className="alert-table__heading-cell">Seen</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((alert) => {
               const cluster = clusterOfPod(storm, alert.pod);
               return (
-                <tr key={alert.alert_id} className="border-b border-line/70 last:border-0 hover:bg-hover/40">
-                  <td className="whitespace-nowrap px-3 py-1.5 font-mono text-[12px] text-fg-muted">{alert.alert_id}</td>
-                  <td className="whitespace-nowrap px-3 py-1.5">
-                    <span className="inline-flex items-center gap-1.5">
+                <tr key={alert.alert_id} className="alert-table-3">
+                  <td className="alert-table__cell">{alert.alert_id}</td>
+                  <td className="alert-table__cell-2">
+                    <span className="alert-table__label-2">
                       {cluster && alert.triage_class === 'ON_ATTACK_PATH' ? (
                         <Link
                           to={`/clusters/${cluster.id}?pod=${encodeURIComponent(alert.pod)}`}
-                          className="font-mono text-[12px] text-accent hover:underline"
+                          className="alert-table__link"
                         >
                           {alert.pod}
                         </Link>
                       ) : (
-                        <span className="font-mono text-[12px] text-fg">{alert.pod}</span>
+                        <span className="alert-table__label-3">{alert.pod}</span>
                       )}
                       {alert.roles.map((role) => (
                         <Tag key={role}>{ROLE[role].label}</Tag>
                       ))}
                     </span>
                   </td>
-                  <td className="whitespace-nowrap px-3 py-1.5">
-                    <span className="font-mono text-[12px] text-fg">{alert.cve_id}</span>
-                    <span className="ml-1.5 text-2xs text-fg-subtle">{alert.severity.toLowerCase()}</span>
+                  <td className="alert-table__cell-2">
+                    <span className="alert-table__label-3">{alert.cve_id}</span>
+                    <span className="alert-table__label-4">{alert.severity.toLowerCase()}</span>
                   </td>
-                  <td className="whitespace-nowrap px-3 py-1.5">
+                  <td className="alert-table__cell-2">
                     <StatusBadge status={alert.triage_class} size="sm" />
                   </td>
-                  <td className="max-w-[15rem] truncate px-3 py-1.5 text-2xs text-fg-muted" title={alert.reason}>
+                  <td className="alert-table__cell-3" title={alert.reason}>
                     {alert.reason}
                   </td>
-                  <td className="max-w-[20rem] px-3 py-1.5">
+                  <td className="alert-table__cell-4">
                     <UntrustedText value={alert.title} truncate />
                   </td>
-                  <td className="whitespace-nowrap px-3 py-1.5 font-mono text-[11px] text-fg-subtle">
+                  <td className="alert-table__cell-5">
                     {alert.scanner?.replace(/^synthetic-/, '') ?? '–'}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-1.5 text-2xs text-fg-subtle">
+                  <td className="alert-table__cell-6">
                     {formatUtc(alert.created_at, { seconds: false })}
                   </td>
                 </tr>
@@ -215,23 +216,23 @@ export function AlertTable({ storm, initialQuery = '' }: { storm: StormView; ini
           </tbody>
         </table>
         {rows.length === 0 ? (
-          <div className="px-4 py-6 text-center text-ui text-fg-muted">No alerts match these filters.</div>
+          <div className="alert-table__block-2">No alerts match these filters.</div>
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 text-2xs text-fg-muted">
+      <div className="alert-table__row-5">
         <span aria-live="polite">
-          Showing <span className="tabular text-fg">{formatCount(first)}</span>–
-          <span className="tabular text-fg">{formatCount(last)}</span> of{' '}
-          <span className="tabular text-fg">{formatCount(filtered.length)}</span> matching alerts
+          Showing <span className="tabular alert-table__label-5">{formatCount(first)}</span>–
+          <span className="tabular alert-table__label-5">{formatCount(last)}</span> of{' '}
+          <span className="tabular alert-table__label-5">{formatCount(filtered.length)}</span> matching alerts
         </span>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="alert-table__row-6">
           <label htmlFor={`${id}-size`}>Rows</label>
           <Select
             id={`${id}-size`}
             value={pageSize}
             onChange={(e) => setPageSize(Number(e.target.value))}
-            className="h-7 w-auto font-sans text-ui"
+            className="alert-table__select"
           >
             {PAGE_SIZES.map((size) => (
               <option key={size} value={size}>

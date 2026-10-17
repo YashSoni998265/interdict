@@ -1,0 +1,50 @@
+/* Styles for Num.tsx */
+
+.num__block > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
+
+.num__block-2 {
+  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  letter-spacing: -0.025em;
+  color: rgb(var(--fg-muted));
+}
+
+.num__block-3 {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: rgb(var(--fg-subtle));
+}
+
+.num__block-4 {
+  color: rgb(253 224 71);
+}
+
+.num__block-5 {
+  border-top-width: 1px;
+  border-color: rgb(var(--line));
+  padding-top: 0.25rem;
+  color: rgb(var(--fg-muted));
+}
+
+.num__button {
+  display: inline;
+  cursor: help;
+  border-radius: 0.125rem;
+  color: inherit;
+}
+
+.num__button--not-plain {
+  text-decoration-line: underline;
+  text-decoration-color: rgb(var(--fg-subtle) / 0.45);
+  text-decoration-style: dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.num__button--not-plain:hover {
+  text-decoration-color: rgb(var(--fg-muted));
+}
