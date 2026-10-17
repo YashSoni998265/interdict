@@ -28,15 +28,13 @@ const routes: RouteObject[] = [
   },
 ];
 
-const future = { v7_relativeSplatPath: true, v7_fetcherPersist: true, v7_normalizeFormMethod: true, v7_partialHydration: true, v7_skipActionErrorRevalidation: true };
-
 export function App() {
-  const [router] = useState(() => createBrowserRouter(routes, { future }));
-  return <RouterProvider router={router} future={{ v7_startTransition: true }} />;
+  const [router] = useState(() => createBrowserRouter(routes));
+  return <RouterProvider router={router} />;
 }
 
 /** The same routes in memory, for tests. */
 export function MemoryApp({ initialEntries }: { initialEntries: string[] }) {
-  const [router] = useState(() => createMemoryRouter(routes, { initialEntries, future }));
-  return <RouterProvider router={router} future={{ v7_startTransition: true }} />;
+  const [router] = useState(() => createMemoryRouter(routes, { initialEntries }));
+  return <RouterProvider router={router} />;
 }
