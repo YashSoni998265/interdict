@@ -1,17 +1,22 @@
 import {
   ArrowLeft,
   ArrowRight,
+  Bug,
   Check,
   CircleAlert,
   Download,
   FileCheck2,
+  Globe,
   Hourglass,
+  KeyRound,
   Loader2,
   Play,
   RotateCcw,
   Route,
   ShieldCheck,
   ShieldX,
+  Waypoints,
+  type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -25,6 +30,7 @@ import { AttackGraph } from '@/components/graph/AttackGraph';
 import { EDGE_STYLE } from '@/components/graph/graphTheme';
 import { CountUp } from '@/components/motion/CountUp';
 import { staticMotion } from '@/components/motion/staticMotion';
+import { Num } from '@/components/Num';
 import { OutcomeBadge } from '@/components/OutcomeBadge';
 import { ImpactSentence } from '@/components/plan/PlanReport';
 import { EmptyState, ErrorState, LoadingState } from '@/components/states';
@@ -95,12 +101,15 @@ function StepShell({
   title,
   lede,
   actions,
+  aside,
   visual,
 }: {
   step: number;
   title: ReactNode;
   lede: ReactNode;
   actions?: ReactNode;
+  /** Supporting detail under the actions (checklists, the graph behind a number). */
+  aside?: ReactNode;
   visual: ReactNode;
 }) {
   return (
@@ -114,30 +123,256 @@ function StepShell({
         </h1>
         <div className="demo-step__lede">{lede}</div>
         {actions ? <div className="demo-step__actions">{actions}</div> : null}
+        {aside ? <div className="demo-step__aside">{aside}</div> : null}
       </div>
       <div className="demo-step__visual">{visual}</div>
     </section>
   );
 }
 
-function NeedsRun({ cluster, onBack }: { cluster: ClusterView; onBack: () => void }) {
+/**
+ * Steps 3 and 4 show the agent's results. When there is no run yet (the visitor skipped step 2,
+ * or reloaded), start one and show it working instead of an empty step.
+ */
+function WaitForRun({ cluster }: { cluster: ClusterView }) {
   const { workbench } = useServices();
   const run = useRun(cluster.id);
-  const running = run?.phase === 'starting' || run?.phase === 'streaming';
+  const analysis = useClusterAnalysis(cluster.id);
+  useEffect(() => {
+    if (!run) void workbench.start(cluster.id, 'deterministic');
+  }, [run, cluster.id, workbench]);
+  const retry = () => void workbench.start(cluster.id, 'deterministic');
+  if ((run?.phase === 'failed' || run?.phase === 'interrupted') && run.error) {
+    return <ErrorState error={run.error} title="The investigation did not finish" onRetry={retry} />;
+  }
+  if (run?.phase === 'done' && !analysis.hunt) {
+    return (
+      <EmptyState title="The agent finished without a Path Hunter result">
+        {analysis.derived?.done ? `It ended with ${analysis.derived.done.status}.` : null}
+      </EmptyState>
+    );
+  }
   return (
-    <div className="demo-card demo-card--centered">
-      <Hourglass className="demo-card__icon" aria-hidden />
-      <p className="demo-card__title">This step needs the agent’s results</p>
-      <p className="demo-card__text">Run the agent on {cluster.target} first. It takes about three seconds.</p>
-      <div className="demo-card__actions">
-        <Button variant="primary" onClick={() => void workbench.start(cluster.id, 'deterministic')} disabled={running}>
-          {running ? <Loader2 className="demo-spin" aria-hidden /> : <Play aria-hidden />}
-          {running ? 'Investigating…' : 'Run the agent'}
-        </Button>
-        <Button variant="ghost" onClick={onBack}>
-          Go to step 2
-        </Button>
+    <div className="demo-wait">
+      <div className="demo-wait__head">
+        <Loader2 className="demo-spin" aria-hidden />
+        <div>
+          <p className="demo-card__title">Running the agent first</p>
+          <p className="demo-card__text">This step shows its results. It takes about three seconds.</p>
+        </div>
       </div>
+      <AgentTimeline derived={analysis.derived} />
+    </div>
+  );
+}
+
+/* Supporting content: what the steps rest on */
+
+const MATTERS: { icon: LucideIcon; title: string; body: string }[] = [
+  { icon: Globe, title: 'Exposed', body: 'The workload can be reached from the Internet through an ingress.' },
+  { icon: Bug, title: 'Exploitable', body: 'It runs an active, network-exploitable vulnerability.' },
+  { icon: Waypoints, title: 'Connected', body: 'Observed network flows lead on, hop by hop, toward a crown-jewel database.' },
+  { icon: KeyRound, title: 'Authorised', body: 'The last hop holds an IAM grant that allows access to the database.' },
+];
+
+function WhatMatters({ storm }: { storm: StormView }) {
+  const stats = storm.graph_stats;
+  return (
+    <div className="demo-aside">
+      <p className="demo-aside__title">An alert matters only if the graph shows all four</p>
+      <ol className="demo-checks">
+        {MATTERS.map((item) => (
+          <li key={item.title} className="demo-check">
+            <span className="demo-check__icon">
+              <item.icon aria-hidden />
+            </span>
+            <div>
+              <p className="demo-check__title">{item.title}</p>
+              <p className="demo-check__body">{item.body}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <p className="demo-aside__title">The graph behind it</p>
+      <dl className="demo-stats">
+        <div className="demo-stat">
+          <dt>workloads</dt>
+          <dd className="demo-stat__value">
+            <Num metric="graphPods" value={stats.pods} />
+          </dd>
+        </div>
+        <div className="demo-stat">
+          <dt>observed flows</dt>
+          <dd className="demo-stat__value">
+            <Num metric="graphFlows" value={stats.observed_flows} />
+          </dd>
+        </div>
+        <div className="demo-stat">
+          <dt>vulnerability findings</dt>
+          <dd className="demo-stat__value">
+            <Num metric="graphFindings" value={stats.vulnerability_findings} />
+          </dd>
+        </div>
+        {storm.attack_steps ? (
+          <div className="demo-stat">
+            <dt>attack steps</dt>
+            <dd className="demo-stat__value">
+              <Num metric="attackSteps" value={storm.attack_steps.total} />
+            </dd>
+          </div>
+        ) : null}
+      </dl>
+    </div>
+  );
+}
+
+function OtherAlerts({ storm }: { storm: StormView }) {
+  const rest = storm.total_alerts - storm.counts.ON_ATTACK_PATH;
+  const rows = [
+    {
+      key: 'not-actionable',
+      value: storm.counts.NOT_ACTIONABLE,
+      title: 'Not actionable',
+      body: 'The vulnerability is inactive or cannot be exploited over the network.',
+    },
+    {
+      key: 'no-path',
+      value: storm.counts.NOT_ON_ATTACK_PATH,
+      title: 'Vulnerable, but on no attack path',
+      body: 'No route from the Internet to a crown jewel runs through the workload.',
+    },
+    {
+      key: 'inconclusive',
+      value: storm.counts.TRIAGE_INCONCLUSIVE,
+      title: 'Inconclusive',
+      body: storm.complete
+        ? 'None: every evidence tier was fresh and verified.'
+        : 'Evidence is stale, so these cannot be classified, and none is called safe.',
+    },
+  ];
+  return (
+    <div className="demo-card">
+      <p className="demo-card__kicker">Where the other {rest.toLocaleString('en-US')} alerts went</p>
+      <ul className="demo-others">
+        {rows.map((row) => (
+          <li key={row.key} className="demo-other">
+            <span className="demo-other__value">{row.value.toLocaleString('en-US')}</span>
+            <div>
+              <p className="demo-other__title">{row.title}</p>
+              <p className="demo-other__body">{row.body}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function HunterChecks({ hunt }: { hunt: HuntReportView | undefined }) {
+  const last = hunt?.rounds[hunt.rounds.length - 1];
+  const scope = hunt?.t_scope ?? [];
+  const reached = last ? last.o_reachable.filter((target) => scope.includes(target)) : [];
+  const checks = [
+    {
+      letter: 'E',
+      title: 'Path search',
+      body: 'Enumerates every attack chain that survives the plan.',
+      result: last ? `${last.e_chains.length} ${plural(last.e_chains.length, 'chain')} left` : null,
+    },
+    {
+      letter: 'F',
+      title: 'Max-flow',
+      body: 'FalkorDB’s max-flow from the Internet to each crown jewel must drop to 0.',
+      result: last ? scope.map((target) => `${target}: ${last.f_values[target] ?? '?'}`).join(', ') : null,
+    },
+    {
+      letter: 'O',
+      title: 'Independent search',
+      body: 'A separate breadth-first search over the exported attack steps.',
+      result: last ? (reached.length > 0 ? `reaches ${reached.join(', ')}` : 'reaches nothing in scope') : null,
+    },
+  ];
+  return (
+    <div className="demo-aside">
+      <p className="demo-aside__title">Three independent checks, on a copy of the graph</p>
+      <ul className="demo-methods">
+        {checks.map((check) => (
+          <li key={check.letter} className="demo-method">
+            <span className="demo-method__letter">{check.letter}</span>
+            <div>
+              <p className="demo-method__title">
+                {check.title}
+                {check.result ? <span className="demo-method__result">{check.result}</span> : null}
+              </p>
+              <p className="demo-method__body">{check.body}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <p className="demo-aside__fine">
+        Each round applies the plan to its own candidate copy of the graph, so your sandbox never changes while the
+        Hunter searches.
+      </p>
+    </div>
+  );
+}
+
+function RoundsCard({ hunt }: { hunt: HuntReportView }) {
+  const scope = new Set(hunt.t_scope);
+  return (
+    <div className="demo-card">
+      <p className="demo-card__kicker">Round by round</p>
+      <ol className="demo-rounds">
+        {hunt.rounds.map((round) => {
+          const clear =
+            round.residuals.length === 0 &&
+            !round.o_reachable.some((target) => scope.has(target)) &&
+            hunt.t_scope.every((target) => (round.f_values[target] ?? 0) === 0);
+          return (
+            <li key={round.round} className={cn('demo-round', clear && 'demo-round--clear')}>
+              <span className="demo-round__badge">Round {round.round}</span>
+              <span className="demo-round__plan">
+                {round.action_ids.length} {plural(round.action_ids.length, 'change')}
+              </span>
+              <span className="demo-round__result">
+                {clear
+                  ? 'no modelled path survives'
+                  : `${round.residuals.length} ${plural(round.residuals.length, 'path')} survived`}
+              </span>
+              <span className="demo-round__time">{Math.max(1, Math.round(round.latency_ms.round))} ms</span>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+const GATEWAY_RULES = [
+  'An allowlisted action type: egress network policies only',
+  'SIMULATION mode: LIVE execution is disabled',
+  'A VALID certificate at the current sandbox revision',
+  'An idempotency key, so a retry never acts twice',
+];
+
+function GatewayChecks() {
+  return (
+    <div className="demo-aside">
+      <p className="demo-aside__title">Before it may act, the Action Gateway requires</p>
+      <ul className="demo-rules">
+        {GATEWAY_RULES.map((rule) => (
+          <li key={rule} className="demo-rule">
+            <span className="demo-rule__icon">
+              <Check aria-hidden />
+            </span>
+            {rule}
+          </li>
+        ))}
+      </ul>
+      <p className="demo-aside__fine">
+        Not claimed: real-world containment, enforcement by the cluster’s network plugin, or protection from vectors the
+        model leaves out, such as credential theft or zero-days.
+      </p>
     </div>
   );
 }
@@ -150,6 +385,7 @@ function StepAlerts({ storm }: { storm: StormView }) {
   return (
     <StepShell
       step={1}
+      aside={<WhatMatters storm={storm} />}
       title={
         <>
           {storm.total_alerts.toLocaleString('en-US')} alerts.
@@ -194,6 +430,7 @@ function StepAlerts({ storm }: { storm: StormView }) {
               <span className="demo-funnel__label">places to fix</span>
             </div>
           </div>
+          <OtherAlerts storm={storm} />
           {restraint ? (
             <div className="demo-card">
               <p className="demo-card__kicker">Same vulnerability, different verdicts</p>
@@ -390,7 +627,7 @@ function StepAgent({ cluster }: { cluster: ClusterView }) {
 
 /* Step 3: the hunt */
 
-function StepHunt({ cluster, onBack }: { cluster: ClusterView; onBack: () => void }) {
+function StepHunt({ cluster }: { cluster: ClusterView }) {
   const analysis = useClusterAnalysis(cluster.id);
   const hunt = analysis.hunt;
   const handle = hunt ? huntPlanHandle(hunt, analysis.plan) : null;
@@ -416,7 +653,8 @@ function StepHunt({ cluster, onBack }: { cluster: ClusterView; onBack: () => voi
         step={3}
         title="The Path Hunter checks the fix."
         lede={<p>Once the agent has a plan, the Path Hunter tries to break it on a copy of the graph.</p>}
-        visual={<NeedsRun cluster={cluster} onBack={onBack} />}
+        aside={<HunterChecks hunt={undefined} />}
+        visual={<WaitForRun cluster={cluster} />}
       />
     );
   }
@@ -433,6 +671,7 @@ function StepHunt({ cluster, onBack }: { cluster: ClusterView; onBack: () => voi
   return (
     <StepShell
       step={3}
+      aside={<HunterChecks hunt={hunt} />}
       title={widened ? 'The first fix wasn’t enough.' : 'The Path Hunter checks the fix.'}
       lede={
         <>
@@ -487,6 +726,7 @@ function StepHunt({ cluster, onBack }: { cluster: ClusterView; onBack: () => voi
               </li>
             ))}
           </ul>
+          <RoundsCard hunt={hunt} />
           {widened ? (
             <div className="demo-card">
               <p className="demo-card__kicker">Paths the first plan missed</p>
@@ -521,7 +761,7 @@ function download(filename: string, text: string) {
   URL.revokeObjectURL(url);
 }
 
-function StepAct({ cluster, onBack }: { cluster: ClusterView; onBack: () => void }) {
+function StepAct({ cluster }: { cluster: ClusterView }) {
   const analysis = useClusterAnalysis(cluster.id);
   const hunt = analysis.hunt;
   const outcome = useHuntOutcome(hunt);
@@ -536,8 +776,9 @@ function StepAct({ cluster, onBack }: { cluster: ClusterView; onBack: () => void
         step={4}
         title="It acts, with proof."
         lede={<p>With a verified plan and a valid certificate, the agent records the fix.</p>}
+        aside={<GatewayChecks />}
         visual={
-          hunt ? <EmptyState title="No verified plan to act on">{hunt.detail}</EmptyState> : <NeedsRun cluster={cluster} onBack={onBack} />
+          hunt ? <EmptyState title="No verified plan to act on">{hunt.detail}</EmptyState> : <WaitForRun cluster={cluster} />
         }
       />
     );
@@ -556,6 +797,7 @@ function StepAct({ cluster, onBack }: { cluster: ClusterView; onBack: () => void
     <StepShell
       step={4}
       title="It acts, with proof."
+      aside={<GatewayChecks />}
       lede={
         <>
           <p>
@@ -809,6 +1051,10 @@ export default function DemoPage() {
   const requested = Number(params.get('step') ?? '1');
   const step = Number.isInteger(requested) ? Math.min(LAST, Math.max(1, requested)) : 1;
   const go = (next: number) => setParams({ step: String(next) });
+  // <main> is the scroll container and only the query string changes, so start each step at the top.
+  useEffect(() => {
+    document.getElementById('main')?.scrollTo({ top: 0 });
+  }, [step]);
   const s = storm.data;
   const [pinned, setPinned] = useState<ClusterView | null>(() => rememberedCluster);
   const reset = useSandboxReset();
@@ -851,8 +1097,8 @@ export default function DemoPage() {
       <div key={step} className="demo-stage">
         {step === 1 ? <StepAlerts storm={s} /> : null}
         {step === 2 ? <StepAgent cluster={cluster} /> : null}
-        {step === 3 ? <StepHunt cluster={cluster} onBack={() => go(2)} /> : null}
-        {step === 4 ? <StepAct cluster={cluster} onBack={() => go(2)} /> : null}
+        {step === 3 ? <StepHunt cluster={cluster} /> : null}
+        {step === 4 ? <StepAct cluster={cluster} /> : null}
         {step === 5 ? <StepBreak cluster={cluster} storm={s} /> : null}
       </div>
     );
