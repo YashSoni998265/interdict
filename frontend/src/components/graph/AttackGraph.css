@@ -1,0 +1,38 @@
+/* Styles for AttackGraph.tsx */
+
+.zoom-bar {
+  margin: 0.5rem !important;
+}
+
+.zoom-bar__row {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  border-radius: 0.375rem;
+  border-width: 1px;
+  border-color: rgb(var(--line));
+  background-color: rgb(var(--elevated) / 0.95);
+  padding: 0.125rem;
+}
+
+.attack-graph {
+  padding: 0.75rem;
+}
+
+.attack-graph__text {
+  margin-top: 0.5rem;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: rgb(var(--fg-muted));
+}
+
+.attack-graph-2 {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.attack-graph__block {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}

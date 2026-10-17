@@ -10,6 +10,7 @@ import { Num } from '../Num';
 import { QueryList } from '../QueryList';
 import { StatusIcon } from '../StatusBadge';
 import { Popover } from '../ui/popover';
+import './Funnel.css';
 
 interface StageInfo {
   label: string;
@@ -74,21 +75,21 @@ function Proof({ storm, info, label }: { storm: StormView; info: StageInfo; labe
       trigger={
         <button
           type="button"
-          className="inline-flex items-center gap-1 rounded text-2xs font-medium text-fg-muted transition-colors hover:text-fg"
+          className="proof__button"
         >
-          <ScanSearch className="size-3" aria-hidden />
+          <ScanSearch className="proof__icon" aria-hidden />
           Graph proof
         </button>
       }
     >
-      <div className="space-y-2.5">
-        <div className="text-ui font-medium text-fg">{label}</div>
-        <p className="text-2xs leading-4 text-fg-muted">{info.how}</p>
+      <div className="proof__block">
+        <div className="proof__block-2">{label}</div>
+        <p className="proof__text">{info.how}</p>
         <QueryList
           queries={queries}
           empty="Derived from the chains and reachability above; no separate query."
         />
-        <p className="text-2xs text-fg-subtle">
+        <p className="proof__text-2">
           Storm {storm.storm_id} · revision {storm.revision} · parameterised templates only, never LLM-written Cypher.
         </p>
       </div>
@@ -110,15 +111,15 @@ function Branch({
   // A branch with no alerts stays visible but quiet; only a non-empty branch is tinted.
   const quiet = count === 0;
   return (
-    <div className={cn('flex items-start gap-2 rounded-md border px-2.5 py-2', quiet ? 'border-line bg-surface' : [tone.border, tone.bg])}>
-      <CornerDownRight className="mt-0.5 size-3.5 shrink-0 text-fg-subtle" aria-hidden />
-      <div className="min-w-0">
-        <div className={cn('flex items-center gap-1.5 text-ui font-medium', tone.text)}>
+    <div className={cn('branch', quiet ? 'branch--quiet' : [tone.border, tone.bg])}>
+      <CornerDownRight className="branch__icon" aria-hidden />
+      <div className="branch__block">
+        <div className={cn('branch__row', tone.text)}>
           <StatusIcon name={descriptor.icon} />
-          <Num metric="alertsPerClass" value={count} className="text-fg" />
-          <span className="text-2xs font-normal text-fg-muted">alerts</span>
+          <Num metric="alertsPerClass" value={count} className="branch__num" />
+          <span className="branch__label">alerts</span>
         </div>
-        <div className="mt-0.5 text-2xs leading-4 text-fg-muted">{descriptor.label}</div>
+        <div className="branch__block-2">{descriptor.label}</div>
         {children}
       </div>
     </div>
@@ -132,8 +133,8 @@ export function Funnel({ storm }: { storm: StormView }) {
   const inconclusive = storm.counts.TRIAGE_INCONCLUSIVE;
 
   return (
-    <div className="space-y-3">
-      <ol className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6" aria-label="Triage funnel">
+    <div className="funnel">
+      <ol className="funnel__list" aria-label="Triage funnel">
         {storm.funnel.map((stage, index) => {
           const info = STAGES[stage.stage];
           const alertUnit = index < 3;
@@ -142,41 +143,41 @@ export function Funnel({ storm }: { storm: StormView }) {
             <li
               key={stage.stage}
               className={cn(
-                'relative flex flex-col rounded-lg border bg-surface px-3 py-3',
-                tone ? tone.border : 'border-line',
+                'funnel-2',
+                tone ? tone.border : 'funnel--not-tone',
               )}
             >
-              <div className="flex items-center justify-between gap-2">
-                <span className={cn('text-2xs font-medium uppercase tracking-[0.06em]', tone ? tone.text : 'text-fg-muted')}>
+              <div className="funnel__row">
+                <span className={cn('funnel__label', tone ? tone.text : 'funnel__label--not-tone')}>
                   {info.label}
                 </span>
                 {tone ? <StatusIcon name="alert" className={tone.text} /> : null}
               </div>
-              <div className="mt-1.5 text-[1.65rem] font-semibold leading-none tracking-tight text-fg">
+              <div className="funnel__block">
                 <Num metric={info.metric} value={stage.count} truncated={Boolean(stage.truncated)} plain />
               </div>
-              <div className="mt-1 text-2xs text-fg-subtle">{info.unit}</div>
+              <div className="funnel__block-2">{info.unit}</div>
               {alertUnit && total > 0 ? (
-                <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-elevated" aria-hidden>
+                <div className="funnel__block-3" aria-hidden>
                   <div
-                    className={cn('h-full rounded-full', tone ? tone.solid : 'bg-fg-muted')}
+                    className={cn('funnel__block-4', tone ? tone.solid : 'funnel__block--not-tone')}
                     style={{ width: `${Math.max((stage.count / total) * 100, stage.count > 0 ? 1.5 : 0)}%` }}
                   />
                 </div>
               ) : (
-                <div className="mt-2.5 h-1" aria-hidden />
+                <div className="funnel__block-5" aria-hidden />
               )}
               {stage.stage === 'clusters' && beyondBound > 0 ? (
-                <div className="mt-2 text-2xs text-fg-muted">
+                <div className="funnel__block-6">
                   incl. {beyondBound} beyond the 3-hop bound
                 </div>
               ) : null}
-              <div className="mt-auto pt-2.5">
+              <div className="funnel__block-7">
                 <Proof storm={storm} info={info} label={info.label} />
               </div>
               {index < storm.funnel.length - 1 ? (
                 <ChevronRight
-                  className="absolute -right-[11px] top-7 z-10 hidden size-3.5 rounded-full bg-canvas text-fg-subtle xl:block"
+                  className="funnel__icon"
                   aria-hidden
                 />
               ) : null}
@@ -184,10 +185,10 @@ export function Funnel({ storm }: { storm: StormView }) {
           );
         })}
       </ol>
-      <div className="grid gap-2 sm:grid-cols-3" aria-label="Branches that leave the funnel">
+      <div className="funnel__grid" aria-label="Branches that leave the funnel">
         <Branch status="NOT_ACTIONABLE" count={storm.counts.NOT_ACTIONABLE} />
         <Branch status="TRIAGE_INCONCLUSIVE" count={inconclusive}>
-          <div className="mt-1 text-2xs text-fg-subtle">
+          <div className="funnel__block-2">
             {inconclusive === 0 && storm.complete
               ? 'None: every evidence tier was collected, fresh and verified.'
               : storm.issues.map((issue) => reasonText(issue.reason)).join('; ') || 'See the evidence issues above.'}

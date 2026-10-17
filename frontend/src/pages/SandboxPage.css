@@ -1,0 +1,39 @@
+/* Styles for SandboxPage.tsx */
+
+.sandbox-page {
+  display: flex;
+  flex: 1 1 0%;
+  flex-direction: column;
+}
+
+.sandbox-page__block {
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  max-width: 64rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+
+.sandbox-page__block > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1.25rem;
+  margin-bottom: 0;
+}
+
+.sandbox-page__heading {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: rgb(var(--fg));
+}
+
+.sandbox-page__text {
+  margin-top: 0.25rem;
+  max-width: 42rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  color: rgb(var(--fg-muted));
+}

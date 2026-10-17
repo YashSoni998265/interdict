@@ -1,124 +1,16 @@
+/*
+ * Global styles, in cascade order. Each component's own styles sit next to it (e.g. ClusterCard.css).
+ * The reset, tokens and shared helpers sit in cascade layers, so a component's own (unlayered)
+ * classes always override them, whatever order the production build links the stylesheets in.
+ */
+@layer base, components;
+
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/jetbrains-mono';
 @import '@xyflow/react/dist/base.css';
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  :root {
-    /* Surfaces, darkest to lightest */
-    --canvas: 9 9 11;
-    --pane: 12 12 14;
-    --surface: 17 17 20;
-    --elevated: 24 24 27;
-    --hover: 32 32 36;
-    /* Lines */
-    --line: 39 39 44;
-    --line-strong: 63 63 70;
-    /* Text: every tier meets WCAG AA (4.5:1) on --canvas and --elevated */
-    --fg: 244 244 245;
-    --fg-muted: 161 161 170;
-    --fg-subtle: 139 139 148;
-    /* The one interactive accent (links, focus); status colours never double as accents */
-    --accent: 56 189 248;
-
-    color-scheme: dark;
-  }
-
-  html {
-    font-size: 14px;
-    -webkit-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
-  }
-
-  body {
-    @apply min-h-screen bg-canvas font-sans text-fg antialiased;
-    font-feature-settings: 'cv11', 'ss01';
-  }
-
-  /* Visible focus everywhere, never removed without a replacement (WCAG 2.4.7 / 2.4.11) */
-  :focus-visible {
-    outline: 2px solid rgb(var(--accent));
-    outline-offset: 2px;
-    border-radius: 4px;
-  }
-
-  ::selection {
-    background: rgb(var(--accent) / 0.3);
-  }
-
-  code,
-  kbd,
-  samp,
-  pre {
-    @apply font-mono;
-    font-feature-settings: normal;
-  }
-
-  /* Thin, quiet scrollbars */
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: rgb(var(--line-strong)) transparent;
-  }
-}
-
-@layer components {
-  .tabular {
-    font-variant-numeric: tabular-nums;
-  }
-
-  .section-label {
-    @apply text-2xs font-medium uppercase tracking-[0.08em] text-fg-subtle;
-  }
-
-  .mono-id {
-    @apply font-mono text-[12px] tracking-tight;
-  }
-}
-
-/* React Flow: blend into the dark canvas */
-.react-flow {
-  --xy-background-color: transparent;
-  --xy-edge-stroke: rgb(var(--fg-subtle));
-  --xy-node-border-radius: 10px;
-  --xy-controls-button-background-color: rgb(var(--elevated));
-  --xy-controls-button-background-color-hover: rgb(var(--hover));
-  --xy-controls-button-color: rgb(var(--fg-muted));
-  --xy-controls-button-color-hover: rgb(var(--fg));
-  --xy-controls-button-border-color: rgb(var(--line));
-}
-
-.react-flow__node:focus-visible {
-  outline: none;
-}
-
-.react-flow__node:focus-visible > div {
-  box-shadow:
-    0 0 0 2px rgb(var(--canvas)),
-    0 0 0 4px rgb(var(--accent));
-}
-
-.react-flow__controls {
-  box-shadow: none;
-  border: 1px solid rgb(var(--line));
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.react-flow__controls-button svg {
-  fill: currentColor;
-}
-
-/* Motion is decoration only: honour the user's preference everywhere */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
+@import './styles/base.css' layer(base);
+@import './styles/tokens.css' layer(base);
+@import './styles/helpers.css' layer(components);
+@import './styles/tones.css';
+@import './styles/motion.css';
+@import './styles/react-flow.css';

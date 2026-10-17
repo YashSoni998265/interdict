@@ -1,0 +1,50 @@
+/* Styles for Pane.tsx */
+
+.pane {
+  display: flex;
+  min-height: 0px;
+  min-width: 0px;
+  flex-direction: column;
+  background-color: rgb(var(--pane));
+}
+
+.pane__header {
+  display: flex;
+  min-height: 3rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 0.75rem;
+  row-gap: 0.5rem;
+  border-bottom-width: 1px;
+  border-color: rgb(var(--line));
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.pane__block {
+  min-width: 0px;
+  flex: 1 1 0%;
+}
+
+.pane__title {
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  color: rgb(var(--fg));
+}
+
+.pane__text {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: rgb(var(--fg-muted));
+}
+
+.pane__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}

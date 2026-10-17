@@ -2,6 +2,7 @@ import type { HTMLAttributes } from 'react';
 
 import { cn } from '@/lib/cn';
 import { TONE_CLASS, type Tone } from '@/lib/status';
+import './tag.css';
 
 export interface TagProps extends HTMLAttributes<HTMLSpanElement> {
   tone?: Tone;
@@ -16,10 +17,10 @@ export function Tag({ tone = 'neutral', mono = false, dashed = false, className,
   return (
     <span
       className={cn(
-        'inline-flex max-w-full items-center gap-1 rounded border px-1.5 py-px text-2xs font-medium leading-4',
-        tone === 'neutral' ? 'border-line bg-elevated text-fg-muted' : [t.text, t.bg, t.border],
-        dashed && 'border-dashed',
-        mono && 'font-mono font-normal tracking-tight',
+        'tag',
+        tone === 'neutral' ? 'tag--neutral' : [t.text, t.bg, t.border],
+        dashed && 'tag--dashed',
+        mono && 'tag--mono',
         className,
       )}
       {...props}

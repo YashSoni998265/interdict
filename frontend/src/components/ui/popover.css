@@ -1,0 +1,26 @@
+/* Styles for popover.tsx */
+
+.popover__content {
+  z-index: 50;
+  width: 22rem;
+  max-width: calc(100vw - 1.5rem);
+  animation: fade-in 150ms ease-out;
+  border-radius: 0.5rem;
+  border-width: 1px;
+  border-color: rgb(var(--line));
+  background-color: rgb(var(--elevated));
+  padding: 0.875rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  color: rgb(var(--fg));
+  box-shadow: 0 0 0 1px rgb(var(--elevated)), 0 12px 32px -12px rgb(var(--elevated));
+}
+
+.popover__content:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.popover__arrow {
+  fill: rgb(var(--elevated));
+}

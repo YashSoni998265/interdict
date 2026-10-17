@@ -342,14 +342,14 @@ export function describeSandboxResult(result: string): { tone: Tone; icon: Statu
   return SANDBOX_RESULT[result as SandboxOpResult] ?? { tone: 'grey', icon: 'question', label: result };
 }
 
-/** Tailwind classes per tone. Literal strings so the JIT compiler keeps them. */
+/** CSS classes per tone, defined in styles/tones.css. */
 export const TONE_CLASS: Record<Tone, { text: string; bg: string; border: string; dot: string; solid: string }> = {
-  red: { text: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30', dot: 'bg-red-400', solid: 'bg-red-500' },
-  amber: { text: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30', dot: 'bg-amber-400', solid: 'bg-amber-500' },
-  grey: { text: 'text-zinc-400', bg: 'bg-zinc-500/10', border: 'border-zinc-500/30', dot: 'bg-zinc-400', solid: 'bg-zinc-500' },
-  orange: { text: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/30', dot: 'bg-orange-400', solid: 'bg-orange-500' },
-  yellow: { text: 'text-yellow-300', bg: 'bg-yellow-400/10', border: 'border-yellow-400/30', dot: 'bg-yellow-300', solid: 'bg-yellow-400' },
-  green: { text: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', dot: 'bg-emerald-400', solid: 'bg-emerald-500' },
-  violet: { text: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/35', dot: 'bg-violet-400', solid: 'bg-violet-500' },
-  neutral: { text: 'text-fg', bg: 'bg-elevated', border: 'border-line', dot: 'bg-fg-muted', solid: 'bg-fg' },
+  red: { text: 'tone-red-text', bg: 'tone-red-bg', border: 'tone-red-border', dot: 'tone-red-dot', solid: 'tone-red-solid' },
+  amber: { text: 'tone-amber-text', bg: 'tone-amber-bg', border: 'tone-amber-border', dot: 'tone-amber-dot', solid: 'tone-amber-solid' },
+  grey: { text: 'tone-grey-text', bg: 'tone-grey-bg', border: 'tone-grey-border', dot: 'tone-grey-dot', solid: 'tone-grey-solid' },
+  orange: { text: 'tone-orange-text', bg: 'tone-orange-bg', border: 'tone-orange-border', dot: 'tone-orange-dot', solid: 'tone-orange-solid' },
+  yellow: { text: 'tone-yellow-text', bg: 'tone-yellow-bg', border: 'tone-yellow-border', dot: 'tone-yellow-dot', solid: 'tone-yellow-solid' },
+  green: { text: 'tone-green-text', bg: 'tone-green-bg', border: 'tone-green-border', dot: 'tone-green-dot', solid: 'tone-green-solid' },
+  violet: { text: 'tone-violet-text', bg: 'tone-violet-bg', border: 'tone-violet-border', dot: 'tone-violet-dot', solid: 'tone-violet-solid' },
+  neutral: { text: 'tone-neutral-text', bg: 'tone-neutral-bg', border: 'tone-neutral-border', dot: 'tone-neutral-dot', solid: 'tone-neutral-solid' },
 };

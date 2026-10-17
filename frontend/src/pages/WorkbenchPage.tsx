@@ -21,6 +21,7 @@ import { defaultOverlay, deriveOverlays } from '@/lib/graphState';
 import { huntPlanHandle } from '@/lib/plan';
 import { lifecycleLabel } from '@/lib/status';
 import { useMediaQuery } from '@/lib/useMediaQuery';
+import './WorkbenchPage.css';
 
 type TabId = 'evidence' | 'investigation' | 'verification';
 
@@ -31,8 +32,8 @@ function RunStatus({ clusterId }: { clusterId: string }) {
   let content;
   if (run?.phase === 'starting' || run?.phase === 'streaming') {
     content = (
-      <span className="inline-flex items-center gap-1.5 text-fg">
-        <span className="size-1.5 animate-pulse-soft rounded-full bg-accent" aria-hidden />
+      <span className="run-status">
+        <span className="run-status__dot" aria-hidden />
         {derived?.currentState ? `${derived.currentState} · ${lifecycleLabel(derived.currentState)}` : 'Starting'}
       </span>
     );
@@ -41,10 +42,10 @@ function RunStatus({ clusterId }: { clusterId: string }) {
   } else if (derived?.done) {
     content = <StatusBadge status={derived.done.status} hasCertificate={false} size="sm" />;
   } else {
-    content = <span className="text-fg-subtle">not investigated yet</span>;
+    content = <span className="run-status-2">not investigated yet</span>;
   }
   return (
-    <div className="flex items-center gap-1.5 text-2xs text-fg-muted" aria-live="polite">
+    <div className="run-status-3" aria-live="polite">
       <span>Status</span>
       {content}
     </div>
@@ -108,31 +109,31 @@ function Workbench({ cluster, storm, initialPod }: { cluster: ClusterView; storm
   );
 
   return (
-    <div className="flex h-full min-h-[560px] flex-col">
-      <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-b border-line px-3 py-2">
-        <Link to="/storm" className="inline-flex items-center gap-1 rounded text-2xs text-fg-muted hover:text-fg">
-          <ArrowLeft className="size-3.5" aria-hidden />
+    <div className="workbench">
+      <div className="workbench__row">
+        <Link to="/storm" className="workbench__link">
+          <ArrowLeft className="workbench__icon" aria-hidden />
           Storm
         </Link>
-        <div className="min-w-0">
-          <h1 className="truncate text-sm font-semibold text-fg">
-            <span className="font-mono">{cluster.target}</span>
-            <span className="font-normal text-fg-muted"> via </span>
-            <span className="font-mono">{cluster.entry_ingress}</span>
+        <div className="workbench__block">
+          <h1 className="workbench__heading">
+            <span className="workbench__label">{cluster.target}</span>
+            <span className="workbench__label-2"> via </span>
+            <span className="workbench__label">{cluster.entry_ingress}</span>
           </h1>
-          <div className="font-mono text-[11px] text-fg-subtle">{cluster.id}</div>
+          <div className="workbench__block-2">{cluster.id}</div>
         </div>
         {cluster.beyond_bound ? (
           <Tag tone="orange">
-            <Telescope className="size-3" aria-hidden />
+            <Telescope className="workbench__icon-2" aria-hidden />
             Beyond the planner’s 3-hop bound
           </Tag>
         ) : null}
-        <span className="inline-flex items-center gap-1 text-2xs text-fg-muted">
+        <span className="workbench__label-3">
           T_scope
           <Tag mono>{cluster.target}</Tag>
         </span>
-        <div className="ml-auto flex flex-wrap items-center gap-3">
+        <div className="workbench__row-2">
           <RunStatus clusterId={cluster.id} />
           <label htmlFor="cluster-switch" className="sr-only">
             Switch cluster
@@ -141,7 +142,7 @@ function Workbench({ cluster, storm, initialPod }: { cluster: ClusterView; storm
             id="cluster-switch"
             value={cluster.id}
             onChange={(e) => navigate(`/clusters/${e.target.value}`)}
-            className="h-7 w-auto max-w-[16rem] font-sans text-ui"
+            className="workbench__select"
           >
             {storm.clusters.map((c) => (
               <option key={c.id} value={c.id}>
@@ -153,14 +154,14 @@ function Workbench({ cluster, storm, initialPod }: { cluster: ClusterView; storm
       </div>
 
       {wide ? (
-        <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_minmax(0,1.05fr)] divide-x divide-line">
+        <div className="workbench__grid">
           {evidence}
           {investigation}
           {verification}
         </div>
       ) : (
-        <Tabs value={tab} onValueChange={(v) => setTab(v as TabId)} className="flex min-h-0 flex-1 flex-col">
-          <TabsList aria-label="Workbench panes" className="shrink-0 bg-pane">
+        <Tabs value={tab} onValueChange={(v) => setTab(v as TabId)} className="workbench__tabs">
+          <TabsList aria-label="Workbench panes" className="workbench__tabs-list">
             <TabsTrigger value="evidence">
               <Network aria-hidden />
               Evidence graph
@@ -174,13 +175,13 @@ function Workbench({ cluster, storm, initialPod }: { cluster: ClusterView; storm
               Plan and verification
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="evidence" className="flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden">
+          <TabsContent value="evidence" className="workbench__tabs-content">
             {evidence}
           </TabsContent>
-          <TabsContent value="investigation" className="flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden">
+          <TabsContent value="investigation" className="workbench__tabs-content">
             {investigation}
           </TabsContent>
-          <TabsContent value="verification" className="flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden">
+          <TabsContent value="verification" className="workbench__tabs-content">
             {verification}
           </TabsContent>
         </Tabs>
@@ -198,14 +199,14 @@ export default function WorkbenchPage() {
 
   if (storm.isPending) {
     return (
-      <div className="px-4">
+      <div className="workbench-page">
         <LoadingState title="Loading the cluster" detail="GET /api/storm: clusters, chains and roles" />
       </div>
     );
   }
   if (storm.error) {
     return (
-      <div className="p-4">
+      <div className="workbench-page-2">
         <ErrorState error={storm.error} title="The storm report could not be loaded" onRetry={() => void storm.refetch()} />
       </div>
     );
@@ -213,13 +214,13 @@ export default function WorkbenchPage() {
   const cluster = storm.data.clusters.find((c) => c.id === clusterId);
   if (!cluster) {
     return (
-      <div className="mx-auto w-full max-w-2xl p-4">
+      <div className="workbench-page-3">
         <EmptyState title={`No cluster “${clusterId}” in this storm`}>
           <p>The clusters in {storm.data.storm_id} are:</p>
-          <ul className="mt-2 space-y-1">
+          <ul className="workbench-page__list">
             {storm.data.clusters.map((c) => (
               <li key={c.id}>
-                <Link to={`/clusters/${c.id}`} className="text-accent hover:underline">
+                <Link to={`/clusters/${c.id}`} className="workbench-page__link">
                   {clusterTitle(c)}
                 </Link>
               </li>

@@ -1,37 +1,38 @@
 import type { QueryRecord } from '@/api/types';
 
 import { Num } from './Num';
+import './QueryList.css';
 
 /** Parameterised query templates with rows and measured latency (the "graph proof"). */
 export function QueryList({ queries, empty = 'No queries recorded.' }: { queries: QueryRecord[]; empty?: string }) {
-  if (queries.length === 0) return <p className="text-2xs text-fg-subtle">{empty}</p>;
+  if (queries.length === 0) return <p className="query-list">{empty}</p>;
   return (
-    <table className="w-full text-left text-2xs">
-      <thead className="text-fg-subtle">
+    <table className="query-list-2">
+      <thead className="query-list__head">
         <tr>
-          <th scope="col" className="pb-1 pr-2 font-medium">
+          <th scope="col" className="query-list__heading-cell">
             Template
           </th>
-          <th scope="col" className="pb-1 pr-2 text-right font-medium">
+          <th scope="col" className="query-list__heading-cell-2">
             Rows
           </th>
-          <th scope="col" className="pb-1 text-right font-medium">
+          <th scope="col" className="query-list__heading-cell-3">
             Latency
           </th>
         </tr>
       </thead>
-      <tbody className="font-mono">
+      <tbody className="query-list__body">
         {queries.map((query, index) => (
-          <tr key={`${query.id}-${query.template}-${index}`} className="border-t border-line/70">
-            <td className="py-1 pr-2 text-fg">
-              <span className="text-fg-subtle">{query.id} </span>
+          <tr key={`${query.id}-${query.template}-${index}`} className="query-list-3">
+            <td className="query-list__cell">
+              <span className="query-list__label">{query.id} </span>
               {query.template}
-              {query.error ? <span className="ml-1 text-red-400">error: {query.error}</span> : null}
+              {query.error ? <span className="query-list__label-2">error: {query.error}</span> : null}
             </td>
-            <td className="py-1 pr-2 text-right text-fg-muted">
+            <td className="query-list__cell-2">
               <Num metric="tierRows" value={query.rows} plain />
             </td>
-            <td className="py-1 text-right text-fg-muted">
+            <td className="query-list__cell-3">
               <Num metric="queryLatency" value={query.latency_ms} format="ms" plain />
             </td>
           </tr>
