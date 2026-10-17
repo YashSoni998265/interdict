@@ -1,4 +1,4 @@
-import { Bot, FlaskConical, PlugZap } from 'lucide-react';
+import { FlaskConical, PlugZap } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { useStorm, useSystem } from '@/api/queries';
@@ -178,19 +178,12 @@ export default function SystemPage() {
                 </span>
               </Fact>
               <Fact label="Agent">
-                {client.mode === 'mock' ? (
-                  'Not available offline: recorded deterministic runs only'
-                ) : s.agent_available ? (
-                  <span className="system-page__label-2">
-                    <Bot className="system-page__icon" aria-hidden />
-                    Claude ({s.agent_model ?? 'model not reported'})
-                  </span>
-                ) : (
-                  <span className="system-page__label-2">
-                    <PlugZap className="system-page__icon" aria-hidden />
-                    Deterministic only (no API key)
-                  </span>
-                )}
+                <span className="system-page__label-2">
+                  <PlugZap className="system-page__icon" aria-hidden />
+                  {client.mode === 'mock'
+                    ? 'Recorded runs of the decision agent (no AI model)'
+                    : 'Decision agent: written rules over tool results, no AI model'}
+                </span>
               </Fact>
               <Fact label="Gate fallbacks">
                 {s.active_fallbacks && s.active_fallbacks.length > 0 ? s.active_fallbacks.join(', ') : 'None reported'}

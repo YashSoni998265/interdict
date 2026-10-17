@@ -60,7 +60,6 @@ class AppSettings:
     mcp_host: str = "127.0.0.1"
     mcp_port: int = 8765
     template: str = "template"
-    llm_model: str = "claude-opus-5-5"
     allowed_origins: tuple[str, ...] = ("http://localhost:5173",)
     cookie_secure: bool = False
     build_sha: str = "dev"
@@ -82,7 +81,6 @@ class AppSettings:
             mcp_host=os.environ.get("INTERDICT_MCP_HOST", cls.mcp_host),
             mcp_port=int(os.environ.get("INTERDICT_MCP_PORT", cls.mcp_port)),
             template=os.environ.get("INTERDICT_TEMPLATE", cls.template),
-            llm_model=os.environ.get("INTERDICT_LLM_MODEL", cls.llm_model),
             allowed_origins=tuple(o.strip() for o in origins.split(",") if o.strip()),
             cookie_secure=os.environ.get("INTERDICT_COOKIE_SECURE", "0") == "1",
             build_sha=os.environ.get("INTERDICT_GIT_SHA", cls.build_sha),

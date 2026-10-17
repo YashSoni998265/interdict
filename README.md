@@ -8,7 +8,7 @@
 | Step | What you see | What the graph does |
 | :--- | :--- | :--- |
 | 1. Alert storm | 1,000 alerts become **69 on a real attack path**, in 4 clusters; 382 are vulnerable but on no path, and 549 are not actionable. | FalkorDB builds `ATTACK_STEP` edges from evidence (exposure, exploitable vulnerability, observed reachability, IAM grants), then forward and backward reachability classify every alert. |
-| 2. Investigate | The agent (Claude over MCP, or the deterministic pipeline) walks the evidence, the paths and memory. | Multi-hop tier queries and bounded path enumeration (≤ 3 lateral hops) over raw `CAN_REACH`. |
+| 2. Investigate | The agent calls the tools over MCP and decides each next step from their answers: memory first, evidence checked, a fix with fully known impact preferred. No AI model. | Multi-hop tier queries and bounded path enumeration (≤ 3 lateral hops) over raw `CAN_REACH`. |
 | 3. Cheapest safe fix | The exact best plan of ≤ 3 allowlist policies, its impact on declared dependencies, alternatives, and hard isolation for comparison. | Exact search over every subset of the action catalogue (the worst case is 4,526 subsets over 10,000 chains, in about 50 ms). |
 | 4. Path Hunter | Rounds of verification. It also finds a **4-hop path to `customer-pii-db` beyond the planner's bound** and re-plans to close it. | `GRAPH.COPY` makes a candidate graph, FalkorDB applies the policies itself, and `algo.maxFlow` per crown jewel, bounded chains and an oracle BFS must agree. |
 | 5. Certificate | "Model-verified containment (simulation)", with snapshot hashes, an expiry, and the exclusions written out. | SHA-256 hashes of the sandbox and the candidate. Any later sandbox change supersedes the certificate. |
@@ -17,7 +17,7 @@
 Honest outcomes are part of the product. Asking for both crown jewels at once returns **"No safe plan within 3 changes"** (4 independent paths need 4 actions), along with the best partial plan. Expiring a piece of evidence makes the triage **inconclusive**, never "0 paths".
 
 ## Why the graph is essential
-Every verdict comes from a connected-data operation in FalkorDB, never from the LLM:
+Every verdict comes from a connected-data operation in FalkorDB, never from the agent:
 
 | Graph operation | Used for |
 | :--- | :--- |
@@ -33,16 +33,21 @@ Every verdict comes from a connected-data operation in FalkorDB, never from the 
 ## Architecture
 ```mermaid
 flowchart LR
-    Browser[Web app<br/>React + TypeScript] -- REST + SSE, session cookie --> API[API<br/>FastAPI]
+    Browser[Web app<br/>React + TypeScript] -- REST + SSE, session cookie --> API[API and decision agent<br/>FastAPI]
     API -- MCP over Streamable HTTP<br/>internal token --> MCP[MCP tool server<br/>7 typed tools]
-    API -- Messages API --> Claude[Claude<br/>claude-opus-5-5]
     MCP --> Engine[Engine<br/>evidence · triage · planner · Hunter · certificates]
     API --> Engine
     Engine --> FDB[(FalkorDB 4.22.1<br/>template · sandboxes · candidates · memory)]
     Engine --> Oracle[Oracle<br/>independent BFS]
 ```
-- **Agent:** Claude chooses among seven MCP tools (`triage_alert_storm`, `find_evidence_by_workload`, `find_attack_paths_to_asset`, `plan_remediation`, `hunt_residual_paths`, `submit_remediation_execution`, `recall_incident_memory`). The schemas are strict, there is no query tool, and the agent gets no sandbox access.
-- **Guards in code:** at most 12 tool calls; the final status, plan, certificate and receipt are copied from tool results. Without an API key, or after a refusal, the **deterministic pipeline** runs the same tools and says so.
+- **Agent:** a decision agent with no AI model. It calls seven MCP tools (`triage_alert_storm`, `find_evidence_by_workload`, `find_attack_paths_to_asset`, `plan_remediation`, `hunt_residual_paths`, `submit_remediation_execution`, `recall_incident_memory`) and decides each next step from their answers:
+  - it reads memory first, and skips an attempt that already failed at the same revision;
+  - it stops on missing, stale or failed evidence (inconclusive, never "safe");
+  - it prefers a fix whose impact on legitimate traffic is fully known, and accepts unknown impact only when no such fix cuts every path, saying so in the report;
+  - it plans again once if the graph changes during the run, and acts only with a certificate.
+
+  Every decision is a written rule in [`agent.py`](backend/src/interdict/agent.py), so runs are free and repeatable. The schemas are strict, there is no query tool, and the agent gets no sandbox access.
+- **Guards in code:** at most 12 tool calls; the final status, plan, certificate and receipt are copied from tool results.
 - **Action Gateway:** the only path to a receipt. It requires the allowlisted action type, SIMULATION mode, a VALID certificate at the current revision, and an idempotency key.
 
 ## Run it
@@ -52,7 +57,6 @@ Prerequisites: Docker. For development, also [uv](https://docs.astral.sh/uv/) an
 cp .env.example .env
 # In .env, set FALKORDB_PASSWORD, plus INTERDICT_SESSION_SECRET and INTERDICT_INTERNAL_TOKEN.
 # Generate each secret with: python3 -c "import secrets; print(secrets.token_urlsafe(48))"
-# Optional: ANTHROPIC_API_KEY enables agent mode.
 docker compose up -d --build        # FalkorDB + the app on http://localhost:8000
 ```
 
@@ -107,7 +111,7 @@ Gate details are in [`solution.md`](solution.md) §17.1.
 | `backend/src/interdict_oracle/` | Independent oracle (imports nothing from the engine) |
 | `frontend/` | React + TypeScript web app |
 | `deploy/`, `Dockerfile`, `docker-compose.yml` | One image (API + MCP + web app), FalkorDB, and Caddy for TLS |
-| `solution.md` | Canonical specification; decisions D-01 to D-21 |
+| `solution.md` | Canonical specification; decisions D-01 to D-22 |
 | `docs/` | Pre-event planning notes |
 
 ## Contributing and security

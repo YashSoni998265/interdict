@@ -566,7 +566,8 @@ export interface CertificateView {
 // Investigations (POST /api/investigations, SSE /events, GET /api/investigations/{id})
 // ---------------------------------------------------------------------------------------------
 
-export type InvestigationMode = 'agent' | 'deterministic';
+/** The one run mode: the decision agent (no AI model). */
+export type InvestigationMode = 'agent';
 
 interface EventBase {
   seq: number;
@@ -600,18 +601,12 @@ export interface ToolResultEvent extends EventBase {
 export interface NarrationEvent extends EventBase {
   type: 'narration';
   text: string;
-  /** "agent-thinking" is the model's summarised reasoning, shown de-emphasised. */
-  source: 'agent' | 'deterministic' | 'agent-thinking' | (string & {});
+  /** "agent": one of the agent's decisions, in words. */
+  source: 'agent' | (string & {});
 }
 
-/** Which mode actually ran: "agent", "deterministic" or "deterministic (agent fallback)". */
-export type RanMode = 'agent' | 'deterministic' | 'deterministic (agent fallback)' | (string & {});
-
-export interface LlmUsage {
-  tool_calls?: number;
-  usage?: Record<string, number>;
-  estimated_cost_usd?: number;
-}
+/** Which mode ran: always "agent", the decision agent. */
+export type RanMode = 'agent' | (string & {});
 
 export interface InvestigationReport {
   status: string;
@@ -621,9 +616,8 @@ export interface InvestigationReport {
   plan_id: string | null;
   certificate_id: string | null;
   headline: string;
-  /** Warnings from the run, e.g. why agent mode fell back. */
+  /** Warnings from the run, e.g. a fix accepted with unknown impact on some flows. */
   notes?: string[] | string;
-  llm?: LlmUsage;
 }
 
 export interface ReportEvent extends EventBase {
@@ -759,10 +753,8 @@ export interface SystemView {
   live_mode: boolean;
   alert_count?: number;
   storm_id?: string;
-  /** Model the agent uses, when one is configured. */
-  agent_model?: string | null;
-  /** False when no Claude API key is configured: runs are deterministic only. */
-  agent_available?: boolean;
+  /** How the agent decides: written rules over tool results, no AI model. */
+  agent?: string;
   /** MCP tools the agent may call. */
   tools?: NamedEntry[];
   sandbox_operations?: NamedEntry[];

@@ -18,7 +18,7 @@ from service_helpers import (
     free_port,
 )
 
-NO_LIMITS = {bucket: (10_000, 3600) for bucket in ("session", "operation", "agent")}
+NO_LIMITS = {bucket: (10_000, 3600) for bucket in ("session", "operation")}
 
 
 @pytest.fixture
@@ -117,11 +117,9 @@ def test_plan_hunt_certificate_and_subgraph(client) -> None:
     assert {n["kind"] for n in graph["nodes"]} == {"Internet", "Pod", "Database"}
 
 
-def test_a_deterministic_investigation_streams_its_timeline(client) -> None:
+def test_an_investigation_streams_the_agents_timeline(client) -> None:
     start(client)
-    started = client.post(
-        "/api/investigations", json={"cluster_id": AUTH_CLUSTER, "mode": "deterministic"}
-    )
+    started = client.post("/api/investigations", json={"cluster_id": AUTH_CLUSTER})
     assert started.status_code == 202
     investigation_id = started.json()["investigation_id"]
     state = wait_for(client, investigation_id)
@@ -132,16 +130,18 @@ def test_a_deterministic_investigation_streams_its_timeline(client) -> None:
     tools_called = [e["tool"] for e in state["events"] if e["type"] == "tool_call"]
     assert tools_called == [
         "triage_alert_storm",
+        "recall_incident_memory",
         "find_evidence_by_workload",
         "find_attack_paths_to_asset",
-        "recall_incident_memory",
+        "plan_remediation",
+        "hunt_residual_paths",
         "plan_remediation",
         "hunt_residual_paths",
         "submit_remediation_execution",
     ]
     with client.stream("GET", f"/api/investigations/{investigation_id}/events") as stream:
         body = "".join(stream.iter_text())
-    assert body.count("\nevent: tool_result\n") == 7 and "event: done" in body
+    assert body.count("\nevent: tool_result\n") == 9 and "event: done" in body
     resumed = client.get(
         f"/api/investigations/{investigation_id}/events",
         headers={"Last-Event-ID": str(len(state["events"]) - 1)},
@@ -149,14 +149,19 @@ def test_a_deterministic_investigation_streams_its_timeline(client) -> None:
     assert resumed.count("data: ") == 1 and "event: done" in resumed
 
 
-def test_agent_mode_without_a_key_runs_the_same_tools_deterministically(client) -> None:
+def test_the_decision_agent_is_the_only_run_mode(client) -> None:
     start(client)
+    refused = client.post(
+        "/api/investigations", json={"cluster_id": DEEP_CLUSTER, "mode": "deterministic"}
+    )
+    assert refused.status_code == 422
     started = client.post(
         "/api/investigations", json={"cluster_id": DEEP_CLUSTER, "mode": "agent"}
     ).json()
-    assert started["mode"] == "deterministic" and "No Claude API key" in started["notes"][0]
+    assert started["mode"] == "agent" and started["notes"] == []
     state = wait_for(client, started["investigation_id"])
     assert state["status"] == "SIMULATED_CONTAINMENT", "the deep path is found and certified"
+    assert client.get("/api/system").json()["agent"].endswith("(no AI model)")
 
 
 def test_tc36_sandbox_operations_supersede_certificates(client) -> None:

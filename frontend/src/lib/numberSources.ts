@@ -107,12 +107,6 @@ export const METRICS = {
     category: 'MEASURED_RUNTIME',
     formula: 'time.perf_counter() around the whole round: copy, apply, rebuild and E/F/O.',
   },
-  llmToolCalls: { category: 'MEASURED_RUNTIME', formula: 'Tool calls the model made in this run (budget: at most 12).' },
-  llmTokens: { category: 'MEASURED_RUNTIME', formula: 'Tokens reported in the Claude API usage field for this run.' },
-  llmCost: {
-    category: 'MEASURED_RUNTIME',
-    formula: 'Estimated by the API from the reported tokens and list prices: an estimate, not a bill.',
-  },
   maxPlanActions: { category: 'CONSTANT', formula: 'k = 3: the planner considers plans of at most 3 actions (ITM-1).' },
   maxLateralHops: { category: 'CONSTANT', formula: 'The planner enumerates chains of at most 3 lateral hops (ITM-1).' },
   maxHuntRounds: { category: 'CONSTANT', formula: 'The Path Hunter stops after at most 5 rounds (R = 5).' },

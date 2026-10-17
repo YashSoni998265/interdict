@@ -1,4 +1,4 @@
-import { Bot, Clock, Cpu, Play, PlugZap, RotateCcw, TriangleAlert } from 'lucide-react';
+import { Clock, Cpu, Play, PlugZap, RotateCcw, TriangleAlert } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
 import { useSystem } from '@/api/queries';
@@ -23,20 +23,15 @@ function AgentLine() {
     return (
       <span className="agent-line">
         <Cpu className="agent-line__icon" aria-hidden />
-        Replay of the recorded deterministic run
+        Replay of a recorded agent run
       </span>
     );
   }
   if (!system.data) return null;
-  return system.data.agent_available ? (
-    <span className="agent-line">
-      <Bot className="agent-line__icon" aria-hidden />
-      Agent: Claude ({system.data.agent_model ?? 'model not reported'})
-    </span>
-  ) : (
+  return (
     <span className="agent-line">
       <PlugZap className="agent-line__icon" aria-hidden />
-      Deterministic mode: graph tools over MCP, no LLM
+      Decision agent: graph tools over MCP, no AI model
     </span>
   );
 }
@@ -76,12 +71,9 @@ export function InvestigationPane({
   derived: DerivedInvestigation | null;
 }) {
   const { workbench } = useServices();
-  const system = useSystem();
   const run = useRun(cluster.id);
   const revision = useSandboxState((s) => s.revision);
-  const agentAvailable = system.data?.agent_available ?? false;
-  // The agent when the API has one, otherwise the deterministic pipeline (the same MCP tools).
-  const mode: InvestigationMode = agentAvailable ? 'agent' : 'deterministic';
+  const mode: InvestigationMode = 'agent';
   const scroller = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
   const items = derived?.items ?? [];

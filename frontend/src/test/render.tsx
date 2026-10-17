@@ -2,6 +2,7 @@ import { render } from '@testing-library/react';
 import type { ReactElement } from 'react';
 
 import { MockApiClient } from '@/api/mock/client';
+import { fixtures } from '@/api/mock/fixtures';
 import { createQueryClient } from '@/api/queries';
 import { MemoryApp } from '@/App';
 import { AppProviders } from '@/app/AppProviders';
@@ -12,6 +13,14 @@ export function fastMockClient(): MockApiClient {
 }
 
 /** Render the whole app at a route, with real providers and the fixture-backed mock API. */
+/** The certificate id of a recorded run (ids change whenever the fixtures are re-recorded). */
+export async function recordedCertificateId(clusterId = 'cluster-prod-payments-db-ing-auth'): Promise<string> {
+  const hunt = (await fixtures.hunt(clusterId)) as { certificate?: { certificate_id: string } | null } | undefined;
+  const id = hunt?.certificate?.certificate_id;
+  if (!id) throw new Error(`No recorded certificate for ${clusterId}`);
+  return id;
+}
+
 export function renderApp(path: string, client = fastMockClient()) {
   const queryClient = createQueryClient();
   const result = render(

@@ -1,4 +1,4 @@
-import { ArrowRight, Brain, CircleCheck, CircleX, Cpu, FileCheck2, Sparkles, TriangleAlert } from 'lucide-react';
+import { ArrowRight, CircleCheck, CircleX, Cpu, FileCheck2, Signpost, TriangleAlert } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import type {
@@ -152,25 +152,14 @@ export function LifecycleDivider({ event, firstAt }: { event: LifecycleEvent; fi
 }
 
 export function NarrationItem({ event }: { event: NarrationEvent }) {
-  if (event.source === 'agent-thinking') {
-    return (
-      <div className="narration-item">
-        <Brain className="narration-item__icon" aria-hidden />
-        <p>
-          <span className="narration-item__label">Reasoning (summarised): </span>
-          {event.text}
-        </p>
-      </div>
-    );
-  }
   const agent = event.source === 'agent';
-  const Icon = agent ? Sparkles : Cpu;
+  const Icon = agent ? Signpost : Cpu;
   return (
     <div className="narration-item-2">
       <Icon className={cn('narration-item__icon-2', agent ? 'narration-item__icon--agent' : 'narration-item__icon--not-agent')} aria-hidden />
       <div className="narration-item__block">
         <div className="narration-item__block-2">
-          {agent ? 'Claude' : 'Engine'}
+          {agent ? 'Agent decision' : 'Engine'}
         </div>
         <p className="narration-item__text">{event.text}</p>
       </div>
@@ -185,8 +174,6 @@ export interface DisplayStatus {
 
 export function ReportCard({ report, display }: { report: InvestigationReport; display: DisplayStatus }) {
   const notes = toNotes(report.notes);
-  const usage = report.llm?.usage;
-  const tokens = usage ? Object.entries(usage).filter(([, v]) => typeof v === 'number') : [];
   return (
     <article className="report-card" aria-label="Final report">
       <div className="report-card__row">
@@ -204,34 +191,6 @@ export function ReportCard({ report, display }: { report: InvestigationReport; d
             </li>
           ))}
         </ul>
-      ) : null}
-      {report.llm ? (
-        <dl className="report-card__details">
-          {report.llm.tool_calls !== undefined ? (
-            <div className="report-card__row-2">
-              <dt>Tool calls</dt>
-              <dd className="report-card__value">
-                <Num metric="llmToolCalls" value={report.llm.tool_calls} />
-              </dd>
-            </div>
-          ) : null}
-          {tokens.map(([name, value]) => (
-            <div key={name} className="report-card-3">
-              <dt>{name.replace(/_/g, ' ')}</dt>
-              <dd className="report-card__value">
-                <Num metric="llmTokens" value={value} />
-              </dd>
-            </div>
-          ))}
-          {report.llm.estimated_cost_usd !== undefined ? (
-            <div className="report-card__row-2">
-              <dt>Estimated cost</dt>
-              <dd className="report-card__value">
-                <Num metric="llmCost" value={report.llm.estimated_cost_usd} format="usd" />
-              </dd>
-            </div>
-          ) : null}
-        </dl>
       ) : null}
       <div className="report-card__row">
         {report.certificate_id ? (

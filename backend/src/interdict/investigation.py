@@ -1,13 +1,10 @@
-"""Investigation runs over the MCP tools: the deterministic pipeline, and shared plumbing.
+"""Shared plumbing for investigation runs over the MCP tools: invokers, the timeline of tool
+calls, and the final report.
 
-Both run modes call the same seven tools through an Invoker and emit the same timeline events:
-
-    agent          Claude chooses the tools and narrates (interdict.agent)
-    deterministic  this module calls them in a fixed order, no LLM (D-14 fallback)
-
-In production the Invoker is an MCP client of the tool server; tests may call the tools
-in-process. Either way the verdicts come from the engine, never from the run mode: the final
-report's status, plan, certificate and receipt are copied from tool results.
+The agent (interdict.agent) calls the seven tools through an Invoker and records every call and
+result on the timeline. In production the Invoker is an MCP client of the tool server; tests may
+call the tools in-process. Either way the verdicts come from the engine, never from the agent:
+the final report's status, plan, certificate and receipt are copied from tool results.
 """
 
 from __future__ import annotations
@@ -190,161 +187,13 @@ def final_report(
     }
 
 
-async def run_deterministic(
-    invoker: Invoker,
-    timeline: Timeline,
-    *,
-    cluster_id: str,
-    storm_id: str,
-    investigation_id: str,
-    mode: str = "deterministic",
-) -> dict[str, Any]:
-    """The fixed tool sequence: triage, evidence, paths, memory, plan, hunt, gateway."""
-    say = timeline.narrate
-    timeline.lifecycle("TRIAGING")
-    triage = await call_tool(
-        invoker,
-        timeline,
-        "triage_alert_storm",
-        {"storm_id": storm_id},
-        "Sort the whole alert storm by whether each alert sits on a real attack path.",
-    )
-    if not triage["ok"]:
-        return _fail(timeline, mode, cluster_id, triage)
-    brief = triage["brief"]
-    cluster = next((c for c in brief["clusters"] if c["id"] == cluster_id), None)
-    if cluster is None:
-        status = "INCONCLUSIVE" if not brief["complete"] else "NOT_FOUND"
-        say(f"Cluster {cluster_id} is not in the current triage ({status}).")
-        return _finish(
-            timeline,
-            final_report(
-                mode=mode,
-                cluster_id=cluster_id,
-                storm=brief,
-                plan=None,
-                hunted=None,
-                receipt=None,
-                memory=None,
-                status=status,
-            ),
-        )
-    target, entry = cluster["target"], cluster["witness_path"][1]
-    say(
-        f"{brief['counts']['ON_ATTACK_PATH']} of {brief['total_alerts']} alerts are on an attack "
-        f"path. Investigating {cluster_id}: {target} reached from {cluster['entry_ingress'] or 'the Internet'}."
-    )
-
-    timeline.lifecycle("ANALYZING")
-    await call_tool(
-        invoker,
-        timeline,
-        "find_evidence_by_workload",
-        {"pod_id": entry},
-        f"Check the four evidence tiers of the entry workload {entry}.",
-    )
-    await call_tool(
-        invoker,
-        timeline,
-        "find_attack_paths_to_asset",
-        {"target_db_id": target, "max_lateral_hops": 3},
-        f"List every bounded attack chain that ends at {target}.",
-    )
-    recalled = await call_tool(
-        invoker,
-        timeline,
-        "recall_incident_memory",
-        {"asset_ids": [target]},
-        f"Check what this session already learned about {target}.",
-    )
-    memory = recalled["brief"] if recalled["ok"] else {"status": "UNAVAILABLE"}
-
-    timeline.lifecycle("PLANNING")
-    planned = await call_tool(
-        invoker,
-        timeline,
-        "plan_remediation",
-        {"cluster_id": cluster_id, "require_known_impact": False},
-        "Find the cheapest set of at most 3 allowlist policies that cuts every chain.",
-    )
-    if not planned["ok"]:
-        return _fail(timeline, mode, cluster_id, planned)
-    plan = planned["brief"]
-    if not plan.get("plan_id"):
-        say(f"Planning ended with {plan['status']}; no certificate is possible.")
-        return _finish(
-            timeline,
-            final_report(
-                mode=mode,
-                cluster_id=cluster_id,
-                storm=brief,
-                plan=plan,
-                hunted=None,
-                receipt=None,
-                memory=memory,
-                status=plan["status"],
-            ),
-        )
-
-    timeline.lifecycle("HUNTING")
-    hunted = await call_tool(
-        invoker,
-        timeline,
-        "hunt_residual_paths",
-        {"plan_id": plan["plan_id"]},
-        "Apply the plan to a candidate graph and hunt for surviving paths with three methods.",
-    )
-    if not hunted["ok"]:
-        return _fail(timeline, mode, cluster_id, hunted)
-    hunt = hunted["brief"]
-    receipt = None
-    if hunt.get("certificate"):
-        certificate = hunt["certificate"]
-        say(
-            f"All three methods agree: nothing reaches {', '.join(hunt['t_scope'])}. "
-            f"Certificate {certificate['certificate_id']} issued."
-        )
-        timeline.lifecycle("EXECUTING")
-        submitted = await call_tool(
-            invoker,
-            timeline,
-            "submit_remediation_execution",
-            {
-                "plan_id": certificate["certified_plan_id"],
-                "certificate_id": certificate["certificate_id"],
-                "execution_mode": "SIMULATION",
-                "idempotency_key": investigation_id,
-            },
-            "Record the verified plan through the Action Gateway (simulation only).",
-        )
-        receipt = submitted["brief"] if submitted["ok"] else None
-    else:
-        say(
-            f"No certificate: {hunt['status']}"
-            + (f" ({hunt['reason']})" if hunt.get("reason") else "")
-        )
-    return _finish(
-        timeline,
-        final_report(
-            mode=mode,
-            cluster_id=cluster_id,
-            storm=brief,
-            plan=plan,
-            hunted=hunt,
-            receipt=receipt,
-            memory=memory,
-            status=hunt["status"],
-        ),
-    )
-
-
-def _fail(timeline: Timeline, mode: str, cluster_id: str, result: dict[str, Any]) -> dict[str, Any]:
+def fail(timeline: Timeline, mode: str, cluster_id: str, result: dict[str, Any]) -> dict[str, Any]:
     error = result.get("error") or {"code": "QUERY_FAILED", "message": result.get("summary", "")}
     timeline.emit("error", code=error["code"], message=error["message"])
     status = (
         "INCONCLUSIVE" if error["code"] in ("SCOPE_INCOMPLETE", "QUERY_FAILED") else TERMINAL_ERROR
     )
-    return _finish(
+    return finish(
         timeline,
         final_report(
             mode=mode,
@@ -360,7 +209,7 @@ def _fail(timeline: Timeline, mode: str, cluster_id: str, result: dict[str, Any]
     )
 
 
-def _finish(timeline: Timeline, report: dict[str, Any]) -> dict[str, Any]:
+def finish(timeline: Timeline, report: dict[str, Any]) -> dict[str, Any]:
     timeline.emit("report", report=report)
     timeline.emit("done", status=report["status"])
     return report

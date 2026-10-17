@@ -60,7 +60,7 @@ export function VerificationPane({
   const runHunt = () => {
     if (handle) void workbench.runHunt(cluster.id, handle);
   };
-  const rerun = () => void workbench.start(cluster.id, run?.requestedMode ?? 'deterministic');
+  const rerun = () => void workbench.start(cluster.id, 'agent');
 
   const finalPlan = hunt?.plan ?? null;
   const verified = hunt?.status === 'SIMULATED_CONTAINMENT' && Boolean(hunt.certificate);
@@ -92,7 +92,7 @@ export function VerificationPane({
             title="No plan yet"
             icon={ListChecks}
             action={
-              <Button size="sm" variant="primary" onClick={() => void workbench.start(cluster.id, 'deterministic')}>
+              <Button size="sm" variant="primary" onClick={() => void workbench.start(cluster.id, 'agent')}>
                 <Play aria-hidden />
                 Run the agent
               </Button>

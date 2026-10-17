@@ -19,7 +19,7 @@ export interface RunState {
   requestedMode: InvestigationMode;
   /** The mode the API said will run (it may fall back from "agent"). */
   startMode: RanMode | null;
-  /** Notes returned when the run started, e.g. why agent mode fell back. */
+  /** Notes returned when the run started. */
   startNotes: string[];
   investigationId: string | null;
   phase: RunPhase;

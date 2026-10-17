@@ -15,17 +15,22 @@ describe('deriveInvestigation', () => {
   it('pairs tool calls with results and picks out the engine reports', async () => {
     const recording = await fixtures.investigation(AUTH);
     const derived = deriveInvestigation(recording!.events);
+    // The agent tries a fix with fully known impact, then accepts unknown impact (backend/agent.py).
     expect(derived.steps.map((s) => s.tool)).toEqual([
       'triage_alert_storm',
+      'recall_incident_memory',
       'find_evidence_by_workload',
       'find_attack_paths_to_asset',
+      'plan_remediation',
+      'hunt_residual_paths',
       'plan_remediation',
       'hunt_residual_paths',
       'submit_remediation_execution',
     ]);
     expect(derived.steps.every((s) => s.state === 'ok')).toBe(true);
     expect(derived.report?.status).toBe('SIMULATED_CONTAINMENT');
-    expect(derived.ranMode).toBe('deterministic');
+    expect(derived.ranMode).toBe('agent');
+    expect(derived.notes.some((note) => note.startsWith('Accepted unknown impact'))).toBe(true);
     expect(derived.plan?.status).toBe('PLAN_FOUND');
     expect(derived.hunt?.rounds).toHaveLength(2);
     expect(derived.done?.status).toBe('SIMULATED_CONTAINMENT');
@@ -38,7 +43,7 @@ describe('deriveInvestigation', () => {
     const derived = deriveInvestigation(shuffled);
     expect(derived.items.map((i) => i.seq)).toEqual(deriveInvestigation(events).items.map((i) => i.seq));
     expect(derived.lastSeq).toBe(events.length);
-    expect(derived.steps).toHaveLength(6);
+    expect(derived.steps).toHaveLength(9);
   });
 
   it('shows a running step until its result arrives', async () => {
@@ -48,9 +53,9 @@ describe('deriveInvestigation', () => {
     expect(derived.currentState).toBe('TRIAGING');
   });
 
-  it('marks agent narration, including summarised reasoning', () => {
+  it('marks the agent’s narration', () => {
     const derived = deriveInvestigation([
-      { seq: 1, at: '2026-10-17T10:00:00Z', type: 'narration', text: 'Thinking…', source: 'agent-thinking' },
+      { seq: 1, at: '2026-10-17T10:00:00Z', type: 'narration', text: 'Planning again.', source: 'agent' },
     ]);
     expect(derived.ranMode).toBe('agent');
   });

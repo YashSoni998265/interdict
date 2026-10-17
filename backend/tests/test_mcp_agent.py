@@ -1,38 +1,33 @@
-"""MCP tool server over real HTTP, and the Claude agent loop (issues #14-#15, §10.3-§10.6)."""
+"""MCP tool server over real HTTP, and the decision agent that drives it (D-22, §10.3-§10.6)."""
 
 from __future__ import annotations
 
 import asyncio
 import json
 import secrets
+from datetime import UTC, datetime
 
 import httpx2
 import pytest
-from fastapi.testclient import TestClient
 from mcp import Client
 from mcp.client.streamable_http import streamable_http_client
 
-from interdict import mcp_server
-from interdict.agent import AgentUnavailableError, run_agent, strict_schema
-from interdict.api import COOKIE, create_app
+from interdict import agent, mcp_server
+from interdict.agent import run_agent
 from interdict.events import Timeline
 from interdict.investigation import DirectInvoker, McpInvoker
+from interdict.sandbox_ops import apply_operation
 from interdict.session import SessionKeys
 from interdict.tools import TOOL_NAMES
 from service_helpers import (
     AUTH_CLUSTER,
+    DEEP_CLUSTER,
     STORM,
-    Block,
-    Message,
-    ScriptedClaude,
     ServerThread,
     app_settings,
     cleanup_session,
-    direct_factory,
     free_port,
-    last_result,
     tool_context,
-    tool_use,
 )
 
 
@@ -136,202 +131,168 @@ def test_the_sdk_client_sees_structured_results(mcp_http, store) -> None:
         cleanup_session(store, SessionKeys.derive(session, settings.session_secret))
 
 
-# --- the agent loop ----------------------------------------------------------------------------
+# --- the decision agent ------------------------------------------------------------------------
 
 
-def happy_script() -> list:
-    return [
-        tool_use("triage_alert_storm", {"storm_id": STORM}, "Start with the whole storm."),
-        lambda m: tool_use(
-            "plan_remediation", {"cluster_id": AUTH_CLUSTER}, "Plan the cheapest fix."
-        ),
-        lambda m: tool_use(
-            "hunt_residual_paths", {"plan_id": last_result(m)["result"]["plan_id"]}, "Verify it."
-        ),
-        lambda m: tool_use(
+def investigate(ctx, cluster_id: str = AUTH_CLUSTER, run_id: str = "inv-agent-test", invoker=None):
+    events = Timeline()
+    report = run(
+        run_agent(
+            invoker or DirectInvoker(ctx),
+            events,
+            cluster_id=cluster_id,
+            storm_id=STORM,
+            investigation_id=run_id,
+        )
+    )
+    return report, events
+
+
+def calls(events: Timeline) -> list[tuple[str, dict]]:
+    return [(e["tool"], e["input"]) for e in events.events if e["type"] == "tool_call"]
+
+
+def known_impact(events: Timeline) -> list[bool]:
+    return [i["require_known_impact"] for tool, i in calls(events) if tool == "plan_remediation"]
+
+
+def why(events: Timeline, tool: str) -> str:
+    return next(e["why"] for e in events.events if e["type"] == "tool_call" and e["tool"] == tool)
+
+
+def test_the_agent_prefers_known_impact_and_flags_the_fallback(store, template) -> None:
+    ctx = tool_context(store, app_settings(template))
+    try:
+        report, events = investigate(ctx)
+        assert [tool for tool, _ in calls(events)] == [
+            "triage_alert_storm",
+            "recall_incident_memory",
+            "find_evidence_by_workload",
+            "find_attack_paths_to_asset",
+            "plan_remediation",
+            "hunt_residual_paths",
+            "plan_remediation",
+            "hunt_residual_paths",
             "submit_remediation_execution",
-            {
-                "plan_id": last_result(m)["result"]["certificate"]["certified_plan_id"],
-                "certificate_id": last_result(m)["result"]["certificate"]["certificate_id"],
-                "execution_mode": "SIMULATION",
-                "idempotency_key": "inv-agent-test-1",
-            },
-            "Record it through the gateway.",
-        ),
-        Message(
-            [Block("text", text="Model-verified containment (simulation) for prod-payments-db.")],
-            "end_turn",
-        ),
-    ]
-
-
-def test_the_agent_drives_the_tools_and_the_engine_decides(store, template) -> None:
-    ctx = tool_context(store, app_settings(template))
-    claude = ScriptedClaude(happy_script())
-    events = Timeline()
-    try:
-        report = run(
-            run_agent(
-                DirectInvoker(ctx),
-                events,
-                claude,
-                model="claude-opus-5-5",
-                cluster_id=AUTH_CLUSTER,
-                storm_id=STORM,
-                investigation_id="inv-agent-test-1",
-            )
-        )
-        assert report["status"] == "SIMULATED_CONTAINMENT" and report["mode"] == "agent"
-        assert report["certificate_id"] and report["receipt_id"] and report["notes"] == []
-        assert report["llm"]["tool_calls"] == 4 and report["llm"]["estimated_cost_usd"] > 0
-        first = claude.requests[0]
-        assert first["model"] == "claude-opus-5-5"
-        assert first["thinking"] == {"type": "adaptive", "display": "summarized"}
-        assert first["output_config"] == {"effort": "medium"}
-        assert "tool_choice" not in first, "Opus 5.5 rejects forced tool choice"
-        assert first["system"][0]["cache_control"] == {"type": "ephemeral"}
-        assert [t["name"] for t in first["tools"]] == sorted(TOOL_NAMES)
-        assert all(
-            t["strict"] and t["input_schema"]["additionalProperties"] is False
-            for t in first["tools"]
-        )
-        whys = [e["why"] for e in events.events if e["type"] == "tool_call"]
-        assert whys[0] == "Start with the whole storm."
-    finally:
-        cleanup_session(store, ctx.keys)
-
-
-def test_containment_wording_without_a_certificate_is_flagged(store, template) -> None:
-    ctx = tool_context(store, app_settings(template))
-    claude = ScriptedClaude(
-        [
-            tool_use("triage_alert_storm", {"storm_id": STORM}),
-            Message(
-                [Block("text", text="Everything is contained, see cert-" + "a" * 32)], "end_turn"
-            ),
         ]
-    )
-    try:
-        report = run(
-            run_agent(
-                DirectInvoker(ctx),
-                Timeline(),
-                claude,
-                model="m",
-                cluster_id=AUTH_CLUSTER,
-                storm_id=STORM,
-                investigation_id="inv-x",
-            )
+        # A fix with fully known impact cuts the cluster's own chain, but not the paths the
+        # hunt adds; only then does the agent accept unknown impact, and the report says so.
+        assert known_impact(events) == [True, False]
+        assert report["status"] == "SIMULATED_CONTAINMENT" and report["mode"] == "agent"
+        assert report["certificate_id"] and report["receipt_id"]
+        assert any(note.startswith("Accepted unknown impact on") for note in report["notes"])
+        hunts = [
+            e
+            for e in events.events
+            if e["type"] == "tool_result" and e["tool"] == "hunt_residual_paths"
+        ]
+        assert report["certificate_id"] in hunts[-1]["summary"], (
+            "the certificate comes from the tool"
         )
-        assert (
-            report["status"] == "INCOMPLETE"
-            and report["headline"] != "Model-verified containment (simulation)"
-        )
-        assert any("containment without a certificate" in n for n in report["notes"])
-        assert any("Unverified references" in n for n in report["notes"])
+        assert "Nothing learned yet" in why(events, "find_evidence_by_workload")
     finally:
         cleanup_session(store, ctx.keys)
 
 
-def test_the_tool_budget_is_enforced_in_code(store, template) -> None:
+def test_memory_changes_the_second_run(store, template) -> None:
     ctx = tool_context(store, app_settings(template))
-    script = [
-        tool_use("recall_incident_memory", {"asset_ids": ["prod-payments-db"]}) for _ in range(13)
-    ]
-    script.append(Message([Block("text", text="Out of budget.")], "end_turn"))
-    events = Timeline()
     try:
-        report = run(
-            run_agent(
-                DirectInvoker(ctx),
-                events,
-                ScriptedClaude(script),
-                model="m",
-                cluster_id=AUTH_CLUSTER,
-                storm_id=STORM,
-                investigation_id="inv-y",
-            )
-        )
-        assert report["status"] == "BUDGET_EXHAUSTED" and report["llm"]["tool_calls"] == 12
-        assert sum(e["type"] == "tool_call" for e in events.events) == 12
+        investigate(ctx, run_id="inv-agent-first")
+        report, events = investigate(ctx, run_id="inv-agent-second")
+        # The known-impact attempt failed at this revision, and memory says so: skip it.
+        assert known_impact(events) == [False]
+        assert "Memory: no fully known fix" in why(events, "plan_remediation")
+        assert "still holds" in why(events, "find_evidence_by_workload"), "and verify again"
+        assert report["status"] == "SIMULATED_CONTAINMENT" and report["receipt_id"]
     finally:
         cleanup_session(store, ctx.keys)
 
 
-def test_a_refusal_hands_over_to_the_deterministic_pipeline(store, template) -> None:
-    settings = app_settings(template)
-    refusing = ScriptedClaude([Message([], "refusal")])
-    with pytest.raises(AgentUnavailableError):
-        run(
-            run_agent(
-                DirectInvoker(tool_context(store, settings)),
-                Timeline(),
-                ScriptedClaude([Message([], "refusal")]),
-                model="m",
-                cluster_id=AUTH_CLUSTER,
-                storm_id=STORM,
-                investigation_id="inv-z",
-            )
+def test_a_fix_with_fully_known_impact_needs_no_compromise(store, template) -> None:
+    ctx = tool_context(store, app_settings(template))
+    try:
+        report, events = investigate(ctx, cluster_id=DEEP_CLUSTER)
+        assert known_impact(events) == [True]
+        assert report["status"] == "SIMULATED_CONTAINMENT" and report["receipt_id"]
+        assert not any("unknown impact" in note for note in report["notes"])
+    finally:
+        cleanup_session(store, ctx.keys)
+
+
+def test_stale_evidence_stops_the_agent_before_any_plan(store, template) -> None:
+    ctx = tool_context(store, app_settings(template))
+    try:
+        ctx.ensure_sandbox()
+        expired = apply_operation(
+            ctx.store,
+            ctx.keys.sandbox,
+            "EXPIRE_EVIDENCE",
+            {"edge_ref": "ev-reach-auth-1-kube-dns-53-udp"},
+            datetime.now(UTC),
         )
-    app = create_app(
-        store,
-        settings,
-        invoker_factory=direct_factory(store, settings),
-        anthropic_client=refusing,
-        static_dir=None,
-        limits={b: (10_000, 3600) for b in ("session", "operation", "agent")},
-    )
-    with TestClient(app) as http:
-        try:
-            token = http.post("/api/sessions").json()["csrf_token"]
-            http.headers["X-CSRF-Token"] = token
-            started = http.post(
-                "/api/investigations", json={"cluster_id": AUTH_CLUSTER, "mode": "agent"}
-            ).json()
-            assert started["mode"] == "agent"
-            for _ in range(300):
-                state = http.get(f"/api/investigations/{started['investigation_id']}").json()
-                if state["status"] != "RUNNING":
-                    break
-                asyncio.run(asyncio.sleep(0.1))
-            assert state["status"] == "SIMULATED_CONTAINMENT"
-            assert state["report"]["mode"] == "deterministic (agent fallback)"
-            assert any(
-                e["type"] == "narration" and "Agent unavailable" in e["text"]
-                for e in state["events"]
+        assert expired.result.value == "APPLIED"
+        report, events = investigate(ctx)
+        assert report["status"] == "INCONCLUSIVE", "never safe, never a plan on stale evidence"
+        assert not {"plan_remediation", "hunt_residual_paths", "submit_remediation_execution"} & {
+            tool for tool, _ in calls(events)
+        }
+        assert any(
+            e["type"] == "narration" and "never treated as safe" in e["text"] for e in events.events
+        )
+    finally:
+        cleanup_session(store, ctx.keys)
+
+
+def test_a_cluster_absent_from_the_graph_is_reported_as_such(store, template) -> None:
+    ctx = tool_context(store, app_settings(template))
+    try:
+        report, events = investigate(ctx, cluster_id="cluster-not-in-the-graph")
+        assert report["status"] == "NOT_FOUND"
+        assert [tool for tool, _ in calls(events)] == ["triage_alert_storm"]
+    finally:
+        cleanup_session(store, ctx.keys)
+
+
+def test_the_tool_budget_is_enforced_in_code(store, template, monkeypatch) -> None:
+    monkeypatch.setattr(agent, "MAX_TOOL_CALLS", 3)
+    ctx = tool_context(store, app_settings(template))
+    try:
+        report, events = investigate(ctx)
+        assert len(calls(events)) == 3 and report["status"] == "INCONCLUSIVE"
+        assert report["receipt_id"] is None and "3-call budget" in report["notes"][-1]
+    finally:
+        cleanup_session(store, ctx.keys)
+
+
+class GraphMovesBeforeTheFirstHunt(DirectInvoker):
+    """Changes the sandbox once, just before the first hunt, as a concurrent visitor might."""
+
+    moved = False
+
+    async def call(self, name, arguments):
+        if name == "hunt_residual_paths" and not self.moved:
+            self.moved = True
+            apply_operation(
+                self.context.store,
+                self.context.keys.sandbox,
+                "EXPOSE_WORKLOAD",
+                {"pod_id": "batch-1"},
+                datetime.now(UTC),
             )
-        finally:
-            cookie = http.cookies.get(COOKIE)
-            if cookie:
-                cleanup_session(
-                    store, SessionKeys.derive(cookie.split(".")[0], settings.session_secret)
-                )
+        return await super().call(name, arguments)
 
 
-def test_strict_schemas_keep_only_supported_keywords() -> None:
-    schema = {
-        "type": "object",
-        "title": "Args",
-        "properties": {
-            "pod_id": {"type": "string", "pattern": "^[a-z]+$", "minLength": 1, "title": "Pod"},
-            "hops": {"type": "integer", "minimum": 0, "maximum": 3, "default": 3},
-            "ids": {
-                "anyOf": [
-                    {"type": "array", "items": {"type": "string", "maxLength": 64}, "maxItems": 10},
-                    {"type": "null"},
-                ]
-            },
-        },
-        "required": ["pod_id"],
-        "additionalProperties": False,
-    }
-    assert strict_schema(schema) == {
-        "type": "object",
-        "properties": {
-            "pod_id": {"type": "string"},
-            "hops": {"type": "integer"},
-            "ids": {"anyOf": [{"type": "array", "items": {"type": "string"}}, {"type": "null"}]},
-        },
-        "required": ["pod_id"],
-        "additionalProperties": False,
-    }
+def test_the_agent_plans_again_once_when_the_graph_moves(store, template) -> None:
+    ctx = tool_context(store, app_settings(template))
+    try:
+        ctx.ensure_sandbox()
+        report, events = investigate(ctx, invoker=GraphMovesBeforeTheFirstHunt(ctx))
+        results = [e for e in events.events if e["type"] == "tool_result"]
+        hunts = [r for r in results if r["tool"] == "hunt_residual_paths"]
+        assert not hunts[0]["ok"], "the first hunt saw the revision move"
+        assert any(
+            e["type"] == "narration" and "planning again" in e["text"] for e in events.events
+        )
+        assert len(hunts) >= 2 and report["status"] != "FAILED"
+    finally:
+        cleanup_session(store, ctx.keys)

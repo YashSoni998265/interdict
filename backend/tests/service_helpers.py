@@ -7,7 +7,6 @@ import socket
 import threading
 import time
 from contextlib import asynccontextmanager
-from dataclasses import dataclass, field
 from typing import Any
 
 import uvicorn
@@ -87,59 +86,3 @@ def cleanup_session(store, keys: SessionKeys) -> None:
             store.delete(name)
     for key in client.scan_iter(f"*{keys.key}*"):
         client.delete(key)
-
-
-# --- a scripted stand-in for the Anthropic client ---------------------------------------------
-
-
-@dataclass
-class Block:
-    type: str
-    text: str = ""
-    thinking: str = ""
-    id: str = ""
-    name: str = ""
-    input: dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class Usage:
-    input_tokens: int = 1000
-    output_tokens: int = 200
-    cache_creation_input_tokens: int = 0
-    cache_read_input_tokens: int = 0
-
-
-@dataclass
-class Message:
-    content: list[Block]
-    stop_reason: str
-    usage: Usage = field(default_factory=Usage)
-
-
-class ScriptedClaude:
-    """Plays a fixed script; each step sees the conversation so far and returns a Message."""
-
-    def __init__(self, script) -> None:
-        self.script = list(script)
-        self.requests: list[dict[str, Any]] = []
-        self.messages = self
-
-    async def create(self, **kwargs: Any) -> Message:
-        self.requests.append(kwargs)
-        step = self.script.pop(0)
-        return step(kwargs["messages"]) if callable(step) else step
-
-
-def tool_use(name: str, arguments: dict[str, Any], why: str = "") -> Message:
-    blocks = [Block("text", text=why)] if why else []
-    blocks.append(Block("tool_use", id=f"tu-{name}-{len(arguments)}", name=name, input=arguments))
-    return Message(blocks, "tool_use")
-
-
-def last_result(messages: list[dict[str, Any]]) -> dict[str, Any]:
-    """The JSON of the most recent tool result the agent received."""
-    import json
-
-    content = messages[-1]["content"][-1]["content"]
-    return json.loads(content)

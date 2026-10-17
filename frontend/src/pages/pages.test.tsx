@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { fastMockClient, renderApp } from '@/test/render';
+import { fastMockClient, recordedCertificateId, renderApp } from '@/test/render';
 
 describe('Alert storm', () => {
   it('shows the headline numbers, the funnel with every branch, the clusters and the restraint example', async () => {
@@ -32,7 +32,7 @@ describe('Alert storm', () => {
 
 describe('Certificate', () => {
   it('shows the claim, the verbatim exclusions and the methods', async () => {
-    renderApp('/certificates/cert-4c538538b3304721938d53692dd578ce');
+    renderApp(`/certificates/${await recordedCertificateId()}`);
     expect(await screen.findByRole('heading', { name: 'Model-verified containment (simulation)' })).toBeInTheDocument();
     expect(screen.getByText(/not evidence of real-world containment; enforcement depends/)).toBeInTheDocument();
     expect(screen.getByText('E · bounded enumerator')).toBeInTheDocument();
@@ -44,7 +44,7 @@ describe('Certificate', () => {
     const client = fastMockClient();
     await client.createSession();
     await client.applySandboxOperation({ op: 'EXPOSE_WORKLOAD', args: { pod_id: 'batch-1' } });
-    renderApp('/certificates/cert-4c538538b3304721938d53692dd578ce', client);
+    renderApp(`/certificates/${await recordedCertificateId()}`, client);
     expect(await screen.findByRole('heading', { name: 'Certificate no longer current' })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText(/Superseded: issued at revision 1, the sandbox is now at revision 2/)).toBeInTheDocument());
     expect(screen.getByRole('link', { name: /Re-run/ })).toBeInTheDocument();
