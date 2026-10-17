@@ -30,7 +30,6 @@ import { AttackGraph } from '@/components/graph/AttackGraph';
 import { EDGE_STYLE } from '@/components/graph/graphTheme';
 import { CountUp } from '@/components/motion/CountUp';
 import { staticMotion } from '@/components/motion/staticMotion';
-import { Num } from '@/components/Num';
 import { OutcomeBadge } from '@/components/OutcomeBadge';
 import { ImpactSentence } from '@/components/plan/PlanReport';
 import { EmptyState, ErrorState, LoadingState } from '@/components/states';
@@ -169,59 +168,29 @@ function WaitForRun({ cluster }: { cluster: ClusterView }) {
 /* Supporting content: what the steps rest on */
 
 const MATTERS: { icon: LucideIcon; title: string; body: string }[] = [
-  { icon: Globe, title: 'Exposed', body: 'The workload can be reached from the Internet through an ingress.' },
-  { icon: Bug, title: 'Exploitable', body: 'It runs an active, network-exploitable vulnerability.' },
-  { icon: Waypoints, title: 'Connected', body: 'Observed network flows lead on, hop by hop, toward a crown-jewel database.' },
-  { icon: KeyRound, title: 'Authorised', body: 'The last hop holds an IAM grant that allows access to the database.' },
+  { icon: Globe, title: 'Exposed', body: 'Reachable from the Internet through an ingress.' },
+  { icon: Bug, title: 'Exploitable', body: 'Runs an active, network-exploitable vulnerability.' },
+  { icon: Waypoints, title: 'Connected', body: 'Observed flows lead on to a crown-jewel database.' },
+  { icon: KeyRound, title: 'Authorised', body: 'The last hop holds an IAM grant to the database.' },
 ];
 
-function WhatMatters({ storm }: { storm: StormView }) {
-  const stats = storm.graph_stats;
+function WhatMatters() {
   return (
     <div className="demo-aside">
       <p className="demo-aside__title">An alert matters only if the graph shows all four</p>
-      <ol className="demo-checks">
+      <ol className="demo-conditions">
         {MATTERS.map((item) => (
-          <li key={item.title} className="demo-check">
-            <span className="demo-check__icon">
+          <li key={item.title} className="demo-condition">
+            <span className="demo-condition__icon">
               <item.icon aria-hidden />
             </span>
             <div>
-              <p className="demo-check__title">{item.title}</p>
-              <p className="demo-check__body">{item.body}</p>
+              <p className="demo-condition__title">{item.title}</p>
+              <p className="demo-condition__body">{item.body}</p>
             </div>
           </li>
         ))}
       </ol>
-      <p className="demo-aside__title">The graph behind it</p>
-      <dl className="demo-stats">
-        <div className="demo-stat">
-          <dt>workloads</dt>
-          <dd className="demo-stat__value">
-            <Num metric="graphPods" value={stats.pods} />
-          </dd>
-        </div>
-        <div className="demo-stat">
-          <dt>observed flows</dt>
-          <dd className="demo-stat__value">
-            <Num metric="graphFlows" value={stats.observed_flows} />
-          </dd>
-        </div>
-        <div className="demo-stat">
-          <dt>vulnerability findings</dt>
-          <dd className="demo-stat__value">
-            <Num metric="graphFindings" value={stats.vulnerability_findings} />
-          </dd>
-        </div>
-        {storm.attack_steps ? (
-          <div className="demo-stat">
-            <dt>attack steps</dt>
-            <dd className="demo-stat__value">
-              <Num metric="attackSteps" value={storm.attack_steps.total} />
-            </dd>
-          </div>
-        ) : null}
-      </dl>
     </div>
   );
 }
@@ -229,25 +198,12 @@ function WhatMatters({ storm }: { storm: StormView }) {
 function OtherAlerts({ storm }: { storm: StormView }) {
   const rest = storm.total_alerts - storm.counts.ON_ATTACK_PATH;
   const rows = [
-    {
-      key: 'not-actionable',
-      value: storm.counts.NOT_ACTIONABLE,
-      title: 'Not actionable',
-      body: 'The vulnerability is inactive or cannot be exploited over the network.',
-    },
-    {
-      key: 'no-path',
-      value: storm.counts.NOT_ON_ATTACK_PATH,
-      title: 'Vulnerable, but on no attack path',
-      body: 'No route from the Internet to a crown jewel runs through the workload.',
-    },
+    { key: 'not-actionable', value: storm.counts.NOT_ACTIONABLE, label: 'not actionable' },
+    { key: 'no-path', value: storm.counts.NOT_ON_ATTACK_PATH, label: 'vulnerable, but on no path' },
     {
       key: 'inconclusive',
       value: storm.counts.TRIAGE_INCONCLUSIVE,
-      title: 'Inconclusive',
-      body: storm.complete
-        ? 'None: every evidence tier was fresh and verified.'
-        : 'Evidence is stale, so these cannot be classified, and none is called safe.',
+      label: storm.complete ? 'inconclusive' : 'inconclusive: stale evidence',
     },
   ];
   return (
@@ -257,10 +213,7 @@ function OtherAlerts({ storm }: { storm: StormView }) {
         {rows.map((row) => (
           <li key={row.key} className="demo-other">
             <span className="demo-other__value">{row.value.toLocaleString('en-US')}</span>
-            <div>
-              <p className="demo-other__title">{row.title}</p>
-              <p className="demo-other__body">{row.body}</p>
-            </div>
+            <span className="demo-other__label">{row.label}</span>
           </li>
         ))}
       </ul>
@@ -276,19 +229,16 @@ function HunterChecks({ hunt }: { hunt: HuntReportView | undefined }) {
     {
       letter: 'E',
       title: 'Path search',
-      body: 'Enumerates every attack chain that survives the plan.',
       result: last ? `${last.e_chains.length} ${plural(last.e_chains.length, 'chain')} left` : null,
     },
     {
       letter: 'F',
-      title: 'Max-flow',
-      body: 'FalkorDB’s max-flow from the Internet to each crown jewel must drop to 0.',
+      title: 'Max-flow in FalkorDB',
       result: last ? scope.map((target) => `${target}: ${last.f_values[target] ?? '?'}`).join(', ') : null,
     },
     {
       letter: 'O',
       title: 'Independent search',
-      body: 'A separate breadth-first search over the exported attack steps.',
       result: last ? (reached.length > 0 ? `reaches ${reached.join(', ')}` : 'reaches nothing in scope') : null,
     },
   ];
@@ -299,20 +249,11 @@ function HunterChecks({ hunt }: { hunt: HuntReportView | undefined }) {
         {checks.map((check) => (
           <li key={check.letter} className="demo-method">
             <span className="demo-method__letter">{check.letter}</span>
-            <div>
-              <p className="demo-method__title">
-                {check.title}
-                {check.result ? <span className="demo-method__result">{check.result}</span> : null}
-              </p>
-              <p className="demo-method__body">{check.body}</p>
-            </div>
+            <span className="demo-method__title">{check.title}</span>
+            {check.result ? <span className="demo-method__result">{check.result}</span> : null}
           </li>
         ))}
       </ul>
-      <p className="demo-aside__fine">
-        Each round applies the plan to its own candidate copy of the graph, so your sandbox never changes while the
-        Hunter searches.
-      </p>
     </div>
   );
 }
@@ -328,18 +269,28 @@ function RoundsCard({ hunt }: { hunt: HuntReportView }) {
             round.residuals.length === 0 &&
             !round.o_reachable.some((target) => scope.has(target)) &&
             hunt.t_scope.every((target) => (round.f_values[target] ?? 0) === 0);
+          const paths = round.residuals
+            .map((id) => hunt.chains.find((chain) => chain.id === id)?.path)
+            .filter((path): path is string[] => Array.isArray(path));
           return (
             <li key={round.round} className={cn('demo-round', clear && 'demo-round--clear')}>
-              <span className="demo-round__badge">Round {round.round}</span>
-              <span className="demo-round__plan">
-                {round.action_ids.length} {plural(round.action_ids.length, 'change')}
-              </span>
-              <span className="demo-round__result">
-                {clear
-                  ? 'no modelled path survives'
-                  : `${round.residuals.length} ${plural(round.residuals.length, 'path')} survived`}
-              </span>
-              <span className="demo-round__time">{Math.max(1, Math.round(round.latency_ms.round))} ms</span>
+              <div className="demo-round__row">
+                <span className="demo-round__badge">Round {round.round}</span>
+                <span className="demo-round__plan">
+                  {round.action_ids.length} {plural(round.action_ids.length, 'change')}
+                </span>
+                <span className="demo-round__result">
+                  {clear
+                    ? 'no modelled path survives'
+                    : `${round.residuals.length} ${plural(round.residuals.length, 'path')} survived`}
+                </span>
+                <span className="demo-round__time">{Math.max(1, Math.round(round.latency_ms.round))} ms</span>
+              </div>
+              {paths.map((path) => (
+                <p key={path.join('>')} className="demo-round__path">
+                  {path.map((node) => nodeLabel(node)).join(' → ')}
+                </p>
+              ))}
             </li>
           );
         })}
@@ -369,10 +320,6 @@ function GatewayChecks() {
           </li>
         ))}
       </ul>
-      <p className="demo-aside__fine">
-        Not claimed: real-world containment, enforcement by the cluster’s network plugin, or protection from vectors the
-        model leaves out, such as credential theft or zero-days.
-      </p>
     </div>
   );
 }
@@ -385,7 +332,7 @@ function StepAlerts({ storm }: { storm: StormView }) {
   return (
     <StepShell
       step={1}
-      aside={<WhatMatters storm={storm} />}
+      aside={<WhatMatters />}
       title={
         <>
           {storm.total_alerts.toLocaleString('en-US')} alerts.
@@ -399,12 +346,7 @@ function StepAlerts({ storm }: { storm: StormView }) {
             Interdict checks every alert against the graph: can an attacker get from the Internet, through this workload,
             all the way to a crown-jewel database? Only alerts on such a path are worth fixing.
           </p>
-          {storm.complete ? (
-            <p>
-              Another {storm.counts.NOT_ON_ATTACK_PATH} alerts are real vulnerabilities, but no attack path runs through
-              them, so they need no fix.
-            </p>
-          ) : (
+          {storm.complete ? null : (
             <p className="demo-note">
               Evidence in your sandbox is stale, so {storm.counts.TRIAGE_INCONCLUSIVE} alerts cannot be classified. Interdict
               will not call them safe. Reset the sandbox in step 5 to restore the evidence.
@@ -433,10 +375,8 @@ function StepAlerts({ storm }: { storm: StormView }) {
           <OtherAlerts storm={storm} />
           {restraint ? (
             <div className="demo-card">
-              <p className="demo-card__kicker">Same vulnerability, different verdicts</p>
-              <p className="demo-card__text">
-                <span className="demo-mono">{restraint.cve}</span> is reported on several workloads. The graph, not the
-                CVE score, decides which one matters.
+              <p className="demo-card__kicker">
+                Same vulnerability, different verdicts: <span className="demo-mono">{restraint.cve}</span>
               </p>
               <div className="demo-verdicts">
                 {restraint.onPath.map((pod) => (
@@ -473,7 +413,6 @@ function AgentTimeline({ derived }: { derived: DerivedInvestigation | null }) {
           tool: s.tool,
           title: toolTitle(s.tool, s.call?.input),
           why: s.call?.why ?? null,
-          summary: s.result?.summary ?? null,
           ms: s.result?.latency_ms ?? null,
           state: s.state,
         }))
@@ -482,14 +421,17 @@ function AgentTimeline({ derived }: { derived: DerivedInvestigation | null }) {
           tool,
           title: toolTitle(tool, undefined),
           why: null,
-          summary: null,
           ms: null,
           state: 'idle' as const,
         }));
   return (
     <ol className="demo-timeline" aria-live="polite" aria-label="The agent’s tool calls">
       {rows.map((row, index) => (
-        <li key={row.key} className={cn('demo-timeline__item', `demo-timeline__item--${row.state}`)}>
+        <li
+          key={row.key}
+          className={cn('demo-timeline__item', `demo-timeline__item--${row.state}`)}
+          title={row.why ? `Why: ${row.why}` : undefined}
+        >
           <span className="demo-timeline__marker">
             {row.state === 'ok' ? (
               <Check aria-hidden />
@@ -501,17 +443,12 @@ function AgentTimeline({ derived }: { derived: DerivedInvestigation | null }) {
               index + 1
             )}
           </span>
-          <div className="demo-timeline__body">
-            <div className="demo-timeline__head">
-              <span className="demo-timeline__title">{row.title}</span>
-              <span className="demo-timeline__tool">
-                {row.tool}
-                {row.ms != null ? ` · ${Math.max(1, Math.round(row.ms))} ms` : ''}
-              </span>
-            </div>
-            {row.why ? <p className="demo-timeline__why">{row.why}</p> : null}
-            {row.summary ? <p className="demo-timeline__summary">{row.summary}</p> : null}
-          </div>
+          <span className="demo-timeline__title">{row.title}</span>
+          {row.why ? <span className="sr-only">Why: {row.why}</span> : null}
+          <span className="demo-timeline__tool">
+            {row.tool}
+            {row.ms != null ? ` · ${Math.max(1, Math.round(row.ms))} ms` : ''}
+          </span>
         </li>
       ))}
     </ol>
@@ -574,9 +511,9 @@ function StepAgent({ cluster }: { cluster: ClusterView }) {
       lede={
         <>
           <p>
-            It takes the attack path into <strong>{cluster.target}</strong> via <strong>{cluster.entry_ingress}</strong>{' '}
-            and calls Interdict’s graph tools over MCP, one after another. Every verdict comes from FalkorDB; the agent
-            decides what to call next and why.
+            It follows the attack path into <strong>{cluster.target}</strong> via{' '}
+            <strong>{cluster.entry_ingress}</strong>, calling Interdict’s graph tools over MCP one by one. FalkorDB gives
+            every verdict; the agent picks the next tool. Hover over a step to see why.
           </p>
           <p className="demo-note">
             {derived?.ranMode
@@ -675,21 +612,12 @@ function StepHunt({ cluster }: { cluster: ClusterView }) {
       title={widened ? 'The first fix wasn’t enough.' : 'The Path Hunter checks the fix.'}
       lede={
         <>
-          {widened ? (
-            <p>
-              The first plan cut this cluster’s own path. The Path Hunter applied it to a copy of the graph and searched
-              again, with no hop limit: {survivors.length} more {plural(survivors.length, 'path')} still reached{' '}
-              {hunt.t_scope.join(', ')}. So the plan was widened and checked again.
-            </p>
-          ) : (
-            <p>
-              The Path Hunter applied the plan to a copy of the graph and searched again, with no hop limit, using three
-              independent methods.
-            </p>
-          )}
           <p>
+            {widened
+              ? `The first plan cut this cluster’s own path. On a copy of the graph, with no hop limit, the Path Hunter still found ${survivors.length} more ${plural(survivors.length, 'path')} into ${hunt.t_scope.join(', ')}, so the plan was widened.`
+              : 'The Path Hunter applied the plan to a copy of the graph and searched again, with no hop limit.'}{' '}
             {contained
-              ? `After ${hunt.rounds.length} ${plural(hunt.rounds.length, 'round')}, path search, max-flow and an independent search agree: no modelled path survives.`
+              ? `After ${hunt.rounds.length} ${plural(hunt.rounds.length, 'round')}, all three checks agree: no modelled path survives.`
               : hunt.detail}
           </p>
         </>
@@ -727,23 +655,6 @@ function StepHunt({ cluster }: { cluster: ClusterView }) {
             ))}
           </ul>
           <RoundsCard hunt={hunt} />
-          {widened ? (
-            <div className="demo-card">
-              <p className="demo-card__kicker">Paths the first plan missed</p>
-              <ul className="demo-paths">
-                {survivors.map((path) => (
-                  <li key={path.join('>')} className="demo-paths__item">
-                    {path.map((node, i) => (
-                      <span key={`${node}-${i}`} className="demo-paths__node">
-                        {i > 0 ? <ArrowRight aria-hidden /> : null}
-                        <span className="demo-mono">{nodeLabel(node)}</span>
-                      </span>
-                    ))}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
         </div>
       }
     />
@@ -802,12 +713,8 @@ function StepAct({ cluster }: { cluster: ClusterView }) {
         <>
           <p>
             The fix is {plan.actions.length} egress {plural(plan.actions.length, 'policy', 'policies')}, one per workload:
-            each may reach only the destinations listed. It is the cheapest safe plan among every combination of up to 3
-            changes.
-          </p>
-          <p>
-            Only with a valid certificate does the agent submit it, through the Action Gateway. In this build the action is
-            a simulation: nothing outside a copy of the synthetic graph changes.
+            the cheapest safe plan within 3 changes. With a valid certificate, the agent submits it through the Action
+            Gateway; in this build, as a simulation.
           </p>
         </>
       }
@@ -833,34 +740,19 @@ function StepAct({ cluster }: { cluster: ClusterView }) {
             <ul className="demo-changes">
               {plan.actions.map((action) => (
                 <li key={action.id} className="demo-change">
-                  <div className="demo-change__head">
-                    <span className="demo-mono demo-change__pod">{action.pods.join(', ')}</span>
-                    <span className="demo-change__variant">{VARIANT[action.variant].label}</span>
-                  </div>
-                  <div className="demo-change__allow">
-                    {action.allow.length > 0 ? (
-                      <>
-                        May only reach{' '}
-                        {action.allow.map((rule, i) => (
-                          <span key={`${rule.dst}-${rule.port}-${rule.protocol}`}>
-                            {i > 0 ? ', ' : ''}
-                            <span className="demo-mono">
-                              {nodeLabel(rule.dst)}:{rule.port}/{rule.protocol}
-                            </span>
-                          </span>
-                        ))}
-                      </>
-                    ) : (
-                      'May reach nothing'
-                    )}
-                    {action.blocked.length > 0 ? ` · blocks ${action.blocked.length} ${plural(action.blocked.length, 'flow')}` : ''}
-                  </div>
+                  <span className="demo-mono demo-change__pod">{action.pods.join(', ')}</span>
+                  <span className="demo-change__variant">{VARIANT[action.variant].label}</span>
+                  <span className="demo-mono demo-change__allow">
+                    {action.allow.length > 0
+                      ? `→ ${action.allow.map((rule) => `${nodeLabel(rule.dst)}:${rule.port}/${rule.protocol}`).join(', ')}`
+                      : '→ nothing'}
+                  </span>
                 </li>
               ))}
             </ul>
           </div>
           <div className={cn('demo-card', outcome.certificateCurrent ? 'demo-card--valid' : 'demo-card--muted')}>
-            <p className="demo-card__kicker">The proof</p>
+            <p className="demo-card__kicker">The proof and the action</p>
             {certificate ? (
               <>
                 <p className="demo-proof">
@@ -868,11 +760,16 @@ function StepAct({ cluster }: { cluster: ClusterView }) {
                   {outcome.certificateCurrent ? 'Model-verified containment (simulation)' : 'Certificate no longer current'}
                 </p>
                 <p className="demo-card__text">
-                  On this snapshot of the graph, after these {plan.actions.length}{' '}
-                  {plural(plan.actions.length, 'change')}, no modelled attack chain reaches {hunt.t_scope.join(', ')}. Three
-                  independent methods agreed. This is not evidence of real-world containment.
+                  After these {plan.actions.length} {plural(plan.actions.length, 'change')}, no modelled attack chain reaches{' '}
+                  {hunt.t_scope.join(', ')} on this snapshot; three independent methods agreed. This is not evidence of
+                  real-world containment.
                 </p>
-                <p className="demo-card__meta">Valid until {formatUtc(certificate.expires_at, { seconds: false })}</p>
+                <p className="demo-card__meta">
+                  Valid until {formatUtc(certificate.expires_at, { seconds: false })}
+                  {receipt
+                    ? ` · recorded through the Action Gateway as a ${receipt.execution_mode === 'SIMULATION' ? 'simulation' : receipt.execution_mode} (${receipt.receipt_id}); no infrastructure was changed`
+                    : ''}
+                </p>
                 <Button asChild variant="link">
                   <Link to={`/certificates/${certificate.certificate_id}`}>
                     Open the certificate
@@ -884,16 +781,6 @@ function StepAct({ cluster }: { cluster: ClusterView }) {
               <p className="demo-card__text">{hunt.detail}</p>
             )}
           </div>
-          {receipt ? (
-            <div className="demo-card">
-              <p className="demo-card__kicker">The action</p>
-              <p className="demo-card__text">
-                Recorded through the Action Gateway as a{' '}
-                {receipt.execution_mode === 'SIMULATION' ? 'simulation' : receipt.execution_mode}:{' '}
-                <span className="demo-mono">{receipt.receipt_id}</span>. No infrastructure was changed.
-              </p>
-            </div>
-          ) : null}
         </div>
       }
     />
@@ -946,8 +833,8 @@ function StepBreak({ cluster, storm }: { cluster: ClusterView; storm: StormView 
           <div className="demo-card">
             <p className="demo-card__kicker">1 · Open a new attack path</p>
             <p className="demo-card__text">
-              Expose <span className="demo-mono">batch-1</span> to the Internet (it has the same DEMO-CVE-001 as auth-1) and
-              let it reach <span className="demo-mono">checkout-1</span> on port 8080: a new chain to prod-payments-db.
+              Expose <span className="demo-mono">batch-1</span> (same DEMO-CVE-001 as auth-1) and let it reach{' '}
+              <span className="demo-mono">checkout-1</span> on port 8080.
             </p>
             <div className="demo-card__actions">
               <Button
@@ -965,15 +852,15 @@ function StepBreak({ cluster, storm }: { cluster: ClusterView; storm: StormView 
             {breakIt.last?.scenario === 'open-path' ? (
               <ul className="demo-results">
                 <li>
-                  Sandbox revision <strong>{breakIt.last.revision}</strong>: {lastLabel}
+                  Revision <strong>{breakIt.last.revision}</strong> · {lastLabel}
                 </li>
                 <li>
-                  Certificate:{' '}
+                  Certificate{' '}
                   <strong>{outcome.certificateCurrent ? 'still current' : 'no longer current'}</strong>
                 </li>
                 {before !== null && client.mode !== 'mock' ? (
                   <li>
-                    Alerts on a real attack path:{' '}
+                    On a real attack path{' '}
                     <strong>
                       {before} → {current ? storm.counts.ON_ATTACK_PATH : '…'}
                     </strong>
@@ -985,7 +872,7 @@ function StepBreak({ cluster, storm }: { cluster: ClusterView; storm: StormView 
 
           <div className="demo-card">
             <p className="demo-card__kicker">2 · Run the agent on the changed graph</p>
-            <p className="demo-card__text">It plans and hunts again from scratch, and issues a new certificate if the fix still holds.</p>
+            <p className="demo-card__text">It plans and hunts again, and issues a new certificate if the fix still holds.</p>
             <div className="demo-card__actions">
               <Button
                 variant="secondary"
@@ -1002,8 +889,7 @@ function StepBreak({ cluster, storm }: { cluster: ClusterView; storm: StormView 
           <div className="demo-card">
             <p className="demo-card__kicker">3 · Make the evidence stale</p>
             <p className="demo-card__text">
-              Expire one piece of evidence. Interdict must then say it cannot be sure: verdicts that depend on it become
-              inconclusive, never “safe”.
+              Expire one piece of evidence: the verdicts that depend on it turn inconclusive, never “safe”.
             </p>
             <div className="demo-card__actions">
               <Button variant="secondary" onClick={() => void breakIt.makeStale()} disabled={!breakIt.canMakeStale || breakIt.busy}>
@@ -1014,7 +900,7 @@ function StepBreak({ cluster, storm }: { cluster: ClusterView; storm: StormView 
             {breakIt.last?.scenario === 'stale' ? (
               <ul className="demo-results">
                 <li>
-                  Sandbox revision <strong>{breakIt.last.revision}</strong>: {lastLabel}
+                  Revision <strong>{breakIt.last.revision}</strong> · {lastLabel}
                 </li>
                 {client.mode !== 'mock' && current ? (
                   <li>
@@ -1051,10 +937,6 @@ export default function DemoPage() {
   const requested = Number(params.get('step') ?? '1');
   const step = Number.isInteger(requested) ? Math.min(LAST, Math.max(1, requested)) : 1;
   const go = (next: number) => setParams({ step: String(next) });
-  // <main> is the scroll container and only the query string changes, so start each step at the top.
-  useEffect(() => {
-    document.getElementById('main')?.scrollTo({ top: 0 });
-  }, [step]);
   const s = storm.data;
   const [pinned, setPinned] = useState<ClusterView | null>(() => rememberedCluster);
   const reset = useSandboxReset();

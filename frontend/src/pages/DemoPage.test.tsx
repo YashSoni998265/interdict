@@ -20,7 +20,7 @@ describe('Guided demo', () => {
     const user = userEvent.setup();
     renderApp('/demo');
     expect(await heading()).toHaveTextContent(/1,000 alerts\.\s*Only 69 matter\./);
-    expect(screen.getByText('Same vulnerability, different verdicts')).toBeInTheDocument();
+    expect(screen.getByText(/Same vulnerability, different verdicts/)).toBeInTheDocument();
     // What an alert needs to matter, and where the other 931 went (549 + 382 + 0).
     expect(screen.getByText('An alert matters only if the graph shows all four')).toBeInTheDocument();
     expect(screen.getByText('Where the other 931 alerts went')).toBeInTheDocument();
@@ -35,8 +35,8 @@ describe('Guided demo', () => {
     await user.click(screen.getByRole('button', { name: /Next: The hunt/ }));
     expect(await heading()).toHaveTextContent('The first fix wasn’t enough.');
     // The paths the Path Hunter found beyond the first plan, from its round-0 residuals.
-    expect(screen.getByText('Paths the first plan missed')).toBeInTheDocument();
-    expect(screen.getByText('analytics-1')).toBeInTheDocument();
+    // The rounds card lists the paths the first plan missed.
+    expect(screen.getByText('Internet → analytics-1 → prod-payments-db')).toBeInTheDocument();
     // The rounds and the three checks, with the last round's results.
     expect(screen.getByText('2 paths survived')).toBeInTheDocument();
     expect(screen.getByText('no modelled path survives')).toBeInTheDocument();
