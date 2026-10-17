@@ -63,7 +63,7 @@ CI runs the same four commands in the `web` job of `.github/workflows/ci.yml`.
 ## Mock mode details
 
 - It cannot recompute. After a sandbox operation it keeps serving the revision-1 recording, and every view says it was computed at an older revision.
-- It follows the API contract: sessions, CSRF, plan handles, `{investigation_id, mode, notes}` (agent mode falls back to the recorded deterministic run with a note), one investigation at a time (`BUSY`), revisions that only increase (a reset is a revision too), certificate status recomputed on read (`SUPERSEDED` once the revision changes, `EXPIRED` after `expires_at`), and an audit log hash-chained in the browser with SHA-256 (`chain_valid`).
+- It follows the API contract: sessions, CSRF, plan handles, `{investigation_id, mode, notes}` (the mock replays the decision agent's recorded run), one investigation at a time (`BUSY`), revisions that only increase (a reset is a revision too), certificate status recomputed on read (`SUPERSEDED` once the revision changes, `EXPIRED` after `expires_at`), and an audit log hash-chained in the browser with SHA-256 (`chain_valid`).
 - Its clock starts at the recording's evaluation time (17 Oct 2026, 10:00 UTC), so recorded certificates expire on the recording's schedule rather than today's.
 - The recorded "all crown jewels at once" hunt (`NO_FEASIBLE_PLAN_WITHIN_K`, `K_EXCEEDED`) has no REST route, so it is shown only in mock mode, on the storm page.
 

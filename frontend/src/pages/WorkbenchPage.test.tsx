@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { renderApp, setViewportWidth } from '@/test/render';
+import { recordedCertificateId, renderApp, setViewportWidth } from '@/test/render';
 
 const AUTH = '/clusters/cluster-prod-payments-db-ing-auth';
 
@@ -39,13 +39,14 @@ describe('Workbench', () => {
 
     const report = await screen.findByRole('article', { name: 'Final report' }, { timeout: 10_000 });
     expect(within(report).getByText('Model-verified containment (simulation)')).toBeInTheDocument();
-    expect(within(report).getByText(/generated without the AI narrator/)).toBeInTheDocument();
+    expect(within(report).getByText(/Decision agent/)).toBeInTheDocument();
 
     // Every tool step shows why it was chosen and what it returned.
     const timeline = within(pane).getByRole('list', { name: 'Investigation timeline' });
     expect(within(timeline).getByText('Triage the alert storm')).toBeInTheDocument();
-    expect(within(timeline).getByText('Hunt for paths that survive the plan')).toBeInTheDocument();
-    expect(within(timeline).getAllByText(/Why this tool:/).length).toBe(6);
+    // Two hunts: the stricter fix first, then the fix that accepts unknown impact.
+    expect(within(timeline).getAllByText('Hunt for paths that survive the plan')).toHaveLength(2);
+    expect(within(timeline).getAllByText(/Why this tool:/).length).toBe(9);
 
     // The right pane shows the verified plan, both Hunter rounds and a current certificate.
     const verification = screen.getByRole('region', { name: 'Plan and verification' });
@@ -60,7 +61,7 @@ describe('Workbench', () => {
     await waitFor(() => expect(within(certificate).getByText('Certificate valid')).toBeInTheDocument());
     expect(within(certificate).getByRole('link', { name: /Open certificate/ })).toHaveAttribute(
       'href',
-      '/certificates/cert-4c538538b3304721938d53692dd578ce',
+      `/certificates/${await recordedCertificateId()}`,
     );
   });
 

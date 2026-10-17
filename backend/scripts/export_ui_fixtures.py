@@ -2,35 +2,40 @@
 
 Runs the engine on the default synthetic environment (seed 20261018, 1,000 alerts) in a
 throwaway sandbox and writes the exact views the API serves, so the UI is built against real
-numbers rather than invented ones. Usage (FalkorDB running):
+numbers rather than invented ones. Each investigation is the real agent's run in a fresh session,
+recorded as the event stream sends it; its hunt and certificate are written from that same run.
+Usage (FalkorDB running):
 
     uv run python scripts/export_ui_fixtures.py ../frontend/src/mocks/fixtures
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
+import secrets
 import sys
 import uuid
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+from interdict.agent import run_agent
 from interdict.config import Settings, find_dotenv, load_dotenv
 from interdict.db import connect
 from interdict.engine.attackgraph import export_steps
 from interdict.engine.hunter import hunt
 from interdict.engine.planner import plan_remediation
 from interdict.engine.sandbox import create_sandbox
-from interdict.engine.statuses import CertificateStatus
 from interdict.engine.triage import run_triage
 from interdict.events import Timeline
 from interdict.graphstore import GraphStore
+from interdict.investigation import DirectInvoker
 from interdict.seed import GENERATOR_VERSION, generate
 from interdict.seed.generator import DEFAULT_SEED
 from interdict.seed.loader import load
+from interdict.session import SessionKeys
+from interdict.tools import ToolContext
 from interdict.views import (
-    certificate_view,
-    chain_view,
     hunt_view,
     plan_report_view,
     storm_view,
@@ -63,6 +68,10 @@ def main(out: Path) -> None:
         write(out, "storm.json", storm_view(report))
 
         clusters = {c.id: c for c in report.clusters}
+        for stale in ("certificates", "hunts", "investigations"):
+            for path in (out / stale).glob("*.json"):
+                if path.name != "all-crown-jewels.json":
+                    path.unlink()
         for cluster in report.clusters:
             chains = [c for c in report.chains if c.id in set(cluster.chain_ids)]
             planned = plan_remediation(report, chains)
@@ -71,7 +80,6 @@ def main(out: Path) -> None:
                 created.append(hunted.certificate.candidate_graph_key)
             final_plan = hunted.plan.plan if hunted.plan else None
             write(out, f"plans/{cluster.id}.json", plan_report_view(planned))
-            write(out, f"hunts/{cluster.id}.json", hunt_view(hunted))
             write(
                 out,
                 f"subgraphs/{cluster.id}.json",
@@ -83,17 +91,7 @@ def main(out: Path) -> None:
                     extra_paths=tuple(tuple(p) for p in cluster_paths(cluster)),
                 ),
             )
-            if hunted.certificate:
-                write(
-                    out,
-                    f"certificates/{hunted.certificate.certificate_id}.json",
-                    certificate_view(hunted.certificate, CertificateStatus.VALID),
-                )
-            write(
-                out,
-                f"investigations/{cluster.id}.json",
-                timeline(report, cluster, chains, planned, hunted),
-            )
+            record_agent(store, template, report.storm_id, cluster.id, out)
 
         everything = hunt(store, report, report.snapshot.crown_jewels, report.chains)
         write(out, "hunts/all-crown-jewels.json", hunt_view(everything))
@@ -112,6 +110,7 @@ def main(out: Path) -> None:
                 "graph_stats": storm_view(report, alerts=False)["graph_stats"],
                 "latencies_ms": {q.template: q.latency_ms for q in report.queries},
                 "build_sha": "fixture",
+                "agent": "decision rules over tool results (no AI model)",
                 "live_mode": False,
             },
         )
@@ -128,162 +127,53 @@ def deep_pods(clusters) -> list[str]:
     return [p for c in clusters.values() if c.beyond_bound for p in c.witness_path[1:-1]]
 
 
-def timeline(report, cluster, chains, planned, hunted) -> dict:
-    """The deterministic investigation sequence for one cluster, in the stream's event schema."""
+def record_agent(
+    store: GraphStore, template: str, storm_id: str, cluster_id: str, out: Path
+) -> None:
+    """Record the agent investigating one cluster in a fresh session, and the hunt and the
+    certificate of that run, so the mock serves one consistent set of ids."""
+    keys = SessionKeys.derive(secrets.token_urlsafe(24), secrets.token_urlsafe(48))
+    ctx = ToolContext(store, keys, clock=lambda: NOW, template=template)
+    create_sandbox(store, keys.sandbox, STAMP, template=template)
     clock = iter(NOW + timedelta(milliseconds=180 * i) for i in range(1000))
     events = Timeline(clock=lambda: next(clock))
-    events.lifecycle("TRIAGING")
-    call = events.next_call_id()
-    events.emit(
-        "tool_call",
-        call_id=call,
-        tool="triage_alert_storm",
-        input={"storm_id": report.storm_id},
-        why="Sort the whole alert storm by whether each alert sits on a real attack path.",
-    )
-    storm = storm_view(report, alerts=False)
-    events.emit(
-        "tool_result",
-        call_id=call,
-        tool="triage_alert_storm",
-        ok=True,
-        summary=(
-            f"{storm['counts']['ON_ATTACK_PATH']} of {storm['total_alerts']} alerts are on an "
-            f"attack path, in {len(storm['clusters'])} clusters."
-        ),
-        latency_ms=round(sum(q["latency_ms"] for q in storm["queries"]), 1),
-        evidence_ids=[q["id"] for q in storm["queries"]],
-        data=storm,
-    )
-    events.lifecycle("ANALYZING")
-    entry = cluster.witness_path[1]
-    call = events.next_call_id()
-    events.emit(
-        "tool_call",
-        call_id=call,
-        tool="find_evidence_by_workload",
-        input={"pod_id": entry},
-        why=f"Check the four evidence tiers for the entry workload {entry}.",
-    )
-    evidence = workload_evidence_view(report.snapshot, entry)
-    events.emit(
-        "tool_result",
-        call_id=call,
-        tool="find_evidence_by_workload",
-        ok=True,
-        summary=", ".join(f"{k}: {v['status']}" for k, v in evidence["tiers"].items()),
-        latency_ms=1.0,
-        evidence_ids=[],
-        data=evidence,
-    )
-    call = events.next_call_id()
-    events.emit(
-        "tool_call",
-        call_id=call,
-        tool="find_attack_paths_to_asset",
-        input={"target_db_id": cluster.target, "max_lateral_hops": 3},
-        why=f"List every bounded attack chain that ends at {cluster.target}.",
-    )
-    to_target = [chain_view(c) for c in report.chains if c.target == cluster.target]
-    events.emit(
-        "tool_result",
-        call_id=call,
-        tool="find_attack_paths_to_asset",
-        ok=True,
-        summary=f"{len(to_target)} chains of at most 3 lateral hops reach {cluster.target}.",
-        latency_ms=1.0,
-        evidence_ids=[],
-        data={"target_db_id": cluster.target, "chains": to_target, "truncated": False},
-    )
-    events.lifecycle("PLANNING")
-    call = events.next_call_id()
-    events.emit(
-        "tool_call",
-        call_id=call,
-        tool="plan_remediation",
-        input={"cluster_id": cluster.id, "require_known_impact": False},
-        why="Find the cheapest set of at most 3 allowlist policies that cuts every chain.",
-    )
-    events.emit(
-        "tool_result",
-        call_id=call,
-        tool="plan_remediation",
-        ok=True,
-        summary=f"{planned.status.value}: {', '.join(planned.plan.action_ids) if planned.plan else 'no plan'}",
-        latency_ms=1.0,
-        evidence_ids=[],
-        data=plan_report_view(planned),
-    )
-    events.lifecycle("HUNTING")
-    call = events.next_call_id()
-    plan_id = planned.plan.id if planned.plan else None
-    events.emit(
-        "tool_call",
-        call_id=call,
-        tool="hunt_residual_paths",
-        input={"plan_id": plan_id},
-        why="Apply the plan to a candidate graph and look for any surviving path with three methods.",
-    )
-    hunted_view = hunt_view(hunted)
-    events.emit(
-        "tool_result",
-        call_id=call,
-        tool="hunt_residual_paths",
-        ok=True,
-        summary=f"{hunted.status.value} after {len(hunted.rounds)} round(s).",
-        latency_ms=round(sum(r.latency_ms["round"] for r in hunted.rounds), 1),
-        evidence_ids=[],
-        data=hunted_view,
-    )
-    status = hunted.status.value
-    if hunted.certificate:
-        events.lifecycle("EXECUTING")
-        call = events.next_call_id()
-        events.emit(
-            "tool_call",
-            call_id=call,
-            tool="submit_remediation_execution",
-            input={
-                "plan_id": hunted.certificate.plan["plan_id"],
-                "certificate_id": hunted.certificate.certificate_id,
-                "execution_mode": "SIMULATION",
-                "idempotency_key": "fixture-key",
-            },
-            why="Record the verified plan through the Action Gateway (simulation only).",
+    investigation_id = f"inv-fixture-{cluster_id}"
+    try:
+        asyncio.run(
+            run_agent(
+                DirectInvoker(ctx),
+                events,
+                cluster_id=cluster_id,
+                storm_id=storm_id,
+                investigation_id=investigation_id,
+            )
         )
-        events.emit(
-            "tool_result",
-            call_id=call,
-            tool="submit_remediation_execution",
-            ok=True,
-            summary="Simulation receipt recorded; no infrastructure was changed.",
-            latency_ms=2.0,
-            evidence_ids=[],
-            data={
-                "status": "ACCEPTED",
-                "receipt_id": "rcpt-fixture",
-                "execution_mode": "SIMULATION",
-                "note": "Simulation only: no infrastructure is changed.",
-            },
+        write(
+            out,
+            f"investigations/{cluster_id}.json",
+            {"investigation_id": investigation_id, "events": events.events},
         )
-    events.emit(
-        "report",
-        report={
-            "status": status,
-            "mode": "deterministic",
-            "cluster_id": cluster.id,
-            "t_scope": [cluster.target],
-            "plan_id": hunted.certificate.plan["plan_id"] if hunted.certificate else None,
-            "certificate_id": hunted.certificate.certificate_id if hunted.certificate else None,
-            "headline": (
-                "Model-verified containment (simulation)"
-                if hunted.certificate
-                else "No certificate: see the reason"
-            ),
-        },
-    )
-    events.emit("done", status=status)
-    return {"investigation_id": f"inv-fixture-{cluster.id}", "events": events.events}
+        hunts = [
+            e["data"]
+            for e in events.events
+            if e["type"] == "tool_result" and e["tool"] == "hunt_residual_paths" and e["ok"]
+        ]
+        if hunts:
+            final = {k: v for k, v in hunts[-1].items() if k != "plan_id"}
+            write(out, f"hunts/{cluster_id}.json", final)
+            certificate_id = (final.get("certificate") or {}).get("certificate_id")
+            if certificate_id:
+                certificate = ctx.records.get(keys.certificate(certificate_id))
+                write(out, f"certificates/{certificate_id}.json", certificate)
+    finally:
+        client = store.db.connection
+        for key in client.scan_iter(f"certificate:{keys.key}:*"):
+            store.delete("cert:" + key.split(":")[-1])
+        for name in store.names():
+            if keys.key in name:
+                store.delete(name)
+        for key in client.scan_iter(f"*{keys.key}*"):
+            client.delete(key)
 
 
 if __name__ == "__main__":

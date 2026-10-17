@@ -24,8 +24,8 @@ describe('mock investigation event stream', () => {
     const recording = await fixtures.investigation(CLUSTER);
     const client = new MockApiClient({ latencyScale: 0 });
     await client.createSession();
-    const { investigation_id, mode } = await client.startInvestigation({ cluster_id: CLUSTER, mode: 'deterministic' });
-    expect(mode).toBe('deterministic');
+    const { investigation_id, mode } = await client.startInvestigation({ cluster_id: CLUSTER, mode: 'agent' });
+    expect(mode).toBe('agent');
 
     const received: { event: InvestigationEvent; at: number }[] = [];
     const errors: unknown[] = [];
@@ -78,7 +78,7 @@ describe('mock investigation event stream', () => {
 
   it('keeps running after an unsubscribe, like a server-side run, and reports its state', async () => {
     const client = new MockApiClient({ latencyScale: 0 });
-    const { investigation_id } = await client.startInvestigation({ cluster_id: CLUSTER, mode: 'deterministic' });
+    const { investigation_id } = await client.startInvestigation({ cluster_id: CLUSTER, mode: 'agent' });
     const stop = client.streamInvestigation(investigation_id, { onEvent: () => undefined, onError: () => undefined });
     stop();
     expect((await client.getInvestigation(investigation_id)).status).toBe('RUNNING');
@@ -88,12 +88,12 @@ describe('mock investigation event stream', () => {
     expect(view.report?.certificate_id).toMatch(/^cert-/);
   });
 
-  it('notes the fallback when agent mode is requested, and refuses a second run while one is busy', async () => {
+  it('replays the agent’s recorded run, and refuses a second run while one is busy', async () => {
     const client = new MockApiClient({ latencyScale: 0 });
     const started = await client.startInvestigation({ cluster_id: CLUSTER, mode: 'agent' });
-    expect(started.mode).toBe('deterministic');
-    expect(String(started.notes)).toMatch(/no AI narrator/);
-    await expect(client.startInvestigation({ cluster_id: CLUSTER, mode: 'deterministic' })).rejects.toMatchObject({
+    expect(started.mode).toBe('agent');
+    expect(started.notes).toEqual([]);
+    await expect(client.startInvestigation({ cluster_id: CLUSTER, mode: 'agent' })).rejects.toMatchObject({
       code: 'BUSY',
       status: 409,
     });
@@ -115,7 +115,7 @@ describe('mock sandbox', () => {
   it('increments the revision and supersedes the certificates issued so far', async () => {
     vi.useFakeTimers();
     const client = new MockApiClient({ latencyScale: 0, streamGapMs: [1, 1] });
-    const { investigation_id } = await client.startInvestigation({ cluster_id: CLUSTER, mode: 'deterministic' });
+    const { investigation_id } = await client.startInvestigation({ cluster_id: CLUSTER, mode: 'agent' });
     client.streamInvestigation(investigation_id, { onEvent: () => undefined, onError: () => undefined });
     await vi.advanceTimersByTimeAsync(1_000);
     vi.useRealTimers();

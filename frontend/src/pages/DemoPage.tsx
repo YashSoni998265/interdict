@@ -40,7 +40,7 @@ import { cn } from '@/lib/cn';
 import { formatUtc, nodeLabel, plural } from '@/lib/format';
 import { defaultOverlay, deriveOverlays } from '@/lib/graphState';
 import type { DerivedInvestigation } from '@/lib/investigation';
-import { ranModeText, toolTitle, TYPICAL_RUN } from '@/lib/investigation';
+import { toolTitle, TYPICAL_RUN } from '@/lib/investigation';
 import { huntPlanHandle, mergeFlows } from '@/lib/plan';
 import { policyYaml } from '@/lib/policyYaml';
 import { describeSandboxResult, VARIANT } from '@/lib/status';
@@ -140,9 +140,9 @@ function WaitForRun({ cluster }: { cluster: ClusterView }) {
   const run = useRun(cluster.id);
   const analysis = useClusterAnalysis(cluster.id);
   useEffect(() => {
-    if (!run) void workbench.start(cluster.id, 'deterministic');
+    if (!run) void workbench.start(cluster.id, 'agent');
   }, [run, cluster.id, workbench]);
-  const retry = () => void workbench.start(cluster.id, 'deterministic');
+  const retry = () => void workbench.start(cluster.id, 'agent');
   if ((run?.phase === 'failed' || run?.phase === 'interrupted') && run.error) {
     return <ErrorState error={run.error} title="The investigation did not finish" onRetry={retry} />;
   }
@@ -499,7 +499,7 @@ const AGENT_RULES = [
   'Never writes Cypher: every query is a fixed, parameterised template',
   'At most 12 tool calls per investigation',
   'It cannot change your sandbox: sandbox operations are not tools',
-  'The final status, plan and certificate are copied from tool results',
+  'No AI model: every decision is a written rule over tool results',
 ];
 
 /** Step 2: the guard rails around the agent. */
@@ -719,8 +719,10 @@ function AgentTimeline({ derived }: { derived: DerivedInvestigation | null }) {
               index + 1
             )}
           </span>
-          <span className="demo-timeline__title">{row.title}</span>
-          {row.why ? <span className="sr-only">Why: {row.why}</span> : null}
+          <span className="demo-timeline__text">
+            <span className="demo-timeline__title">{row.title}</span>
+            {row.why ? <span className="demo-timeline__why">{row.why}</span> : null}
+          </span>
           <span className="demo-timeline__tool">
             {row.tool}
             {row.ms != null ? ` · ${Math.max(1, Math.round(row.ms))} ms` : ''}
@@ -783,6 +785,10 @@ function StepAgent({ cluster }: { cluster: ClusterView }) {
   const finished = run?.phase === 'done';
   const elapsed =
     derived?.firstAt && derived.done ? (Date.parse(derived.done.at) - Date.parse(derived.firstAt)) / 1000 : null;
+  // When the agent stops before a hunt (stale evidence, no cluster), its last decision says why.
+  const lastDecision =
+    derived?.items.reduce<string | null>((text, item) => (item.kind === 'narration' ? item.event.text : text), null) ??
+    null;
   return (
     <StepShell
       step={2}
@@ -792,13 +798,12 @@ function StepAgent({ cluster }: { cluster: ClusterView }) {
         <>
           <p>
             It follows the attack path into <strong>{cluster.target}</strong> via{' '}
-            <strong>{cluster.entry_ingress}</strong>, calling Interdict’s graph tools over MCP one by one. FalkorDB gives
-            every verdict; the agent picks the next tool. Hover over a step to see why.
+            <strong>{cluster.entry_ingress}</strong>, calling Interdict’s graph tools over MCP. After each answer it
+            decides the next step, shown under each tool; FalkorDB gives every verdict.
           </p>
           <p className="demo-note">
-            {derived?.ranMode
-              ? ranModeText(derived.ranMode)
-              : 'Deterministic mode: no LLM and no API key; the same tools, in a fixed order.'}
+            No AI model and no API key: every decision is a written rule over the graph’s answers, so runs are free
+            and repeatable.
           </p>
         </>
       }
@@ -806,7 +811,7 @@ function StepAgent({ cluster }: { cluster: ClusterView }) {
         <Button
           variant="primary"
           size="lg"
-          onClick={() => void workbench.start(cluster.id, 'deterministic')}
+          onClick={() => void workbench.start(cluster.id, 'agent')}
           disabled={running}
         >
           {running ? (
@@ -828,12 +833,16 @@ function StepAgent({ cluster }: { cluster: ClusterView }) {
               <OutcomeBadge hunt={analysis.hunt} />
               {elapsed !== null ? <span className="demo-agent__time">Finished in {elapsed.toFixed(1)} s</span> : null}
             </div>
+          ) : finished && derived?.report ? (
+            <p className="demo-agent__stop">
+              <strong>{derived.report.headline}.</strong> {lastDecision}
+            </p>
           ) : null}
           {run?.phase === 'failed' && run.error ? (
             <ErrorState
               error={run.error}
               title="The investigation could not start"
-              onRetry={() => void workbench.start(cluster.id, 'deterministic')}
+              onRetry={() => void workbench.start(cluster.id, 'agent')}
             />
           ) : null}
         </div>
@@ -1160,7 +1169,7 @@ function StepBreak({ cluster, storm }: { cluster: ClusterView; storm: StormView 
             <div className="demo-card__actions">
               <Button
                 variant="secondary"
-                onClick={() => void workbench.start(cluster.id, 'deterministic')}
+                onClick={() => void workbench.start(cluster.id, 'agent')}
                 disabled={!changed || running}
               >
                 {running ? <Loader2 className="demo-spin" aria-hidden /> : <Play aria-hidden />}

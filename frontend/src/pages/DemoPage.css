@@ -316,6 +316,8 @@
 
 .demo-timeline {
   display: grid;
+  /* One column that never grows past the card: long decision lines end in an ellipsis. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.125rem;
   border-radius: var(--radius-card);
   background-color: rgb(var(--surface));
@@ -375,15 +377,31 @@
   color: rgb(var(--red-text));
 }
 
-.demo-timeline__title {
+.demo-timeline__text {
+  display: flex;
   min-width: 0;
   flex: 1 1 0%;
+  flex-direction: column;
+}
+
+.demo-timeline__title,
+.demo-timeline__why {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.demo-timeline__title {
   font-size: 0.9375rem;
   font-weight: 600;
   color: rgb(var(--fg));
+}
+
+/* The agent's decision for this step (the full text is in the row's tooltip). */
+.demo-timeline__why {
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: rgb(var(--fg-muted));
 }
 
 .demo-timeline__tool {
@@ -391,6 +409,20 @@
   font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.75rem;
   color: rgb(var(--fg-subtle));
+}
+
+/* Why the agent stopped, when it stopped before a hunt. */
+.demo-agent__stop {
+  border-left: 3px solid rgb(var(--orange-text) / 0.6);
+  padding-left: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: rgb(var(--fg-muted));
+}
+
+.demo-agent__stop strong {
+  font-weight: 600;
+  color: rgb(var(--fg));
 }
 
 .demo-agent__outcome {
@@ -1222,7 +1254,8 @@
    Level 1 sets the same content tighter; level 2 tighter still, without two summaries whose facts
    are stated next to them (the severity counts, and the fix's impact sentence); level 3, the last
    resort, keeps only the names of the four conditions, drops the severity lead (its numbers are the
-   chart's first row) and sets rules and card text smaller. The navigation is outside the step, so
+   chart's first row) and step 2's small graph, and sets rules, card text and the agent's steps
+   smaller. The navigation is outside the step, so
    it never moves. */
 @media (min-width: 1024px) {
   .demo-stage[data-fit~='1'] .demo-step__title {
@@ -1290,8 +1323,30 @@
     gap: 0.25rem;
   }
 
+  .demo-stage[data-fit~='2'] .demo-timeline__item {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+
   .demo-stage[data-fit~='2'] :is(.demo-severity__legend, .demo-impact) {
     display: none;
+  }
+
+  /* Step 2 keeps the agent's decisions to the last: its small graph goes first. */
+  .demo-stage[data-fit~='3'] .demo-agent > .demo-graph {
+    display: none;
+  }
+
+  .demo-stage[data-fit~='3'] .demo-timeline {
+    gap: 0;
+  }
+
+  .demo-stage[data-fit~='3'] .demo-timeline__title {
+    font-size: 0.875rem;
+  }
+
+  .demo-stage[data-fit~='3'] .demo-timeline__why {
+    font-size: 0.75rem;
   }
 
   .demo-stage[data-fit~='3'] :is(.demo-condition__body, .demo-severity__lead) {

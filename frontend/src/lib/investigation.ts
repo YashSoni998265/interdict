@@ -46,7 +46,7 @@ export interface DerivedInvestigation {
   report: InvestigationReport | null;
   done: DoneEvent | null;
   errors: ErrorEvent[];
-  /** Which mode actually ran: from the report, or from agent narration while running. */
+  /** Which mode ran: from the report, or from the agent's narration while running. */
   ranMode: RanMode | null;
   /** Warnings attached to the final report. */
   notes: string[];
@@ -111,7 +111,7 @@ export function deriveInvestigation(input: readonly InvestigationEvent[]): Deriv
         break;
       }
       case 'narration':
-        if (event.source === 'agent' || event.source === 'agent-thinking') agentNarration = true;
+        if (event.source === 'agent') agentNarration = true;
         items.push({ kind: 'narration', seq: event.seq, event });
         break;
       case 'report':
@@ -193,7 +193,7 @@ export function toolTitle(tool: string, input: Record<string, unknown> | undefin
     case 'find_attack_paths_to_asset':
       return `List attack chains to ${arg('target_db_id') ?? 'the crown jewel'}`;
     case 'plan_remediation':
-      return 'Plan the cheapest safe fix';
+      return input?.require_known_impact === true ? 'Plan a fix with fully known impact' : 'Plan the cheapest safe fix';
     case 'hunt_residual_paths':
       return 'Hunt for paths that survive the plan';
     case 'submit_remediation_execution':
@@ -212,6 +212,7 @@ export function toolTitle(tool: string, input: Record<string, unknown> | undefin
 /** The tool sequence a typical run uses (§10.5), shown before the first run. */
 export const TYPICAL_RUN = [
   'triage_alert_storm',
+  'recall_incident_memory',
   'find_evidence_by_workload',
   'find_attack_paths_to_asset',
   'plan_remediation',
@@ -237,11 +238,9 @@ export function railStates(seen: readonly string[]): string[] {
   return result;
 }
 
-/** Which mode actually ran, in words (the report or the start response says). */
+/** Which mode ran, in words (the report or the start response says). */
 export function ranModeText(mode: string | null | undefined): string {
   if (!mode) return 'Not run yet';
-  if (mode === 'agent') return 'Agent: Claude chose the tools and narrated';
-  if (mode === 'deterministic') return 'Deterministic: the same tool sequence, generated without the AI narrator';
-  if (mode.startsWith('deterministic')) return 'Deterministic (agent fallback): generated without the AI narrator';
+  if (mode === 'agent') return 'Decision agent: each step decided by written rules from the graph’s answers, no AI model';
   return mode;
 }

@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { renderApp, setViewportWidth } from '@/test/render';
+import { recordedCertificateId, renderApp, setViewportWidth } from '@/test/render';
 
 const heading = () => screen.findByRole('heading', { level: 1 });
 
@@ -32,8 +32,11 @@ describe('Guided demo', () => {
     expect(await heading()).toHaveTextContent('The agent investigates.');
     await runAgent(user);
     const timeline = screen.getByRole('list', { name: 'The agent’s tool calls' });
-    expect(within(timeline).getByText('Hunt for paths that survive the plan')).toBeInTheDocument();
-    expect(screen.getByText(/generated without the AI narrator/)).toBeInTheDocument();
+    expect(within(timeline).getAllByText('Hunt for paths that survive the plan')).toHaveLength(2);
+    expect(screen.getByText(/No AI model and no API key/)).toBeInTheDocument();
+    // Each step shows the agent's decision: here, accepting unknown impact after a stricter try.
+    expect(within(timeline).getByText('Plan a fix with fully known impact')).toBeInTheDocument();
+    expect(within(timeline).getByText(/Accept unknown impact, and flag it/)).toBeInTheDocument();
     expect(screen.getByText('What the agent can and cannot do')).toBeInTheDocument();
     expect(screen.getByText('At most 12 tool calls per investigation')).toBeInTheDocument();
 
@@ -54,7 +57,7 @@ describe('Guided demo', () => {
     expect(screen.getByText(/This is not evidence of real-world containment/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Open the certificate/ })).toHaveAttribute(
       'href',
-      '/certificates/cert-4c538538b3304721938d53692dd578ce',
+      `/certificates/${await recordedCertificateId()}`,
     );
     expect(screen.getByRole('button', { name: /Download the policies/ })).toBeInTheDocument();
     expect(screen.getByText('A VALID certificate at the current sandbox revision')).toBeInTheDocument();

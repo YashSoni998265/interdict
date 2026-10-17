@@ -34,7 +34,7 @@ export const RECORDED_AT = '2026-10-17T10:00:00Z';
 export const ALL_CROWN_JEWELS = 'all-crown-jewels';
 
 const ID_PATTERN = /^[a-z0-9-]{1,64}$/;
-/** The MCP tools the recorded runs call, in order (fixtures/investigations). */
+/** The seven MCP tools the agent may call (tools.TOOL_NAMES). */
 const RECORDED_TOOLS = [
   'triage_alert_storm',
   'find_evidence_by_workload',
@@ -42,6 +42,7 @@ const RECORDED_TOOLS = [
   'plan_remediation',
   'hunt_residual_paths',
   'submit_remediation_execution',
+  'recall_incident_memory',
 ] as const;
 const ZERO_HASH = `sha256:${'0'.repeat(64)}`;
 const MAX_OPERATIONS = 20;
@@ -235,16 +236,7 @@ export class MockApiClient implements ApiClient {
       recording: recording.investigation_id,
     });
     this.scheduleNext(id, run);
-    return {
-      investigation_id: id,
-      mode: 'deterministic',
-      notes:
-        request.mode === 'agent'
-          ? [
-              'Mock API: agent mode is not available offline, so this replays the recorded deterministic run (no AI narrator).',
-            ]
-          : [],
-    };
+    return { investigation_id: id, mode: 'agent', notes: [] };
   }
 
   streamInvestigation(
@@ -291,7 +283,7 @@ export class MockApiClient implements ApiClient {
       investigation_id: investigationId,
       status: done?.type === 'done' ? done.status : 'RUNNING',
       cluster_id: run.clusterId,
-      mode: report?.type === 'report' ? report.report.mode : 'deterministic',
+      mode: report?.type === 'report' ? report.report.mode : 'agent',
       events: [...run.emitted],
       report: report?.type === 'report' ? report.report : null,
     };
@@ -366,8 +358,6 @@ export class MockApiClient implements ApiClient {
       ...system,
       alert_count: storm.total_alerts,
       storm_id: storm.storm_id,
-      agent_model: null,
-      agent_available: false,
       tools: [...RECORDED_TOOLS],
       sandbox_operations: ['EXPOSE_WORKLOAD', 'ADD_LATERAL_REACH', 'EXPIRE_EVIDENCE'],
     };

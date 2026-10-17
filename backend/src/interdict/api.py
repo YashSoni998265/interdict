@@ -34,7 +34,7 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from interdict import tools
-from interdict.agent import AgentUnavailableError, run_agent
+from interdict.agent import run_agent
 from interdict.audit import AuditLog
 from interdict.config import AppSettings, Settings, find_dotenv, load_dotenv
 from interdict.db import QueryFailedError, connect, run
@@ -43,7 +43,7 @@ from interdict.engine.sandbox import read_revision, reset_sandbox
 from interdict.events import Timeline
 from interdict.gateway import certificate_status
 from interdict.graphstore import GraphStore
-from interdict.investigation import Invoker, McpInvoker, run_deterministic
+from interdict.investigation import Invoker, McpInvoker
 from interdict.sandbox_ops import MAX_OPERATIONS, OPERATIONS, apply_operation
 from interdict.session import Records, SessionKeys
 from interdict.views import storm_view, subgraph_view
@@ -58,9 +58,7 @@ ID = r"^[a-z0-9-]{1,64}$"
 LIMITS = {  # (count, window seconds) per client IP, §10.10 [TARGET values]
     "session": (10, 3600),
     "operation": (60, 3600),
-    "agent": (5, 3600),
 }
-LLM_DAILY_BUDGET_USD = float(os.environ.get("LLM_DAILY_BUDGET_USD", "10"))
 STATIC_DIR = Path(
     os.environ.get(
         "INTERDICT_STATIC_DIR", Path(__file__).resolve().parents[3] / "frontend" / "dist"
@@ -88,7 +86,7 @@ class HuntRequest(Strict):
 
 class InvestigationRequest(Strict):
     cluster_id: Annotated[str, Field(pattern=ID)]
-    mode: Literal["agent", "deterministic"] = "deterministic"
+    mode: Literal["agent"] = "agent"
 
 
 class OperationRequest(Strict):
@@ -113,12 +111,10 @@ class State:
         store: GraphStore,
         settings: AppSettings,
         invoker_factory: InvokerFactory,
-        anthropic_client: Any | None,
     ) -> None:
         self.store = store
         self.settings = settings
         self.invoker_factory = invoker_factory
-        self.anthropic = anthropic_client
         self.redis = store.db.connection
         self.running: dict[str, asyncio.Task] = {}
         self.limit = asyncio.Semaphore(4)
@@ -133,14 +129,13 @@ def create_app(
     settings: AppSettings,
     *,
     invoker_factory: InvokerFactory | None = None,
-    anthropic_client: Any | None = None,
     static_dir: Path | None = STATIC_DIR,
     limits: dict[str, tuple[int, int]] | None = None,
 ) -> FastAPI:
     def mcp_invoker(session_id: str) -> AbstractAsyncContextManager[Invoker]:
         return McpInvoker.connect(settings.mcp_url, settings.internal_token, session_id)
 
-    state = State(store, settings, invoker_factory or mcp_invoker, anthropic_client)
+    state = State(store, settings, invoker_factory or mcp_invoker)
     app = FastAPI(
         title="Interdict API",
         version="0.1.0",
@@ -342,33 +337,7 @@ def create_app(
             raise HTTPException(
                 409, {"code": "BUSY", "message": "an investigation is already running"}
             )
-        mode = body.mode
-        notes = []
-        if mode == "agent":
-            if state.anthropic is None:
-                mode, notes = (
-                    "deterministic",
-                    [
-                        "No Claude API key is configured; the deterministic pipeline runs the same tools."
-                    ],
-                )
-            elif not rate_limit(request, "agent"):
-                mode, notes = (
-                    "deterministic",
-                    [
-                        "Live agent runs are rate-limited; the deterministic pipeline runs the same tools."
-                    ],
-                )
-            elif (
-                float(state.redis.get(f"llm:spend:{datetime.now(UTC):%Y-%m-%d}") or 0)
-                >= LLM_DAILY_BUDGET_USD
-            ):
-                mode, notes = (
-                    "deterministic",
-                    [
-                        "Today's LLM budget is spent; the deterministic pipeline runs the same tools."
-                    ],
-                )
+        mode, notes = body.mode, []
         investigation_id = f"inv-{uuid.uuid4().hex[:16]}"
         sid = await asyncio.to_thread(storm_id, session)
         session.records.put(
@@ -464,7 +433,7 @@ def create_app(
     def get_audit(session: Session, after: int = 0) -> dict[str, Any]:
         return {"events": session.audit.page(after), "chain_valid": session.audit.verify()}
 
-    # --- sandbox operations (never exposed to the LLM) -------------------------------------
+    # --- sandbox operations (never exposed to the agent) -----------------------------------
 
     @app.post("/api/sandbox/operations")
     def post_operation(
@@ -544,8 +513,7 @@ def create_app(
             "alert_count": alerts,
             "storm_id": storm,
             "dataset": "synthetic (Online Boutique-shaped, DEMO-CVE identifiers, RFC 5737 addresses)",
-            "agent_model": settings.llm_model if state.anthropic else None,
-            "agent_available": state.anthropic is not None,
+            "agent": "decision rules over tool results (no AI model)",
             "live_mode": False,
             "tools": list(tools.TOOL_NAMES),
             "sandbox_operations": list(OPERATIONS),
@@ -565,7 +533,6 @@ def create_app(
             checks["falkordb"] = checks.get("falkordb", False)
             checks["template"] = False
         checks["mcp"] = _reachable(settings.mcp_url)
-        checks["agent_key"] = state.anthropic is not None  # optional: the fallback needs none
         ready = checks["falkordb"] and checks["template"] and checks["mcp"]
         return JSONResponse({"ready": ready, "checks": checks}, status_code=200 if ready else 503)
 
@@ -618,41 +585,13 @@ async def _investigate(
     async with state.limit:
         try:
             async with state.invoker_factory(session.session_id) as invoker:
-                report = None
-                if mode == "agent":
-                    try:
-                        report = await run_agent(
-                            invoker,
-                            timeline,
-                            state.anthropic,
-                            model=state.settings.llm_model,
-                            cluster_id=cluster_id,
-                            storm_id=sid,
-                            investigation_id=investigation_id,
-                        )
-                        cost = (report.get("llm") or {}).get("estimated_cost_usd", 0)
-                        day = f"llm:spend:{datetime.now(UTC):%Y-%m-%d}"
-                        state.redis.incrbyfloat(day, cost)
-                        state.redis.expire(day, 2 * 24 * 3600)
-                    except AgentUnavailableError as exc:
-                        timeline.narrate(
-                            f"Agent unavailable ({exc}); running the deterministic pipeline with the same tools."
-                        )
-                        session.audit.append(
-                            "LLM_REFUSAL", trace_id=investigation_id, detail=str(exc)
-                        )
-                        report = None
-                if report is None:
-                    report = await run_deterministic(
-                        invoker,
-                        timeline,
-                        cluster_id=cluster_id,
-                        storm_id=sid,
-                        investigation_id=investigation_id,
-                        mode="deterministic"
-                        if mode == "deterministic"
-                        else "deterministic (agent fallback)",
-                    )
+                report = await run_agent(
+                    invoker,
+                    timeline,
+                    cluster_id=cluster_id,
+                    storm_id=sid,
+                    investigation_id=investigation_id,
+                )
                 status = report["status"]
         except Exception as exc:
             log.exception("investigation %s failed", investigation_id)
@@ -677,12 +616,7 @@ def _default_app() -> FastAPI:  # pragma: no cover - process entry point
     load_dotenv(find_dotenv())
     settings = AppSettings.from_env()
     store = GraphStore(connect(Settings.from_env()))
-    client = None
-    if os.environ.get("ANTHROPIC_API_KEY"):
-        import anthropic
-
-        client = anthropic.AsyncAnthropic(timeout=60.0, max_retries=2)
-    return create_app(store, settings, anthropic_client=client)
+    return create_app(store, settings)
 
 
 def __getattr__(name: str) -> Any:  # lazily build `app` for `uvicorn interdict.api:app`
