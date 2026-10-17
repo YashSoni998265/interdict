@@ -348,6 +348,10 @@
   color: rgb(225 29 72);
 }
 
+.storm-headline__tile--yellow .storm-headline__value {
+  color: rgb(161 98 7);
+}
+
 .storm-headline__label {
   margin-top: 0.5rem;
   font-size: 0.875rem;

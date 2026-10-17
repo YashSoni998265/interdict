@@ -16,7 +16,7 @@ import {
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
-import { useStorm, useSubgraph } from '@/api/queries';
+import { useSandboxReset, useStorm, useSubgraph } from '@/api/queries';
 import type { ClusterView, HuntReportView, StormView } from '@/api/types';
 import { useBreakIt } from '@/app/breakIt';
 import { useClusterAnalysis, useHuntOutcome } from '@/app/hooks';
@@ -44,6 +44,12 @@ import './DemoPage.css';
 
 const STEPS = ['The alerts', 'The agent', 'The hunt', 'The action', 'Break it'] as const;
 const LAST = STEPS.length;
+
+/**
+ * The cluster the demo follows, kept for the page session: stale evidence empties the storm's
+ * clusters, and the story (with its reset) must survive leaving the demo and coming back.
+ */
+let rememberedCluster: ClusterView | null = null;
 
 /** The cluster the demo follows: the one holding the restraint example's on-path workload. */
 function demoCluster(storm: StormView): ClusterView | undefined {
@@ -148,7 +154,7 @@ function StepAlerts({ storm }: { storm: StormView }) {
         <>
           {storm.total_alerts.toLocaleString('en-US')} alerts.
           <br />
-          Only {onPath} matter.
+          {storm.complete ? `Only ${onPath} matter.` : 'The triage is inconclusive.'}
         </>
       }
       lede={
@@ -157,10 +163,17 @@ function StepAlerts({ storm }: { storm: StormView }) {
             Interdict checks every alert against the graph: can an attacker get from the Internet, through this workload,
             all the way to a crown-jewel database? Only alerts on such a path are worth fixing.
           </p>
-          <p>
-            Another {storm.counts.NOT_ON_ATTACK_PATH} alerts are real vulnerabilities, but no attack path runs through them,
-            so they need no fix.
-          </p>
+          {storm.complete ? (
+            <p>
+              Another {storm.counts.NOT_ON_ATTACK_PATH} alerts are real vulnerabilities, but no attack path runs through
+              them, so they need no fix.
+            </p>
+          ) : (
+            <p className="demo-note">
+              Evidence in your sandbox is stale, so {storm.counts.TRIAGE_INCONCLUSIVE} alerts cannot be classified. Interdict
+              will not call them safe. Reset the sandbox in step 5 to restore the evidence.
+            </p>
+          )}
         </>
       }
       visual={
@@ -797,7 +810,19 @@ export default function DemoPage() {
   const step = Number.isInteger(requested) ? Math.min(LAST, Math.max(1, requested)) : 1;
   const go = (next: number) => setParams({ step: String(next) });
   const s = storm.data;
-  const cluster = s ? demoCluster(s) : undefined;
+  const [pinned, setPinned] = useState<ClusterView | null>(() => rememberedCluster);
+  const reset = useSandboxReset();
+  // Keep following the same cluster: stale evidence makes the triage inconclusive and empties the
+  // storm's clusters, but the demo must still show what happened to it (and offer a reset).
+  useEffect(() => {
+    if (!s) return;
+    const next = pinned ? (s.clusters.find((c) => c.id === pinned.id) ?? pinned) : (demoCluster(s) ?? null);
+    if (next !== pinned) {
+      rememberedCluster = next;
+      setPinned(next);
+    }
+  }, [s, pinned]);
+  const cluster = pinned ?? (s ? demoCluster(s) : undefined);
 
   let body: ReactNode;
   if (storm.isPending) {
@@ -805,7 +830,22 @@ export default function DemoPage() {
   } else if (storm.error) {
     body = <ErrorState error={storm.error} title="The storm report could not be loaded" onRetry={() => void storm.refetch()} />;
   } else if (!s || !cluster) {
-    body = <EmptyState title="No attack path reaches a crown jewel">There is nothing to fix in this storm.</EmptyState>;
+    body =
+      s && !s.complete ? (
+        <EmptyState
+          title="Not enough fresh evidence"
+          action={
+            <Button variant="primary" onClick={() => reset.mutate()} disabled={reset.isPending}>
+              <RotateCcw aria-hidden />
+              Reset my sandbox
+            </Button>
+          }
+        >
+          The triage is inconclusive, so no attack path can be shown. Reset the sandbox to restore the evidence.
+        </EmptyState>
+      ) : (
+        <EmptyState title="No attack path reaches a crown jewel">There is nothing to fix in this storm.</EmptyState>
+      );
   } else {
     body = (
       <div key={step} className="demo-stage">

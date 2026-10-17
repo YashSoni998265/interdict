@@ -101,7 +101,12 @@ export default function LandingPage() {
           </Button>
         </div>
         <div className="landing-hero__field">
-          {s ? (
+          {s && !s.complete ? (
+            <p className="landing-hero__inconclusive">
+              Evidence in your sandbox is stale, so the triage is inconclusive: {s.counts.TRIAGE_INCONCLUSIVE} alerts cannot
+              be classified, and none is called safe. Reset the sandbox to see the storm again.
+            </p>
+          ) : s ? (
             <StormField total={s.total_alerts} onPath={s.counts.ON_ATTACK_PATH} clusters={clusters} />
           ) : (
             <div className="landing-hero__field-placeholder" aria-hidden />

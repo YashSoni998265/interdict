@@ -222,15 +222,31 @@ export default function StormPage() {
                   <span className="storm-headline__label">alerts in the storm</span>
                 </div>
                 <ArrowRight className="storm-headline__arrow" aria-hidden />
-                <div className="storm-headline__tile storm-headline__tile--red">
-                  <CountUp value={data.counts.ON_ATTACK_PATH} from={data.total_alerts} className="storm-headline__value" />
-                  <span className="storm-headline__label">on a real attack path</span>
-                </div>
-                <ArrowRight className="storm-headline__arrow" aria-hidden />
-                <div className="storm-headline__tile">
-                  <CountUp value={data.clusters.length} className="storm-headline__value" />
-                  <span className="storm-headline__label">places to fix</span>
-                </div>
+                {data.complete ? (
+                  <>
+                    <div className="storm-headline__tile storm-headline__tile--red">
+                      <CountUp value={data.counts.ON_ATTACK_PATH} from={data.total_alerts} className="storm-headline__value" />
+                      <span className="storm-headline__label">on a real attack path</span>
+                    </div>
+                    <ArrowRight className="storm-headline__arrow" aria-hidden />
+                    <div className="storm-headline__tile">
+                      <CountUp value={data.clusters.length} className="storm-headline__value" />
+                      <span className="storm-headline__label">places to fix</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="storm-headline__tile storm-headline__tile--yellow">
+                      <CountUp value={data.counts.TRIAGE_INCONCLUSIVE} className="storm-headline__value" />
+                      <span className="storm-headline__label">inconclusive: evidence is stale</span>
+                    </div>
+                    <ArrowRight className="storm-headline__arrow" aria-hidden />
+                    <div className="storm-headline__tile">
+                      <span className="storm-headline__value">?</span>
+                      <span className="storm-headline__label">places to fix: unknown until the evidence is fresh</span>
+                    </div>
+                  </>
+                )}
               </div>
               <Disclosure summary="How we got here: every step of the triage, with its graph proof" className="storm-page__how">
                 <Funnel storm={data} />
@@ -261,7 +277,13 @@ export default function StormPage() {
                   <ClusterCard key={cluster.id} cluster={cluster} />
                 ))}
               </div>
-              {data.clusters.length === 0 ? (
+              {data.clusters.length === 0 && !data.complete ? (
+                <EmptyState title="Not enough fresh evidence">
+                  Clusters cannot be computed while evidence is stale, and Interdict does not call the alerts safe. Reset the
+                  sandbox to restore the evidence.
+                </EmptyState>
+              ) : null}
+              {data.clusters.length === 0 && data.complete ? (
                 <EmptyState title="No chains reach a crown jewel">
                   Reachability over the ATTACK_STEP edges found no Internet-to-crown-jewel path, so there is nothing to
                   fix.
