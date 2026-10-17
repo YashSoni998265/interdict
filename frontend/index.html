@@ -1,10 +1,12 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="dark" />
-    <meta name="theme-color" content="#09090b" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f5f5f7" />
+    <!-- Applies the saved colour theme before the first paint (an external file: the CSP allows only same-origin scripts). -->
+    <script src="/theme.js"></script>
     <meta
       name="description"
       content="Interdict triages a synthetic alert storm on a FalkorDB graph, plans the cheapest safe egress-policy fix and verifies it with three independent methods. Simulation only: no infrastructure is changed."
@@ -12,7 +14,7 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Interdict: graph-proven attack-path triage</title>
   </head>
-  <body class="bg-canvas text-fg antialiased">
+  <body>
     <noscript>Interdict needs JavaScript to show the investigation workbench.</noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

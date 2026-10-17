@@ -1,0 +1,31 @@
+/* Styles for ThemeToggle.tsx */
+
+.theme-toggle {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: rgb(var(--fg) / 0.05);
+  color: rgb(var(--fg-muted));
+  transition:
+    background-color 200ms var(--ease-out),
+    color 200ms var(--ease-out),
+    transform 200ms var(--ease-out);
+}
+
+.theme-toggle:hover {
+  background-color: rgb(var(--fg) / 0.09);
+  color: rgb(var(--fg));
+}
+
+.theme-toggle:active {
+  transform: scale(0.94);
+}
+
+.theme-toggle svg {
+  width: 1rem;
+  height: 1rem;
+}

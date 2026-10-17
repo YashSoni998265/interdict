@@ -7,7 +7,7 @@
 }
 
 .impact-sentence__label {
-  color: rgb(161 98 7);
+  color: rgb(var(--yellow-text));
 }
 
 .plan-metrics {
@@ -65,7 +65,7 @@
 }
 
 .named-flows__label--yellow {
-  color: rgb(161 98 7);
+  color: rgb(var(--yellow-text));
 }
 
 .named-flows__label--not-yellow {
@@ -378,7 +378,7 @@
 }
 
 .plan-report__status-icon {
-  color: rgb(109 40 217);
+  color: rgb(var(--violet-text));
 }
 
 .plan-report__block-2 > :not([hidden]) ~ :not([hidden]) {

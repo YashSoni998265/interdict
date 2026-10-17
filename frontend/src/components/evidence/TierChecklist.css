@@ -27,7 +27,7 @@
 .mark--stale {
   border-color: rgb(250 204 21 / 0.4);
   background-color: rgb(250 204 21 / 0.1);
-  color: rgb(161 98 7);
+  color: rgb(var(--yellow-text));
 }
 
 .mark__icon {
@@ -67,7 +67,7 @@
 }
 
 .tier-row__label--yellow {
-  color: rgb(161 98 7);
+  color: rgb(var(--yellow-text));
 }
 
 .tier-row__label--not-yellow {

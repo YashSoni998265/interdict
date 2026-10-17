@@ -26,18 +26,18 @@
 
 .attack-edge__label--active {
   border-color: rgb(244 63 94 / 0.45);
-  color: rgb(159 18 57);
+  color: rgb(var(--rose-text-strong));
 }
 
 .attack-edge__label--cut {
   border-style: dashed;
   border-color: rgb(124 58 237 / 0.6);
-  color: rgb(91 33 182);
+  color: rgb(var(--violet-text-strong));
 }
 
 .attack-edge__label--residual {
   border-color: rgb(234 88 12 / 0.6);
-  color: rgb(154 52 18);
+  color: rgb(var(--orange-text-strong));
 }
 
 .attack-edge__label--cleared {
@@ -56,5 +56,5 @@
 
 .attack-edge__label--cut-2 {
   text-decoration-line: line-through;
-  text-decoration-color: rgb(109 40 217 / 0.8);
+  text-decoration-color: rgb(var(--violet-text) / 0.8);
 }

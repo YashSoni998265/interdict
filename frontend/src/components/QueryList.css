@@ -58,7 +58,7 @@
 
 .query-list__label-2 {
   margin-left: 0.25rem;
-  color: rgb(185 28 28);
+  color: rgb(var(--red-text));
 }
 
 .query-list__cell-2 {

@@ -1,7 +1,7 @@
 /* Status tones: text, background, border, dot and solid colour per tone (lib/status.ts) */
 
 .tone-red-text {
-  color: rgb(185 28 28);
+  color: rgb(var(--red-text));
 }
 
 .tone-red-bg {
@@ -21,7 +21,7 @@
 }
 
 .tone-amber-text {
-  color: rgb(180 83 9);
+  color: rgb(var(--amber-text));
 }
 
 .tone-amber-bg {
@@ -41,7 +41,7 @@
 }
 
 .tone-grey-text {
-  color: rgb(82 82 91);
+  color: rgb(var(--zinc-text));
 }
 
 .tone-grey-bg {
@@ -61,7 +61,7 @@
 }
 
 .tone-orange-text {
-  color: rgb(194 65 12);
+  color: rgb(var(--orange-text));
 }
 
 .tone-orange-bg {
@@ -81,7 +81,7 @@
 }
 
 .tone-yellow-text {
-  color: rgb(161 98 7);
+  color: rgb(var(--yellow-text));
 }
 
 .tone-yellow-bg {
@@ -101,7 +101,7 @@
 }
 
 .tone-green-text {
-  color: rgb(4 120 87);
+  color: rgb(var(--green-text));
 }
 
 .tone-green-bg {
@@ -121,7 +121,7 @@
 }
 
 .tone-violet-text {
-  color: rgb(109 40 217);
+  color: rgb(var(--violet-text));
 }
 
 .tone-violet-bg {

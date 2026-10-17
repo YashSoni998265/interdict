@@ -1,4 +1,4 @@
-/* Design tokens: a light palette (RGB channels), depth, radii and motion */
+/* Design tokens: light and dark palettes (RGB channels), depth, radii and motion */
 
 :root {
   /* Surfaces */
@@ -17,6 +17,23 @@
   /* The one interactive accent (links, focus, primary actions); status colours never double as accents */
   --accent: 0 102 204;
   --accent-fill: 0 113 227;
+  /* Status text, AA on the surfaces and on their own tints */
+  --yellow-text: 161 98 7;
+  --yellow-text-strong: 133 77 14;
+  --amber-text: 180 83 9;
+  --amber-text-strong: 146 64 14;
+  --red-text: 185 28 28;
+  --red-text-strong: 153 27 27;
+  --rose-text: 190 18 60;
+  --rose-text-strong: 159 18 57;
+  --rose-figure: 225 29 72;
+  --orange-text: 194 65 12;
+  --orange-text-strong: 154 52 18;
+  --violet-text: 109 40 217;
+  --violet-text-strong: 91 33 182;
+  --green-text: 4 120 87;
+  --zinc-text: 82 82 91;
+  --zinc-text-strong: 63 63 70;
   /* Depth */
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 6px 20px -8px rgb(0 0 0 / 0.1);
   --shadow-elevated: 0 0 0 1px rgb(0 0 0 / 0.05), 0 18px 44px -14px rgb(0 0 0 / 0.24);
@@ -27,4 +44,39 @@
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   color-scheme: light;
+}
+
+/* Dark mode, chosen with the header toggle (public/theme.js applies it before the first paint) */
+:root[data-theme='dark'] {
+  --canvas: 9 9 11;
+  --pane: 12 12 14;
+  --surface: 20 20 23;
+  --elevated: 28 28 31;
+  --hover: 36 36 40;
+  --line: 44 44 50;
+  --line-strong: 70 70 78;
+  --fg: 244 244 245;
+  --fg-muted: 177 177 186;
+  --fg-subtle: 146 146 155;
+  --accent: 41 151 255;
+  --accent-fill: 0 113 227;
+  --yellow-text: 253 224 71;
+  --yellow-text-strong: 250 204 21;
+  --amber-text: 252 211 77;
+  --amber-text-strong: 253 230 138;
+  --red-text: 248 113 113;
+  --red-text-strong: 252 165 165;
+  --rose-text: 253 164 175;
+  --rose-text-strong: 254 205 211;
+  --rose-figure: 251 113 133;
+  --orange-text: 253 186 116;
+  --orange-text-strong: 254 215 170;
+  --violet-text: 196 181 253;
+  --violet-text-strong: 221 214 254;
+  --green-text: 52 211 153;
+  --zinc-text: 161 161 170;
+  --zinc-text-strong: 212 212 216;
+  --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.06), 0 8px 24px -12px rgb(0 0 0 / 0.7);
+  --shadow-elevated: 0 0 0 1px rgb(255 255 255 / 0.09), 0 18px 44px -14px rgb(0 0 0 / 0.8);
+  color-scheme: dark;
 }

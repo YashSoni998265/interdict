@@ -5,11 +5,11 @@
 }
 
 .provenance__freshness--stale {
-  color: rgb(161 98 7);
+  color: rgb(var(--yellow-text));
 }
 
 .provenance__freshness--unverified {
-  color: rgb(161 98 7);
+  color: rgb(var(--yellow-text));
 }
 
 .provenance-list > :not([hidden]) ~ :not([hidden]) {
@@ -76,5 +76,5 @@
 }
 
 .provenance-list__value--stale {
-  color: rgb(161 98 7);
+  color: rgb(var(--yellow-text));
 }

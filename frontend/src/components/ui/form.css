@@ -18,7 +18,7 @@
 .field__text {
   font-size: 0.6875rem;
   line-height: 1rem;
-  color: rgb(185 28 28);
+  color: rgb(var(--red-text));
 }
 
 .field__text-2 {
