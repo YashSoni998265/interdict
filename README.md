@@ -6,6 +6,8 @@
 
 **Live demo:** [interdict-graphhack.duckdns.org](https://interdict-graphhack.duckdns.org) (simulation only; each visitor gets a private sandbox).
 
+**Read the story:** [Follow the graph, not the alert](https://interdict.hashnode.dev/follow-the-graph-not-the-alert), how Interdict works and how we built it.
+
 ## What happens in 60 seconds
 | Step | What you see | What the graph does |
 | :--- | :--- | :--- |
