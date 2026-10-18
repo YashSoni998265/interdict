@@ -36,7 +36,6 @@ from interdict.seed.loader import load
 from interdict.session import SessionKeys
 from interdict.tools import ToolContext
 from interdict.views import (
-    hunt_view,
     plan_report_view,
     storm_view,
     subgraph_view,
@@ -70,8 +69,7 @@ def main(out: Path) -> None:
         clusters = {c.id: c for c in report.clusters}
         for stale in ("certificates", "hunts", "investigations"):
             for path in (out / stale).glob("*.json"):
-                if path.name != "all-crown-jewels.json":
-                    path.unlink()
+                path.unlink()
         for cluster in report.clusters:
             chains = [c for c in report.chains if c.id in set(cluster.chain_ids)]
             planned = plan_remediation(report, chains)
@@ -92,9 +90,6 @@ def main(out: Path) -> None:
                 ),
             )
             record_agent(store, template, report.storm_id, cluster.id, out)
-
-        everything = hunt(store, report, report.snapshot.crown_jewels, report.chains)
-        write(out, "hunts/all-crown-jewels.json", hunt_view(everything))
 
         for pod in sorted({p for c in report.chains for p in c.pods} | set(deep_pods(clusters))):
             write(out, f"evidence/{pod}.json", workload_evidence_view(report.snapshot, pod))

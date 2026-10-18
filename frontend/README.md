@@ -1,6 +1,6 @@
 # Interdict web app
 
-The face of Interdict: the alert storm, the investigation workbench (attack subgraph, agent timeline, plan comparison, Path Hunter rounds), the certificate, the sandbox and the system page. It only displays engine output; it never computes a verdict. Everything it shows is synthetic and simulated: no infrastructure is ever changed.
+The face of Interdict: the guided demo, the alert storm, the investigation workbench (attack subgraph, agent timeline, plan comparison, Path Hunter rounds), the certificate, the sandbox and the system page. It only displays engine output; it never computes a verdict. Everything it shows is synthetic and simulated: no infrastructure is ever changed.
 
 ## Run it
 
@@ -46,12 +46,13 @@ CI runs the same four commands in the `web` job of `.github/workflows/ci.yml`.
 
 | Route | What it shows |
 | :--- | :--- |
-| `/` | One-sentence value, the 60-second demo, how it works, dataset disclosure |
-| `/storm` | Funnel from 1,000 alerts to clusters with every branch visible, the restraint example, cluster cards with their plan status, every alert (untrusted titles shown inert) |
+| `/` | The pitch, a way into the demo, the agent's four graph moves, why every verdict comes from the graph, breaking the proof, and what it cannot prove |
+| `/demo` | The guided demo in five steps, each on one screen: the alerts, the agent, the hunt, the action (with the policy file), and break it |
+| `/storm` | Explore: the funnel from 1,000 alerts to clusters with every branch visible, the restraint example, cluster cards with their plan status, every alert (untrusted titles shown inert) |
 | `/clusters/:clusterId` | Workbench: evidence graph and tier checklist, agent timeline, plan comparison, Hunter rounds, certificate, audit strip. Three panes at 1280 px and wider, tabs below |
 | `/certificates/:certificateId` | The §9.2 certificate: claim, scope, snapshot hashes, threat model, evidence, E/F/O results, rounds, plan, provenance, exclusions verbatim; greyed when superseded or expired |
 | `/sandbox` | Break it yourself (also a drawer from the header): typed operations with a preview, results, history, reset |
-| `/system` | FalkorDB version, build, seed, agent availability, graph stats, measured query latencies, MCP tools |
+| `/system` | Under the hood: the agent's MCP tools, sandbox operations, deployment (FalkorDB version, build, the decision agent), dataset and seed, graph stats, measured query latencies |
 
 ## How it stays honest
 
@@ -65,7 +66,6 @@ CI runs the same four commands in the `web` job of `.github/workflows/ci.yml`.
 - It cannot recompute. After a sandbox operation it keeps serving the revision-1 recording, and every view says it was computed at an older revision.
 - It follows the API contract: sessions, CSRF, plan handles, `{investigation_id, mode, notes}` (the mock replays the decision agent's recorded run), one investigation at a time (`BUSY`), revisions that only increase (a reset is a revision too), certificate status recomputed on read (`SUPERSEDED` once the revision changes, `EXPIRED` after `expires_at`), and an audit log hash-chained in the browser with SHA-256 (`chain_valid`).
 - Its clock starts at the recording's evaluation time (17 Oct 2026, 10:00 UTC), so recorded certificates expire on the recording's schedule rather than today's.
-- The recorded "all crown jewels at once" hunt (`NO_FEASIBLE_PLAN_WITHIN_K`, `K_EXCEEDED`) has no REST route, so it is shown only in mock mode, on the storm page.
 
 ## Code map
 
@@ -79,7 +79,7 @@ CI runs the same four commands in the `web` job of `.github/workflows/ci.yml`.
 
 ## Accessibility
 
-Keyboard navigation with visible focus everywhere, labelled regions and controls, a table view as the text alternative to the graph, screen-reader announcements for new timeline steps, `prefers-reduced-motion` respected, and text colours that meet WCAG AA on the dark surfaces. The intent is WCAG 2.2 AA; no formal audit has been run.
+Keyboard navigation with visible focus everywhere, labelled regions and controls, a table view as the text alternative to the graph, screen-reader announcements for new timeline steps, `prefers-reduced-motion` respected, and text colours that meet WCAG AA in both the light and the dark theme. The intent is WCAG 2.2 AA; no formal audit has been run.
 
 ## Credits
 

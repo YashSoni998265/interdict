@@ -72,21 +72,3 @@ export function JsonView({ value, maxHeight = 'json-view__scroll', className }: 
     </div>
   );
 }
-
-/** A monospace identifier that truncates, with the full value on hover and for copying. */
-export function MonoId({ value, className, copy = false }: { value: string; className?: string; copy?: boolean }) {
-  return (
-    <span className={cn('mono-id', className)}>
-      <span className="mono-id mono-id__label" title={value}>
-        {value}
-      </span>
-      {copy ? <CopyButton value={value} label={`Copy ${value}`} /> : null}
-    </span>
-  );
-}
-
-export function Kbd({ children }: { children: string }) {
-  return (
-    <kbd className="kbd">{children}</kbd>
-  );
-}

@@ -1,4 +1,4 @@
-import type { ChainView, FlowRef } from '@/api/types';
+import type { FlowRef } from '@/api/types';
 
 const integer = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
 
@@ -78,18 +78,6 @@ export function plural(count: number, one: string, many = `${one}s`): string {
 export function describeFlow(id: string, flows: Record<string, FlowRef> | undefined): string {
   const flow = flows?.[id];
   return flow ? `${flow.src} → ${flow.dst} :${flow.port}/${flow.protocol}` : id;
-}
-
-export function flowParts(
-  id: string,
-  flows: Record<string, FlowRef> | undefined,
-): FlowRef | undefined {
-  return flows?.[id];
-}
-
-/** The node path for a chain id, when a view that lists it is available. */
-export function chainPath(id: string, chains: ChainView[] | undefined): string[] | undefined {
-  return chains?.find((c) => c.id === id)?.path;
 }
 
 export const INTERNET_ID = 'global-internet';

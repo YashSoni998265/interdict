@@ -76,33 +76,3 @@
 .json-view__scroll {
   max-height: 20rem;
 }
-
-.mono-id {
-  display: inline-flex;
-  min-width: 0px;
-  max-width: 100%;
-  align-items: center;
-  gap: 0.125rem;
-}
-
-.mono-id__label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: rgb(var(--fg));
-}
-
-.kbd {
-  border-radius: 0.25rem;
-  border-width: 1px;
-  border-color: rgb(var(--line));
-  background-color: rgb(var(--elevated));
-  padding-left: 0.25rem;
-  padding-right: 0.25rem;
-  padding-top: 1px;
-  padding-bottom: 1px;
-  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 0.6875rem;
-  line-height: 1rem;
-  color: rgb(var(--fg-muted));
-}

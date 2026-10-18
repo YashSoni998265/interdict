@@ -1,8 +1,4 @@
-import type { AlertView, ClusterView, FunnelStageName, StormView } from '@/api/types';
-
-export function funnelStage(storm: StormView, stage: FunnelStageName) {
-  return storm.funnel.find((s) => s.stage === stage);
-}
+import type { AlertView, ClusterView, StormView } from '@/api/types';
 
 export function clusterOfPod(storm: StormView | undefined, pod: string): ClusterView | undefined {
   return storm?.clusters.find((c) => c.workloads.includes(pod));
