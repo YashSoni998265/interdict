@@ -4,6 +4,8 @@
 
 > Built for **WeMakeDevs × FalkorDB Graph Hacks 2026, Track 01: Agents That Act on Connected Data** (Oct 15–18, 2026). All data is synthetic, and nothing ever changes real infrastructure.
 
+**Live demo:** [interdict-graphhack.duckdns.org](https://interdict-graphhack.duckdns.org) (simulation only; each visitor gets a private sandbox).
+
 ## What happens in 60 seconds
 | Step | What you see | What the graph does |
 | :--- | :--- | :--- |
@@ -174,6 +176,8 @@ flowchart LR
 - **Action Gateway:** the only path to a receipt. It requires the allowlisted action type, SIMULATION mode, a VALID certificate at the current revision, and an idempotency key.
 
 ## Run it
+**Live:** [interdict-graphhack.duckdns.org](https://interdict-graphhack.duckdns.org), this stack on one host with HTTPS from Caddy ([`deploy/docker-compose.prod.yml`](deploy/docker-compose.prod.yml)).
+
 Prerequisites: Docker. For development, also [uv](https://docs.astral.sh/uv/) and Node 22.
 
 ```bash
