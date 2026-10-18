@@ -1,5 +1,5 @@
 import { useQueries } from '@tanstack/react-query';
-import { ArrowRight, CircleHelp, Clock, Info, Play, RotateCcw } from 'lucide-react';
+import { ArrowRight, Clock, Info, Play, RotateCcw } from 'lucide-react';
 import { useId, useMemo, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -481,10 +481,6 @@ export function SandboxPanel({ preset, compact = false }: { preset?: SandboxOper
         ) : null}
       </section>
 
-      <p className="sandbox-panel__text-5">
-        <CircleHelp className="sandbox-panel__icon-2" aria-hidden />
-        GRANT_DB_ACCESS and REMOVE_POLICY are specified but not built in this version (solution.md §3.5).
-      </p>
     </div>
   );
 }
