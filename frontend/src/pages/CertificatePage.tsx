@@ -76,7 +76,7 @@ function Hash({ value }: { value: string | null | undefined }) {
   );
 }
 
-const LIFECYCLE = ['VALID', 'EXPIRED', 'SUPERSEDED', 'REVERIFICATION_FAILED'] as const;
+const LIFECYCLE = ['VALID', 'EXPIRED', 'SUPERSEDED'] as const;
 
 function Lifecycle({ status }: { status: string }) {
   return (
@@ -493,14 +493,8 @@ export default function CertificatePage() {
               <Download aria-hidden />
               Download JSON
             </Button>
-            <Button size="sm" variant="ghost" disabled aria-describedby="reproduce-note">
-              Reproduce
-            </Button>
           </div>
-          <p id="reproduce-note" className="certificate-page__text-2">
-            Reproduction (verify_certificate re-runs E, F and O on the retained snapshot) is specified but not built in
-            this version (solution.md §3.5). The downloaded JSON and the digest let a reviewer compare records.
-          </p>
+          <p className="certificate-page__text-2">The downloaded JSON and its digest let a reviewer compare records.</p>
         </div>
       </article>
       <Footer />

@@ -1,4 +1,4 @@
-"""The seven investigation tools (solution.md §3.5, §10.4, D-17), one implementation shared by the
+"""The seven investigation tools (solution.md §10.4, D-17), one implementation shared by the
 MCP server and in-process runs (tests, and recording the UI fixtures).
 
 Every tool takes typed, validated arguments (IDs match `^[a-z0-9-]{1,64}$`, no field accepts a

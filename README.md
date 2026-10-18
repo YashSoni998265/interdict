@@ -241,7 +241,7 @@ Gate details are in [`solution.md`](solution.md) §17.1.
 | `backend/src/interdict_oracle/` | Independent oracle (imports nothing from the engine) |
 | `frontend/` | React + TypeScript web app |
 | `deploy/`, `Dockerfile`, `docker-compose.yml` | One image (API + MCP + web app), FalkorDB, and Caddy for TLS |
-| `solution.md` | Canonical specification; decisions D-01 to D-22 |
+| `solution.md` | Canonical specification and its design decisions |
 
 ## Team
 - **Yash Soni** ([@YashSoni998265](https://github.com/YashSoni998265)): designed and built Interdict: the engine, API, MCP server, agent and web app.
