@@ -8,6 +8,8 @@
 
 **Read the story:** [Follow the graph, not the alert](https://interdict.hashnode.dev/follow-the-graph-not-the-alert), how Interdict works and how we built it.
 
+**Demo video:** [watch it on YouTube](https://www.youtube.com/watch?v=MdRmfKqdNKw) (6 minutes).
+
 ## What happens in 60 seconds
 | Step | What you see | What the graph does |
 | :--- | :--- | :--- |
