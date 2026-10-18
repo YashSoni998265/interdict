@@ -53,10 +53,32 @@ const STEPS = ['The alerts', 'The agent', 'The hunt', 'The action', 'Break it'] 
 const LAST = STEPS.length;
 
 /**
- * The cluster the demo follows, kept for the page session: stale evidence empties the storm's
- * clusters, and the story (with its reset) must survive leaving the demo and coming back.
+ * The cluster the demo follows, kept for the browser tab: stale evidence empties the storm's
+ * clusters, and the story (with its reset) must survive leaving the demo, coming back and reloading.
+ * A reload must not pick again: once batch-1 is on a path, the restraint example (and with it
+ * `demoCluster`) points at another cluster.
  */
-let rememberedCluster: ClusterView | null = null;
+const CLUSTER_KEY = 'interdict-demo-cluster';
+let rememberedCluster: ClusterView | null = loadRememberedCluster();
+
+function loadRememberedCluster(): ClusterView | null {
+  try {
+    const saved = window.sessionStorage.getItem(CLUSTER_KEY);
+    return saved ? (JSON.parse(saved) as ClusterView) : null;
+  } catch {
+    return null;
+  }
+}
+
+function rememberCluster(cluster: ClusterView | null): void {
+  rememberedCluster = cluster;
+  try {
+    if (cluster) window.sessionStorage.setItem(CLUSTER_KEY, JSON.stringify(cluster));
+    else window.sessionStorage.removeItem(CLUSTER_KEY);
+  } catch {
+    // Storage blocked (private mode, disabled site data): the cluster lasts for this page only.
+  }
+}
 
 /** The cluster the demo follows: the one holding the restraint example's on-path workload. */
 function demoCluster(storm: StormView): ClusterView | undefined {
@@ -1095,6 +1117,9 @@ function StepBreak({ cluster, storm }: { cluster: ClusterView; storm: StormView 
   const current = storm.revision === revision;
   const responses = breakIt.last?.responses ?? [];
   const applied = responses.filter((r) => r.result === 'APPLIED').length;
+  // What this change did to earlier certificates, fixed when it was made: a re-run's new
+  // certificate is reported under step 2, so it must not turn this line into "still current".
+  const superseded = responses.some((r) => r.superseded_certificates.length > 0);
   const lastLabel =
     applied === responses.length
       ? `${applied} ${plural(applied, 'change')} applied`
@@ -1148,8 +1173,19 @@ function StepBreak({ cluster, storm }: { cluster: ClusterView; storm: StormView 
                   Revision <strong>{breakIt.last.revision}</strong> · {lastLabel}
                 </li>
                 <li>
-                  Certificate{' '}
-                  <strong>{outcome.certificateCurrent ? 'still current' : 'no longer current'}</strong>
+                  {applied === 0 ? (
+                    <>
+                      Certificate <strong>{outcome.certificateCurrent ? 'still current' : 'no longer current'}</strong>
+                    </>
+                  ) : superseded ? (
+                    <>
+                      Certificate <strong>no longer current</strong>
+                    </>
+                  ) : (
+                    <>
+                      <strong>No certificate</strong> to supersede yet
+                    </>
+                  )}
                 </li>
                 {before !== null && client.mode !== 'mock' ? (
                   <li>
@@ -1240,7 +1276,7 @@ export default function DemoPage() {
     if (!s) return;
     const next = pinned ? (s.clusters.find((c) => c.id === pinned.id) ?? pinned) : (demoCluster(s) ?? null);
     if (next !== pinned) {
-      rememberedCluster = next;
+      rememberCluster(next);
       setPinned(next);
     }
   }, [s, pinned]);

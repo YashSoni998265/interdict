@@ -1,7 +1,8 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { fixtures } from '@/api/mock/fixtures';
 import { recordedCertificateId, renderApp, setViewportWidth } from '@/test/render';
 
 const heading = () => screen.findByRole('heading', { level: 1 });
@@ -83,5 +84,20 @@ describe('Guided demo', () => {
     renderApp('/demo?step=3');
     expect(await screen.findByRole('heading', { level: 1, name: 'The first fix wasn’t enough.' }, { timeout: 10_000 })).toBeInTheDocument();
     expect(screen.getByText('Round by round')).toBeInTheDocument();
+  });
+
+  it('keeps following the same cluster after a reload', async () => {
+    // A reload loads the page afresh: it must read the remembered cluster back, not pick again
+    // (after "Open a new attack path" the restraint example points at another cluster).
+    const analytics = (await fixtures.storm()).clusters.find((c) => c.id === 'cluster-prod-payments-db-ing-analytics');
+    window.sessionStorage.setItem('interdict-demo-cluster', JSON.stringify(analytics));
+    try {
+      vi.resetModules();
+      const reloaded = await import('@/test/render');
+      reloaded.renderApp('/demo?step=2');
+      expect(await screen.findByText('ing-analytics')).toBeInTheDocument();
+    } finally {
+      window.sessionStorage.clear();
+    }
   });
 });
