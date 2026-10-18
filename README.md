@@ -14,7 +14,7 @@
 | 5. Certificate | "Model-verified containment (simulation)", with snapshot hashes, an expiry, and the exclusions written out. | SHA-256 hashes of the sandbox and the candidate. Any later sandbox change supersedes the certificate. |
 | 6. Try to break it | Expose a workload and add a lateral reach in the sandbox panel: a new attack path appears, the certificate is superseded, and the next run re-plans. | Each change is one Cypher query with a revision compare-and-set. |
 
-Honest outcomes are part of the product. Asking for both crown jewels at once returns **"No safe plan within 3 changes"** (4 independent paths need 4 actions), along with the best partial plan. Expiring a piece of evidence makes the triage **inconclusive**, never "0 paths".
+Honest outcomes are part of the product. Ask the API to protect both crown jewels at once (`POST /api/plans`, then `POST /api/hunts`) and the result is **"No safe plan within 3 changes"**: the Path Hunter finds a fourth path that the first plan misses, and 4 independent paths need 4 actions. The best partial plan comes with it. Expiring a piece of evidence makes the triage **inconclusive**, never "0 paths".
 
 ## Why the graph is essential
 Every verdict comes from a connected-data operation in FalkorDB, never from the agent:
@@ -24,7 +24,7 @@ Every verdict comes from a connected-data operation in FalkorDB, never from the 
 | Multi-hop pattern queries over 11 relationship types | Evidence tiers per workload, with provenance and freshness |
 | Derived `ATTACK_STEP` graph, built in Cypher from evidence | One edge per possible attacker move (MITRE ATT&CK labels: T1190, T1210, T1078.004) |
 | Variable-length paths over `CAN_REACH` | Bounded attack-chain enumeration (method E), cross-checked against `ATTACK_STEP` |
-| `algo.BFS` and `algo.maxFlow` | Reachability for triage; unit-capacity max-flow from the Internet to each crown jewel (method F) |
+| `algo.bfs` and `algo.maxFlow` | Reachability for triage; unit-capacity max-flow from the Internet to each crown jewel (method F) |
 | `GRAPH.COPY` | A private sandbox per visitor, and a candidate graph per Hunter round |
 | Kubernetes policy semantics applied in Cypher | FalkorDB prunes every flow the candidate policies no longer allow, and the result must equal the planner's prediction |
 | Revision compare-and-set in the same query as each mutation | Certificates are superseded the moment the graph changes |
@@ -190,11 +190,11 @@ cd backend && uv sync
 uv run python -m interdict.seed     # load the synthetic environment (graph `template`)
 uv run python -m interdict.mcp_server &
 uv run uvicorn interdict.api:app --port 8000
-uv run pytest                       # ~490 tests against the local FalkorDB
+uv run pytest                       # 494 tests against the local FalkorDB
 cd ../frontend && npm ci && npm run dev   # http://localhost:5173 (mock data by default; see frontend/README.md)
 ```
 
-**Use the tools from Claude Code.** The MCP server only listens on localhost and requires the internal token:
+**Use the tools from Claude Code.** With the development setup above, the MCP server listens on localhost only and requires the internal token (the Docker setup does not publish it):
 ```bash
 claude mcp add --transport http interdict http://127.0.0.1:8765/mcp \
   --header "Authorization: Bearer $INTERDICT_INTERNAL_TOKEN" \
@@ -207,7 +207,7 @@ claude mcp add --transport http interdict http://127.0.0.1:8765/mcp \
 | Full storm triage, 1,000 alerts (gate G4) | median 58 ms |
 | Exact planner, worst case (30 actions, 10,000 chains) | about 50 ms |
 | Path Hunter for one cluster, two rounds, ending in a certificate | about 0.7 s |
-| Whole deterministic investigation through the MCP server | about 1.0 s |
+| Whole agent investigation through the MCP server (7 to 9 tool calls) | about 1.2 to 1.6 s |
 | `algo.maxFlow` agreement with the oracle on 50 random graphs (gate G1) | 50 / 50, p95 5 ms |
 | Graph copy, about 800 nodes and 3,000 edges (gate G2) | p95 108 ms |
 | Container start to ready, API + MCP + web app (gate G5) | 2.7 s |
