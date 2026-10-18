@@ -68,11 +68,6 @@ export interface ApiClient {
   resetSandbox(): Promise<SandboxResetResponse>;
   getAudit(after?: number): Promise<AuditPage>;
   getSystem(): Promise<SystemView>;
-  /**
-   * A recorded engine run with no REST route in this API version: planning for every crown
-   * jewel at once. Only the mock client provides it; screens hide it otherwise.
-   */
-  getRecordedScenario?(name: 'all-crown-jewels'): Promise<HuntReportView>;
 }
 
 export function resolveApiMode(value: string | undefined): ApiMode {

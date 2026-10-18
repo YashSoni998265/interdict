@@ -122,7 +122,3 @@ export const METRICS = {
 } satisfies Record<string, MetricSource>;
 
 export type MetricId = keyof typeof METRICS;
-
-export function metricSource(id: MetricId): MetricSource {
-  return METRICS[id];
-}

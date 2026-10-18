@@ -26,7 +26,6 @@ export const keys = {
   certificate: (id: string) => ['certificate', id] as const,
   system: ['system'] as const,
   audit: ['audit'] as const,
-  scenario: (name: string) => ['scenario', name] as const,
 };
 
 export function createQueryClient(): QueryClient {
@@ -111,23 +110,6 @@ export function useCertificate(certificateId: string | null) {
 export function useSystem() {
   const client = useApi();
   return useQuery({ queryKey: keys.system, queryFn: () => client.getSystem(), enabled: useReady(), staleTime: 5 * 60_000 });
-}
-
-export function useRecordedScenario(enabled: boolean) {
-  const client = useApi();
-  const available = typeof client.getRecordedScenario === 'function';
-  return {
-    available,
-    query: useQuery({
-      queryKey: keys.scenario('all-crown-jewels'),
-      queryFn: () => {
-        if (!client.getRecordedScenario) throw new Error('Recorded scenarios need the mock API.');
-        return client.getRecordedScenario('all-crown-jewels');
-      },
-      enabled: useReady() && available && enabled,
-      staleTime: Infinity,
-    }),
-  };
 }
 
 export interface AuditLog {

@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react';
-import type { ReactElement } from 'react';
 
 import { MockApiClient } from '@/api/mock/client';
 import { fixtures } from '@/api/mock/fixtures';
@@ -12,7 +11,6 @@ export function fastMockClient(): MockApiClient {
   return new MockApiClient({ latencyScale: 0, streamGapMs: [1, 1] });
 }
 
-/** Render the whole app at a route, with real providers and the fixture-backed mock API. */
 /** The certificate id of a recorded run (ids change whenever the fixtures are re-recorded). */
 export async function recordedCertificateId(clusterId = 'cluster-prod-payments-db-ing-auth'): Promise<string> {
   const hunt = (await fixtures.hunt(clusterId)) as { certificate?: { certificate_id: string } | null } | undefined;
@@ -21,6 +19,7 @@ export async function recordedCertificateId(clusterId = 'cluster-prod-payments-d
   return id;
 }
 
+/** Render the whole app at a route, with real providers and the fixture-backed mock API. */
 export function renderApp(path: string, client = fastMockClient()) {
   const queryClient = createQueryClient();
   const result = render(
@@ -29,15 +28,6 @@ export function renderApp(path: string, client = fastMockClient()) {
     </AppProviders>,
   );
   return { ...result, client, queryClient };
-}
-
-/** Render one component inside the app providers (no router). */
-export function renderWithProviders(ui: ReactElement, client = fastMockClient()) {
-  return render(
-    <AppProviders client={client} queryClient={createQueryClient()}>
-      {ui}
-    </AppProviders>,
-  );
 }
 
 /** Pretend the viewport is at least this wide (drives the three-pane workbench layout). */

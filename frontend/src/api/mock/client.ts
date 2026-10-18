@@ -30,8 +30,6 @@ import { canonicalJson, sha256Hex } from './sha256';
  * at real speed, so recorded certificates expire on the recording's schedule, not today's.
  */
 export const RECORDED_AT = '2026-10-17T10:00:00Z';
-/** The recorded scenario that plans for every crown jewel at once (NO_FEASIBLE_PLAN_WITHIN_K). */
-export const ALL_CROWN_JEWELS = 'all-crown-jewels';
 
 const ID_PATTERN = /^[a-z0-9-]{1,64}$/;
 /** The seven MCP tools the agent may call (tools.TOOL_NAMES). */
@@ -194,14 +192,6 @@ export class MockApiClient implements ApiClient {
     if (!hunt) throw notFound(`No recorded hunt starts from plan ${planId}.`);
     this.recordHunt(hunt, undefined);
     return { plan_id: planId, ...this.withCurrentCertificateStatus(hunt) };
-  }
-
-  /** Mock-only: a recorded engine run that has no REST route in this API version. */
-  async getRecordedScenario(name: typeof ALL_CROWN_JEWELS): Promise<HuntReportView> {
-    await this.delay(200, 400);
-    const hunt = await fixtures.hunt(name);
-    if (!hunt) throw notFound(`No recorded scenario ${name}.`);
-    return hunt;
   }
 
   async startInvestigation(request: InvestigationRequest): Promise<InvestigationStart> {
@@ -521,7 +511,6 @@ export class MockApiClient implements ApiClient {
     this.huntIndex ??= (async () => {
       const index = new Map<string, string>();
       for (const name of fixtureNames('hunts')) {
-        if (name === ALL_CROWN_JEWELS) continue;
         const first = (await fixtures.hunt(name))?.rounds[0];
         if (first) index.set(first.plan_id, name);
       }

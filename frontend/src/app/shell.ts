@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import { createContext } from 'react';
 
 import type { SandboxOperation } from '@/api/types';
 
@@ -8,7 +8,3 @@ export interface ShellActions {
 }
 
 export const ShellContext = createContext<ShellActions>({ openSandbox: () => undefined });
-
-export function useShell(): ShellActions {
-  return useContext(ShellContext);
-}
