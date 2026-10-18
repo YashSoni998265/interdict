@@ -237,6 +237,10 @@ Gate details are in [`solution.md`](solution.md) §17.1.
 | `solution.md` | Canonical specification; decisions D-01 to D-22 |
 | `docs/` | Pre-event planning notes |
 
+## Team
+- **Yash Soni** ([@YashSoni998265](https://github.com/YashSoni998265)): designed and built Interdict: the engine, API, MCP server, agent and web app.
+- **Rohan Jaiswal** ([@Sonicof](https://github.com/Sonicof)): planned the project and collaborated with Yash on its tasks, deployed the live demo, added unit tests for the web helpers, and recorded the demo video.
+
 ## Contributing and security
 See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). `main` is protected: every change goes through a pull request with passing CI.
 
