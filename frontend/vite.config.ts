@@ -27,6 +27,9 @@ export default defineConfig(({ mode }) => {
       // elkjs (graph layout) is one ~1.4 MB module. It is loaded lazily, only when a workbench
       // graph is first laid out, so it never blocks the first page.
       chunkSizeWarningLimit: 1600,
+      // Fonts stay separate files: the production CSP (deploy/Caddyfile) allows fonts only from
+      // 'self', so a small font inlined as a data: URI would be blocked.
+      assetsInlineLimit: (file) => (/\.woff2?$/.test(file) ? false : undefined),
       rollupOptions: {
         output: {
           // Stable vendor chunks: they change less often than app code, so they cache well.
