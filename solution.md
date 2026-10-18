@@ -1013,7 +1013,7 @@ These are the test cases implemented in `backend/tests/`, named `test_tcNN_…`.
 
 ### 16.3 Coverage and counts
 - **Backend:** 169 test functions, 494 cases with parametrisation, against FalkorDB. They include 15 contract tests that pin the Day-1 gate behaviours (`test_falkordb_contract.py`) and the decision agent's rules (`test_mcp_agent.py`).
-- **Web:** about 60 Vitest tests, 78 cases, covering the guided demo, the break-it flow, the status language, number sources, untrusted text and the mock API contract.
+- **Web:** about 80 Vitest tests, 116 cases, covering the guided demo, the break-it flow, the status language, number sources, untrusted text, the mock API contract and the storm, format and evidence helpers.
 - **CI:** GitHub Actions run every check on each pull request: PR title, hygiene, secrets scan, backend tests against FalkorDB, and web lint, typecheck, tests and build.
 
 ---
