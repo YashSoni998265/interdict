@@ -249,7 +249,7 @@ Gate details are in [`solution.md`](solution.md) §17.1.
 See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). `main` is protected: every change goes through a pull request with passing CI.
 
 ## AI usage disclosure
-This project is built with an AI coding assistant (Claude Code). The planning documents in `docs/` and `solution.md` were prepared before the event as notes. All application code was written during the event and is reviewed and tested by the team. Commits that include AI-written changes carry a `Co-Authored-By` trailer.
+This project is built with an AI coding assistant (Claude Code). The planning notes in `docs/` were prepared before the event; `solution.md` grew from them and was updated during the event to describe what was built. All application code was written during the event and is reviewed and tested by the team. Commits that include AI-written changes carry a `Co-Authored-By` trailer.
 
 ## License
 [MIT](LICENSE)
