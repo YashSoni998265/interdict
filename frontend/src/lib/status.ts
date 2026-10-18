@@ -1,5 +1,5 @@
 /**
- * The one status language (solution.md §13.4, docs/06 §7.4): every engine status maps to the
+ * The one status language (solution.md §13.4): every engine status maps to the
  * same colour, icon and words in the graph, timeline, cards and certificate. Colour is never
  * the only signal; every descriptor carries an icon and a text label.
  *
