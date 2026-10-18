@@ -2,7 +2,7 @@
 
 > **Document:** `solution.md`, v2.0 (2026-10-18). Interdict was named *SentinelGraph* until 2026-10-16 (D-15).
 > **Event:** WeMakeDevs × FalkorDB Graph Hacks 2026, **Track 01: Agents That Act on Connected Data** (Oct 15, 12:01 AM IST → Oct 18, 11:59 PM IST).
-> **What this is:** the specification of Interdict as built. It began as the pre-event planning notes kept in [`docs/`](docs/) and was updated during the event, one recorded decision at a time (§0.2), to match the code. Section numbers are stable because code and tests cite them.
+> **What this is:** the specification of Interdict as built. It began as pre-event planning notes (kept in the repository history, PR #2) and was updated during the event, one recorded decision at a time (§0.2), to match the code. Section numbers are stable because code and tests cite them.
 
 ---
 
@@ -38,7 +38,7 @@
 ## 0. Authority, Conventions and Glossary
 
 ### 0.1 Authority
-1. This document is the canonical description of Interdict. Where the pre-event notes in `docs/` disagree with it, this document wins.
+1. This document is the canonical description of Interdict. Where the pre-event planning notes (repository history, PR #2) disagree with it, this document wins.
 2. A design change is recorded as a decision in §0.2 in the same pull request as the code that implements it.
 3. Every number given here was measured (gate results in §17.1, the test suite, or the running app), not estimated.
 
@@ -1130,7 +1130,7 @@ The workbench then shows the 4-hop path to `customer-pii-db` that only max-flow 
 
 ### 20.3 AI-use disclosure
 - **Coding:** the team used Claude Code as a coding assistant, and commits with AI-written changes carry a `Co-Authored-By` trailer.
-- **Planning notes:** the notes in `docs/` were prepared before the event with AI assistance and are disclosed as planning notes. This specification grew from them and was updated during the event.
+- **Planning notes:** pre-event planning notes were prepared with AI assistance and are disclosed; they remain in the repository history (PR #2). This specification grew from them and was updated during the event.
 - **Code:** all application code was written during the event.
 - **Runtime:** no AI model runs; the agent is written rules (D-22).
 - **Verification:** the team checked the work with the test suite, the gate results and live checks of the running app.

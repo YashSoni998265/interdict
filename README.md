@@ -242,7 +242,6 @@ Gate details are in [`solution.md`](solution.md) §17.1.
 | `frontend/` | React + TypeScript web app |
 | `deploy/`, `Dockerfile`, `docker-compose.yml` | One image (API + MCP + web app), FalkorDB, and Caddy for TLS |
 | `solution.md` | Canonical specification; decisions D-01 to D-22 |
-| `docs/` | Pre-event planning notes |
 
 ## Team
 - **Yash Soni** ([@YashSoni998265](https://github.com/YashSoni998265)): designed and built Interdict: the engine, API, MCP server, agent and web app.
@@ -252,7 +251,7 @@ Gate details are in [`solution.md`](solution.md) §17.1.
 See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). `main` is protected: every change goes through a pull request with passing CI.
 
 ## AI usage disclosure
-This project is built with an AI coding assistant (Claude Code). The planning notes in `docs/` were prepared before the event; `solution.md` grew from them and was updated during the event to describe what was built. All application code was written during the event and is reviewed and tested by the team. Commits that include AI-written changes carry a `Co-Authored-By` trailer.
+This project is built with an AI coding assistant (Claude Code). Pre-event planning notes (ideas and design sketches, prepared with AI assistance) were the starting point for `solution.md`, which was updated during the event to describe what was built; the notes remain in the repository history (PR #2). All application code was written during the event and is reviewed and tested by the team. Commits that include AI-written changes carry a `Co-Authored-By` trailer.
 
 ## License
 [MIT](LICENSE)
