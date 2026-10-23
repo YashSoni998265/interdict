@@ -5,7 +5,7 @@ description = "Graph-grounded security triage on FalkorDB"
 requires-python = ">=3.12"
 dependencies = [
     "falkordb>=1.8.0",
-    "fastapi==0.143.0",
+    "fastapi==0.150.0",
     "mcp==2.3.0",
     "uvicorn==0.54.0",
 ]
