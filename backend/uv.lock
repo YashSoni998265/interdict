@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -223,15 +223,15 @@ wheels = [
 
 [[package]]
 name = "falkordb"
-version = "1.8.0"
+version = "1.8.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "python-dateutil" },
     { name = "redis" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/dd/96/a2f4d214a0c8871e72d0fdb80b5e7caf93037ff8583d1c4e822c4344bd17/falkordb-1.8.0.tar.gz", hash = "sha256:d3508f43ba1ee2585d1cca06e70d1339ea8b0f824b506bd7010c2b563b046ae1", size = 131288, upload-time = "2026-10-14T11:54:32.968Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/82/e5/18675f4538d33fdaf18279d89cdc663c02ac3987ef200dbc30b825308ae6/falkordb-1.8.1.tar.gz", hash = "sha256:2ab3fd5e3880a3a2708efbcc536a9175f24a59bff328758a3819dca8994526be", size = 134804, upload-time = "2026-10-25T07:36:42.92Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/21/90/210f67c1c990ee37b99c3ce74bb20e0e8fbdbd26e2570a09d82ce50cc2ef/falkordb-1.8.0-py3-none-any.whl", hash = "sha256:49c346399661eb16449dadf58c0a9784eb79847ba7f82376c6a7ab2455362094", size = 38395, upload-time = "2026-10-14T11:54:31.642Z" },
+    { url = "https://files.pythonhosted.org/packages/9d/f1/306e8e8e9901553cb924162ada7dbf1740ebdc221c575fc8c1856f1d277e/falkordb-1.8.1-py3-none-any.whl", hash = "sha256:ad9116f073de822bd1dd98f0dea41eadf93b75ef5f412e34abb60548211c30af", size = 40598, upload-time = "2026-10-25T07:36:42.005Z" },
 ]
 
 [[package]]
@@ -365,7 +365,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "falkordb", specifier = ">=1.8.0" },
+    { name = "falkordb", specifier = ">=1.8.1" },
     { name = "fastapi", specifier = "==0.143.0" },
     { name = "mcp", specifier = "==2.3.0" },
     { name = "uvicorn", specifier = "==0.54.0" },
