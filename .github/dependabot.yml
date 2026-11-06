@@ -23,6 +23,15 @@ updates:
       interval: weekly
     commit-message:
       prefix: "build(deps)"
+    groups:
+      # React's packages move together: a react-dom or @types/react-dom major on its own
+      # cannot install against react 18.
+      react:
+        patterns:
+          - react
+          - react-dom
+          - "@types/react"
+          - "@types/react-dom"
     ignore:
       # ESLint 10 waits for eslint-plugin-jsx-a11y, whose latest release (6.10.2) supports ESLint 9 at most.
       - dependency-name: eslint
