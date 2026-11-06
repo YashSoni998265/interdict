@@ -14,7 +14,7 @@ export default defineConfig([
       js.configs.recommended,
       tseslint.configs.recommendedTypeChecked,
       tseslint.configs.stylisticTypeChecked,
-      reactHooks.configs['recommended-latest'],
+      reactHooks.configs.flat.recommended,
       reactRefresh.configs.vite,
       jsxA11y.flatConfigs.recommended,
     ],
@@ -48,6 +48,9 @@ export default defineConfig([
         { checksVoidReturn: { attributes: false } },
       ],
       'react-refresh/only-export-components': ['error', { allowConstantExport: true }],
+      // New in react-hooks 7. Six existing effects reset state when an input changes (filters,
+      // pinned step, layout errors); rewriting them is a behaviour change, not a lint fix.
+      'react-hooks/set-state-in-effect': 'off',
       eqeqeq: ['error', 'smart'],
     },
   },
